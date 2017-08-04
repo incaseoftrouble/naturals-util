@@ -17,28 +17,41 @@
 
 package de.tum.in.naturals.set;
 
-import it.unimi.dsi.fastutil.ints.IntSet;
-import javax.annotation.Nonnegative;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import java.util.NoSuchElementException;
 
-/**
- * A set of non-negative integers.
- */
-public interface NatSet extends IntSet {
-  /**
-   * {@inheritDoc}
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   */
-  @Override
-  boolean add(@Nonnegative int index);
+class NatBitSetIterator implements IntIterator {
+  private final NatBitSet set;
+  private int current;
+  private int next;
 
-  /**
-   * {@inheritDoc}
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   */
+  public NatBitSetIterator(NatBitSet set) {
+    this.set = set;
+    current = -1;
+    next = set.nextPresentIndex(0);
+  }
+
   @Override
-  boolean remove(@Nonnegative int index);
+  public boolean hasNext() {
+    return next != -1;
+  }
+
+  @Override
+  public int nextInt() {
+    if (!hasNext()) {
+      throw new NoSuchElementException();
+    }
+    current = next;
+    next = set.nextPresentIndex(next + 1);
+    return current;
+  }
+
+  @Override
+  public void remove() {
+    if (current == -1) {
+      throw new IllegalStateException();
+    }
+    set.clear(current);
+    current = -1;
+  }
 }

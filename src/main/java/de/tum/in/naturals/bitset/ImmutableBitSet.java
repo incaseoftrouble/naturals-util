@@ -29,7 +29,9 @@ public final class ImmutableBitSet extends BitSet {
   private static final ImmutableBitSet EMPTY = new ImmutableBitSet();
   private static final long serialVersionUID = -481427560402287503L;
 
-  private ImmutableBitSet() {}
+  private ImmutableBitSet() {
+    super(0);
+  }
 
   private ImmutableBitSet(BitSet bitSet) {
     super(bitSet.length());

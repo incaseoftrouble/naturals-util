@@ -38,7 +38,7 @@ import java.util.function.IntToDoubleFunction;
 import javax.annotation.Nullable;
 
 /**
- * An efficient representation of a mapping from {0, ..., n} to R.
+ * An efficient representation of a total mapping from {0, ..., n} to R.
  *
  * <p><strong>Warning</strong>: This class uses {@link Double#NaN} to represent missing keys. Thus,
  * this value cannot be mapped.</p>
@@ -72,6 +72,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   }
 
   public Nat2DoubleDenseArrayMap(int size, double initialValue) {
+    checkNotAbsent(initialValue);
     this.array = new double[size];
     if (initialValue != 0d) {
       Arrays.fill(array, initialValue);
@@ -82,9 +83,17 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   public Nat2DoubleDenseArrayMap(int size, IntToDoubleFunction initialValues) {
     this.array = new double[size];
     for (int i = 0; i < array.length; i++) {
-      array[i] = initialValues.applyAsDouble(i);
+      double value = initialValues.applyAsDouble(i);
+      checkNotAbsent(value);
+      array[i] = value;
     }
     this.size = size;
+  }
+
+  private void checkNotAbsent(double value) {
+    if (isAbsent(value)) {
+      throw new IllegalArgumentException(String.format("Value %s not allowed", value));
+    }
   }
 
   @Override
@@ -100,6 +109,9 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
 
   @Override
   public boolean containsValue(double v) {
+    if (isAbsent(v)) {
+      return false;
+    }
     for (double value : array) {
       if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(v)) {
         return true;
@@ -121,10 +133,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   }
 
   public void fill(int from, int to, double value) {
-    assert 0 <= from && from <= to && to <= array.length;
-    if (from == to) {
-      return;
-    }
+    checkNotAbsent(value);
     Arrays.fill(array, from, to, value);
   }
 
@@ -181,7 +190,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
 
   @Override
   public double put(int key, double value) {
-    assert !isAbsent(value);
+    checkNotAbsent(value);
     double previous = array[key];
     array[key] = value;
     if (isAbsent(previous)) {
@@ -396,7 +405,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
 
     @Override
     public int size() {
-      return map.size;
+      return map.size();
     }
   }
 
@@ -479,7 +488,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
 
     @Override
     public int size() {
-      return map.size;
+      return map.size();
     }
   }
 }

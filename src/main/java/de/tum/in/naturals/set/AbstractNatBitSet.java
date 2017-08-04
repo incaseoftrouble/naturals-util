@@ -22,35 +22,58 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
 
 abstract class AbstractNatBitSet extends AbstractIntSet implements NatBitSet {
-  @Override
-  public boolean add(int key) {
-    if (contains(key)) {
-      return true;
+  protected static void checkNonNegative(int index) {
+    if (index < 0) {
+      throw new IndexOutOfBoundsException(String.format("Negative index %d ", index));
     }
-    set(key);
-    return false;
+  }
+
+  protected static void checkRange(int from, int to) {
+    if (to < from) {
+      throw new IndexOutOfBoundsException(String.format("From %d bigger than to %d", from, to));
+    }
+    if (from < 0) {
+      throw new IndexOutOfBoundsException(String.format("Negative from index %d ", from));
+    }
   }
 
   @Override
-  public void and(IntCollection ints) {
-    IntIterator iterator = iterator();
-    while (iterator.hasNext()) {
-      int next = iterator.nextInt();
-      if (!ints.contains(next)) {
-        iterator.remove();
+  public boolean add(int index) {
+    if (contains(index)) {
+      return false;
+    }
+    set(index);
+    return true;
+  }
+
+  @Override
+  public void and(IntCollection indices) {
+    if (indices.isEmpty()) {
+      clear();
+    } else {
+      IntIterator iterator = iterator();
+      while (iterator.hasNext()) {
+        int next = iterator.nextInt();
+        if (!indices.contains(next)) {
+          iterator.remove();
+        }
       }
     }
   }
 
   @Override
-  public void andNot(IntCollection ints) {
+  public void andNot(IntCollection indices) {
+    if (indices.isEmpty()) {
+      return;
+    }
     IntIterator iterator = iterator();
     while (iterator.hasNext()) {
       int next = iterator.nextInt();
-      if (ints.contains(next)) {
+      if (indices.contains(next)) {
         iterator.remove();
       }
     }
@@ -66,48 +89,60 @@ abstract class AbstractNatBitSet extends AbstractIntSet implements NatBitSet {
   }
 
   @Override
-  public boolean intersects(IntCollection ints) {
-    return IntIterators.any(ints.iterator(), this::contains);
+  public int firstInt() {
+    int firstPresent = nextPresentIndex(0);
+    if (firstPresent == -1) {
+      throw new NoSuchElementException();
+    }
+    return firstPresent;
   }
 
   @Override
-  public void or(IntCollection ints) {
-    ints.forEach((IntConsumer) this::set);
+  public boolean intersects(IntCollection indices) {
+    return IntIterators.any(indices.iterator(), this::contains);
   }
 
   @Override
-  public boolean remove(int key) {
-    if (!contains(key)) {
+  public void or(IntCollection indices) {
+    if (indices.isEmpty()) {
+      return;
+    }
+    indices.forEach((IntConsumer) this::set);
+  }
+
+  @Override
+  public boolean remove(int index) {
+    if (!contains(index)) {
       return false;
     }
-    clear(key);
-    return false;
-  }
-
-  @Override
-  public boolean removeAll(IntCollection ints) {
-    if (!intersects(ints)) {
-      return false;
-    }
-    andNot(ints);
+    clear(index);
     return true;
   }
 
   @Override
-  public boolean retainAll(IntCollection ints) {
-    if (IntIterators.all(iterator(), ints::contains)) {
+  public boolean removeAll(IntCollection indices) {
+    if (!intersects(indices)) {
       return false;
     }
-    and(ints);
+    andNot(indices);
     return true;
   }
 
   @Override
-  public void xor(IntCollection ints) {
-    if (ints instanceof IntSet) {
-      ints.forEach((IntConsumer) this::flip);
-    } else {
-      NatBitSets.copyOf(ints).forEach((IntConsumer) this::flip);
+  public boolean retainAll(IntCollection indices) {
+    if (IntIterators.all(iterator(), indices::contains)) {
+      return false;
     }
+    and(indices);
+    return true;
+  }
+
+  @Override
+  public void xor(IntCollection indices) {
+    if (indices.isEmpty()) {
+      return;
+    }
+    IntSet set = indices instanceof IntSet ? (IntSet) indices : NatBitSets.copyOf(indices);
+    set.forEach((IntConsumer) this::flip);
   }
 }

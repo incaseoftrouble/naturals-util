@@ -1,15 +1,22 @@
 <FindBugsFilter>
-    <!-- Match all things to be excluded here! -->
-    <Match>
-        <!-- Restrict to test folder ... -->
-        <Folder name="~test\..*"/>
-        <!-- ... and classes named ...Test -->
-        <Or>
-            <Class name="~.*Test$" />
-            <!-- Include inner classes -->
-            <Class name="~.*Test\$[0-9]*" />
-        </Or>
-        <!-- Test classes often use @SetUp to initialize their values -->
-        <Bug code="UwF"/>
-    </Match>
+  <!-- Tests and benchmarks often use @SetUp or similar to initialize their values -->
+  <Match>
+    <Folder name="~test\..*"/>
+    <Or>
+      <Class name="~.*Test$"/>
+      <Class name="~.*Benchmark$"/>
+      <!-- Include inner classes -->
+      <Class name="~.*Test\$.*"/>
+      <Class name="~.*Benchmark\$.*"/>
+    </Or>
+    <Or>
+      <Bug code="UwF"/>
+      <Bug pattern="NP_NONNULL_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+    </Or>
+  </Match>
+
+  <!-- exclude JMH generated code from analysis -->
+  <Match>
+    <Package name="~de\.tum\.in\.naturals\..*\.generated"/>
+  </Match>
 </FindBugsFilter>

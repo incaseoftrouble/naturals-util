@@ -223,7 +223,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     return value;
   }
 
-  private void removeIndex(int index) {
+  protected void removeIndex(int index) {
     assert index < size;
     int nextIndex = index + 1;
     if (nextIndex < size) {
@@ -280,7 +280,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
 
     @Override
     public boolean hasNext() {
-      return index < map.size;
+      return index < map.size();
     }
 
     @Override
@@ -305,7 +305,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
   }
 
   private static class EntrySetView extends AbstractInt2DoubleEntrySet<Int2DoubleSortedArrayMap> {
-    public EntrySetView(Int2DoubleSortedArrayMap map) {
+    EntrySetView(Int2DoubleSortedArrayMap map) {
       super(map);
     }
 
@@ -429,7 +429,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     private final int index;
     private final Int2DoubleSortedArrayMap map;
 
-    public MapEntry(Int2DoubleSortedArrayMap map, int index) {
+    MapEntry(Int2DoubleSortedArrayMap map, int index) {
       this.map = map;
       this.index = index;
     }
@@ -485,7 +485,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  private static class ValuesView extends AbstractDoubleCollection {
+  private  static class ValuesView extends AbstractDoubleCollection {
     private final Int2DoubleSortedArrayMap map;
 
     ValuesView(Int2DoubleSortedArrayMap map) {

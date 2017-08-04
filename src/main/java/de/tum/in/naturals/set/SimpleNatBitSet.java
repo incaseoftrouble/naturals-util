@@ -32,28 +32,28 @@ class SimpleNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public void and(IntCollection ints) {
-    if (ints instanceof SimpleNatBitSet) {
-      SimpleNatBitSet other = (SimpleNatBitSet) ints;
+  public void and(IntCollection indices) {
+    if (indices instanceof SimpleNatBitSet) {
+      SimpleNatBitSet other = (SimpleNatBitSet) indices;
       bitSet.and(other.bitSet);
     } else {
-      super.and(ints);
+      super.and(indices);
     }
   }
 
   @Override
-  public void andNot(IntCollection ints) {
-    if (ints instanceof SimpleNatBitSet) {
-      SimpleNatBitSet other = (SimpleNatBitSet) ints;
+  public void andNot(IntCollection indices) {
+    if (indices instanceof SimpleNatBitSet) {
+      SimpleNatBitSet other = (SimpleNatBitSet) indices;
       bitSet.andNot(other.bitSet);
     } else {
-      super.andNot(ints);
+      super.andNot(indices);
     }
   }
 
   @Override
-  public void clear(int i) {
-    bitSet.clear(i);
+  public void clear(int index) {
+    bitSet.clear(index);
   }
 
   @Override
@@ -73,8 +73,20 @@ class SimpleNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public boolean contains(int key) {
-    return bitSet.get(key);
+  public boolean contains(int index) {
+    return 0 <= index && bitSet.get(index);
+  }
+
+  @Override
+  public boolean containsAll(IntCollection indices) {
+    if (indices instanceof SimpleNatBitSet) {
+      SimpleNatBitSet other = (SimpleNatBitSet) indices;
+
+      BitSet clone = (BitSet) other.bitSet.clone();
+      clone.andNot(bitSet);
+      return clone.isEmpty();
+    }
+    return super.containsAll(indices);
   }
 
   @Override
@@ -87,15 +99,6 @@ class SimpleNatBitSet extends AbstractNatBitSet {
       return bitSet.equals(other.bitSet);
     }
     return super.equals(o);
-  }
-
-  @Override
-  public int firstInt() {
-    int firstSet = bitSet.nextSetBit(0);
-    if (firstSet == -1) {
-      throw new NoSuchElementException();
-    }
-    return bitSet.nextSetBit(0);
   }
 
   @Override
@@ -123,12 +126,12 @@ class SimpleNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public boolean intersects(IntCollection ints) {
-    if (ints instanceof SimpleNatBitSet) {
-      SimpleNatBitSet other = (SimpleNatBitSet) ints;
+  public boolean intersects(IntCollection indices) {
+    if (indices instanceof SimpleNatBitSet) {
+      SimpleNatBitSet other = (SimpleNatBitSet) indices;
       return bitSet.intersects(other.bitSet);
     }
-    return super.intersects(ints);
+    return super.intersects(indices);
   }
 
   @Override
@@ -151,12 +154,22 @@ class SimpleNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public void or(IntCollection ints) {
-    if (ints instanceof SimpleNatBitSet) {
-      SimpleNatBitSet other = (SimpleNatBitSet) ints;
+  public int nextAbsentIndex(int index) {
+    return bitSet.nextClearBit(index);
+  }
+
+  @Override
+  public int nextPresentIndex(int index) {
+    return bitSet.nextSetBit(index);
+  }
+
+  @Override
+  public void or(IntCollection indices) {
+    if (indices instanceof SimpleNatBitSet) {
+      SimpleNatBitSet other = (SimpleNatBitSet) indices;
       bitSet.or(other.bitSet);
     } else {
-      super.or(ints);
+      super.or(indices);
     }
   }
 
@@ -181,12 +194,12 @@ class SimpleNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public void xor(IntCollection ints) {
-    if (ints instanceof SimpleNatBitSet) {
-      SimpleNatBitSet other = (SimpleNatBitSet) ints;
+  public void xor(IntCollection indices) {
+    if (indices instanceof SimpleNatBitSet) {
+      SimpleNatBitSet other = (SimpleNatBitSet) indices;
       bitSet.xor(other.bitSet);
     } else {
-      super.xor(ints);
+      super.xor(indices);
     }
   }
 }

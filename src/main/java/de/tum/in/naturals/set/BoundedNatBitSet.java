@@ -18,12 +18,49 @@
 package de.tum.in.naturals.set;
 
 import it.unimi.dsi.fastutil.ints.IntCollection;
+import java.util.Collection;
 import javax.annotation.Nonnegative;
 
 /**
  * An extension to {@link NatBitSet} specialized for bounded, non-negative integer domains.
  */
 public interface BoundedNatBitSet extends NatBitSet {
+  /**
+   * @throws IndexOutOfBoundsException
+   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  boolean add(@Nonnegative int index);
+
+  /**
+   * @throws IndexOutOfBoundsException
+   *     if any index is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  boolean addAll(Collection<? extends Integer> indices);
+
+  /**
+   * @throws IndexOutOfBoundsException
+   *     if any index is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  boolean addAll(IntCollection indices);
+
+  /**
+   * @throws IndexOutOfBoundsException
+   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  void clear(@Nonnegative int index);
+
+  /**
+   * @throws IndexOutOfBoundsException
+   *     if {@code from} or {@code to} is negative or greater or equal to the {@link #domainSize()},
+   *     or {@code to} is less than {@code from}.
+   */
+  @Override
+  void clear(int from, int to);
+
   @Override
   BoundedNatBitSet clone();
 
@@ -42,7 +79,44 @@ public interface BoundedNatBitSet extends NatBitSet {
   int domainSize();
 
   /**
-   * Adds all elements of the domain which are not contained in the given collection to this set.
+   * @throws IndexOutOfBoundsException
+   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
    */
-  void orNot(IntCollection ints);
+  @Override
+  void flip(int index);
+
+  /**
+   * @throws IndexOutOfBoundsException
+   *     if {@code from} or {@code to} is negative or greater or equal to the {@link #domainSize()},
+   *     or {@code to} is less than {@code from}.
+   */
+  @Override
+  void flip(int from, int to);
+
+  @Override
+  void or(IntCollection indices);
+
+  /**
+   * Adds all elements of the domain which are not contained in the given indices to this set. This
+   * is equivalent to<pre>
+   *   for(int i = 0; i < domainSize(); i++) {
+   *     if (!indices.contains(i)) add(i);
+   *   }
+   * </pre>
+   */
+  void orNot(IntCollection indices);
+
+  /**
+   * @throws IndexOutOfBoundsException
+   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  boolean remove(int index);
+
+  /**
+   * @throws IndexOutOfBoundsException
+   *     if any index is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  boolean removeAll(Collection<?> indices);
 }

@@ -37,7 +37,7 @@ import java.util.function.IntUnaryOperator;
 import javax.annotation.Nullable;
 
 /**
- * An efficient representation of a mapping from {0, ..., n} to {{@link Integer#MIN_VALUE} +
+ * An efficient representation of a total mapping from {0, ..., n} to {{@link Integer#MIN_VALUE} +
  * 1, ..., {@link Integer#MAX_VALUE}}.
  *
  * <p><strong>Warning:</strong> For performance, missing keys are stored as
@@ -72,6 +72,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
   }
 
   public Nat2IntDenseArrayMap(int size, int initialValue) {
+    checkNotAbsent(initialValue);
     this.array = new int[size];
     if (initialValue != 0) {
       Arrays.fill(array, initialValue);
@@ -82,9 +83,17 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
   public Nat2IntDenseArrayMap(int size, IntUnaryOperator initialValues) {
     this.array = new int[size];
     for (int i = 0; i < array.length; i++) {
-      array[i] = initialValues.applyAsInt(i);
+      int value = initialValues.applyAsInt(i);
+      checkNotAbsent(value);
+      array[i] = value;
     }
     this.size = size;
+  }
+
+  private void checkNotAbsent(int value) {
+    if (isAbsent(value)) {
+      throw new IllegalArgumentException(String.format("Value %d not allowed", value));
+    }
   }
 
   @Override
@@ -100,6 +109,9 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
 
   @Override
   public boolean containsValue(int v) {
+    if (isAbsent(v)) {
+      return false;
+    }
     for (int value : array) {
       if (value == v) {
         return true;
@@ -121,14 +133,12 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
   }
 
   public void fill(int from, int to, int value) {
-    assert 0 <= from && from <= to && to <= array.length;
-    if (from == to) {
-      return;
-    }
+    checkNotAbsent(value);
     Arrays.fill(array, from, to, value);
   }
 
   public void fill(PrimitiveIterator.OfInt iterator, int value) {
+    checkNotAbsent(value);
     while (iterator.hasNext()) {
       array[iterator.next()] = value;
     }
@@ -181,7 +191,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
 
   @Override
   public int put(int key, int value) {
-    assert !isAbsent(value);
+    checkNotAbsent(value);
     int previous = array[key];
     array[key] = value;
     if (isAbsent(previous)) {
@@ -396,7 +406,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
 
     @Override
     public int size() {
-      return map.size;
+      return map.size();
     }
   }
 
@@ -479,7 +489,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
 
     @Override
     public int size() {
-      return map.size;
+      return map.size();
     }
   }
 }

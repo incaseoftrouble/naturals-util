@@ -32,18 +32,20 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
     this.element = element;
   }
 
+  private static void throwOperationUnsupported() {
+    throw new UnsupportedOperationException("Singleton can hold at most one value");
+  }
+
   @Override
-  public boolean add(int key) {
-    if (key < 0) {
-      throw new IllegalArgumentException(String.format("Negative index %d", key));
-    }
-    if (key == element) {
+  public boolean add(int index) {
+    checkNonNegative(index);
+    if (index == element) {
       return false;
     }
     if (!isEmpty()) {
-      throw new UnsupportedOperationException("Singleton can hold at most one value");
+      throwOperationUnsupported();
     }
-    setValue(key);
+    setValue(index);
     return true;
   }
 
@@ -56,10 +58,8 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void clear(int from, int to) {
-    if (from > to) {
-      throw new IllegalArgumentException(String.format("From %d larger than to %d", from, to));
-    }
-    if (from == to || isEmpty()) {
+    checkRange(from, to);
+    if (isEmpty()) {
       return;
     }
     if (from <= element && element < to) {
@@ -78,13 +78,13 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public boolean contains(int key) {
-    return !isEmpty() && key == element;
+  public boolean contains(int index) {
+    return !isEmpty() && index == element;
   }
 
   @Override
   public int firstInt() {
-    if (element == EMPTY) {
+    if (isEmpty()) {
       throw new NoSuchElementException();
     }
     return element;
@@ -92,31 +92,26 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void flip(int index) {
+    checkNonNegative(index);
     if (isEmpty()) {
       element = index;
     } else if (index == element) {
       element = EMPTY;
     } else {
-      throw new UnsupportedOperationException("Singleton can hold at most one value");
+      throwOperationUnsupported();
     }
   }
 
   @Override
   public void flip(int from, int to) {
-    if (from > to) {
-      throw new IllegalArgumentException(String.format("From %d larger than to %d", from, to));
-    }
+    checkRange(from, to);
     if (from == to) {
       return;
     }
     if (from + 1 != to) {
-      throw new UnsupportedOperationException("Singleton can hold at most one value");
+      throwOperationUnsupported();
     }
-    if (isEmpty()) {
-      setValue(from);
-    } else if (from == element) {
-      setEmpty();
-    }
+    flip(from);
   }
 
   @Override
@@ -131,18 +126,34 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int lastInt() {
-    if (element == EMPTY) {
+    if (isEmpty()) {
       throw new NoSuchElementException();
     }
     return element;
   }
 
   @Override
-  public boolean remove(int key) {
+  public int nextAbsentIndex(int index) {
+    checkNonNegative(index);
+    return (!isEmpty() && index == element) ? element + 1 : index;
+  }
+
+  @Override
+  public int nextPresentIndex(int index) {
+    checkNonNegative(index);
+    if (isEmpty()) {
+      return -1;
+    }
+    return index <= element ? element : -1;
+  }
+
+  @Override
+  public boolean remove(int index) {
+    checkNonNegative(index);
     if (isEmpty()) {
       return false;
     }
-    if (key != element) {
+    if (index != element) {
       return false;
     }
     setEmpty();
@@ -151,45 +162,39 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void set(int index) {
-    if (index < 0) {
-      throw new IllegalArgumentException(String.format("Negative index %d", index));
-    }
+    checkNonNegative(index);
     if (isEmpty()) {
       element = index;
     } else if (index != element) {
-      throw new UnsupportedOperationException("Singleton can hold at most one value");
+      throwOperationUnsupported();
     }
   }
 
   @Override
   public void set(int index, boolean value) {
-    if (index < 0) {
-      throw new IllegalArgumentException(String.format("Negative index %d", index));
-    }
+    checkNonNegative(index);
     if (isEmpty()) {
       if (value) {
         setValue(index);
       }
     } else if ((index == element) != value) {
-      throw new UnsupportedOperationException("Singleton can hold at most one value");
+      throwOperationUnsupported();
     }
   }
 
   @Override
   public void set(int from, int to) {
-    if (from > to) {
-      throw new IllegalArgumentException(String.format("From %d larger than to %d", from, to));
-    }
+    checkRange(from, to);
     if (from == to) {
       return;
     }
     if (from + 1 != to) {
-      throw new UnsupportedOperationException("Singleton can hold at most one value");
+      throwOperationUnsupported();
     }
     if (isEmpty()) {
       setValue(from);
     } else if (from != element) {
-      throw new UnsupportedOperationException("Singleton can hold at most one value");
+      throwOperationUnsupported();
     }
   }
 
@@ -209,7 +214,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int[] toIntArray() {
-    return new int[] {element};
+    return isEmpty() ? new int[0] : new int[] {element};
   }
 
   private static class SingletonSetIterator implements IntIterator {

@@ -19,6 +19,8 @@ package de.tum.in.naturals.set;
 
 import de.tum.in.naturals.bitset.BitSets;
 import de.tum.in.naturals.bitset.SparseBitSet;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
@@ -35,24 +37,31 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     this.bitSet = other.bitSet;
     this.complement = !other.complement;
     this.complementView = other;
+    assert checkConsistency();
+  }
+
+  private SparseBoundedNatBitSet(SparseBitSet bitSet, @Nonnegative int domainSize,
+      boolean complement) {
+    super(domainSize);
+    this.bitSet = bitSet;
+    this.complement = complement;
+    this.complementView = new SparseBoundedNatBitSet(this);
+    assert checkConsistency();
   }
 
   SparseBoundedNatBitSet(SparseBitSet bitSet, @Nonnegative int domainSize) {
-    super(domainSize);
-    this.bitSet = bitSet;
-    this.complement = false;
-    this.complementView = new SparseBoundedNatBitSet(this);
+    this(bitSet, domainSize, false);
   }
 
   @Override
-  public void and(IntCollection ints) {
+  public void and(IntCollection indices) {
     assert checkConsistency();
-    // retainAll
-    if (ints instanceof SparseBoundedNatBitSet) {
-      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) ints;
-      checkIndex(other.lastInt());
+    if (indices.isEmpty()) {
+      clear();
+    } else if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
       if (complement) {
-        orWith(other.bitSet, !other.complement);
+        bitSet.or(0, domainSize(), other.complement ? other.bitSet : other.complementBits());
       } else {
         if (other.complement) {
           bitSet.andNot(other.bitSet);
@@ -61,20 +70,22 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
         }
       }
     } else {
-      super.and(ints);
+      super.and(indices);
     }
     assert checkConsistency();
   }
 
   @Override
-  public void andNot(IntCollection ints) {
+  public void andNot(IntCollection indices) {
     assert checkConsistency();
-    // removeAll
-    if (ints instanceof SparseBoundedNatBitSet) {
-      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) ints;
-      checkIndex(other.lastInt());
+    if (indices.isEmpty()) {
+      return;
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+
       if (complement) {
-        orWith(other.bitSet, other.complement);
+        bitSet.or(0, domainSize(), other.complement ? other.complementBits() : other.bitSet);
       } else {
         if (other.complement) {
           bitSet.and(other.bitSet);
@@ -83,7 +94,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
         }
       }
     } else {
-      super.andNot(ints);
+      super.andNot(indices);
     }
     assert checkConsistency();
   }
@@ -95,7 +106,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public void clear(int index) {
     assert checkConsistency();
-    checkIndex(index);
+    checkInDomain(index);
     bitSet.set(index, complement);
     assert checkConsistency();
   }
@@ -103,8 +114,12 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public void clear(int from, int to) {
     assert checkConsistency();
-    checkRange(from, to);
-    bitSet.clear(from, to);
+    checkInDomain(from, to);
+    if (complement) {
+      bitSet.set(from, to);
+    } else {
+      bitSet.clear(from, to);
+    }
     assert checkConsistency();
   }
 
@@ -112,12 +127,47 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public SparseBoundedNatBitSet clone() {
     assert checkConsistency();
-    return new SparseBoundedNatBitSet(bitSet.clone(), domainSize());
+    return new SparseBoundedNatBitSet(bitSet.clone(), domainSize(), complement);
   }
 
   @Override
   public BoundedNatBitSet complement() {
     return complementView;
+  }
+
+  private SparseBitSet complementBits() {
+    SparseBitSet copy = bitSet.clone();
+    copy.flip(0, domainSize());
+    return copy;
+  }
+
+  @Override
+  public boolean contains(int k) {
+    return 0 <= k && (complement ? k < domainSize() && !bitSet.get(k) : bitSet.get(k));
+  }
+
+  @Override
+  public boolean containsAll(IntCollection indices) {
+    assert checkConsistency();
+    if (isEmpty()) {
+      return indices.isEmpty();
+    }
+    if (indices.isEmpty()) {
+      return true;
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+      int otherLastInt = other.lastInt();
+      if (!inDomain(otherLastInt) || lastInt() < otherLastInt) {
+        return false;
+      }
+
+      SparseBitSet otherSetBits = other.complement ? other.complementBits() : other.bitSet;
+      SparseBitSet unsetBits = complement ? bitSet : complementBits();
+
+      return !unsetBits.intersects(otherSetBits);
+    }
+    return super.containsAll(indices);
   }
 
   @Override
@@ -128,39 +178,64 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     }
     if (o instanceof SparseBoundedNatBitSet) {
       SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) o;
-      if (domainSize() != other.domainSize()) {
-        return false;
+      if (isEmpty()) {
+        return other.isEmpty();
       }
-      if (other.complement == this.complement) {
+
+      int domainSize = domainSize();
+      int otherDomainSize = other.domainSize();
+
+      if (complement) {
+        if (other.complement) {
+          if (domainSize == otherDomainSize) {
+            return bitSet.equals(other.bitSet);
+          }
+
+          SparseBoundedNatBitSet smaller;
+          SparseBoundedNatBitSet larger;
+          int smallerSize;
+          int largerSize;
+          if (domainSize < otherDomainSize) {
+            smaller = this;
+            larger = other;
+            smallerSize = domainSize;
+            largerSize = otherDomainSize;
+          } else {
+            smaller = other;
+            larger = this;
+            smallerSize = otherDomainSize;
+            largerSize = domainSize;
+          }
+
+          if (larger.bitSet.nextClearBit(smallerSize) < largerSize) {
+            return false;
+          }
+          // Avoid cloning the array - might be slower but less memory consumption
+          smaller.bitSet.xor(0, smallerSize, larger.bitSet);
+          boolean equals = smaller.bitSet.isEmpty();
+          smaller.bitSet.xor(0, smallerSize, larger.bitSet);
+          return equals;
+        }
+      } else if (!other.complement) {
         return bitSet.equals(other.bitSet);
       }
-      return bitSet.cardinality() + other.bitSet.cardinality() == domainSize()
-          && !bitSet.intersects(other.bitSet);
+
+      // complement != otherComplement
+      int complementDomainSize = complement ? domainSize : otherDomainSize;
+      SparseBoundedNatBitSet nonComplementSet = complement ? other : this;
+      assert !nonComplementSet.complement;
+
+      return !bitSet.intersects(other.bitSet)
+          && bitSet.cardinality() + other.bitSet.cardinality() == complementDomainSize
+          && (domainSize == otherDomainSize || nonComplementSet.lastInt() < complementDomainSize);
     }
     return super.equals(o);
   }
 
   @Override
-  public int firstInt() {
-    assert checkConsistency();
-    if (complement) {
-      int firstClear = bitSet.nextClearBit(0);
-      if (firstClear >= domainSize()) {
-        throw new NoSuchElementException();
-      }
-      return firstClear;
-    }
-    int firstSet = bitSet.nextSetBit(0);
-    if (firstSet == -1) {
-      throw new NoSuchElementException();
-    }
-    return firstSet;
-  }
-
-  @Override
   public void flip(int index) {
     assert checkConsistency();
-    checkIndex(index);
+    checkInDomain(index);
     bitSet.flip(index);
     assert checkConsistency();
   }
@@ -168,7 +243,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public void flip(int from, int to) {
     assert checkConsistency();
-    checkRange(from, to);
+    checkInDomain(from, to);
     bitSet.flip(from, to);
     assert checkConsistency();
   }
@@ -180,7 +255,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int hashCode() {
     assert checkConsistency();
-    return (complement ? ~bitSet.hashCode() : bitSet.hashCode()) + super.hashCode() * 31;
+    return (complement ? ~bitSet.hashCode() : bitSet.hashCode()) ^ HashCommon.mix(domainSize());
   }
 
   boolean isComplement() {
@@ -201,107 +276,123 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
         : BitSets.iterator(bitSet, domainSize());
   }
 
-  private int lastClearBit() {
-    // Binary search for the biggest clear bit with index <= length
-    int firstClearBit = bitSet.nextClearBit(0);
-    int domainSize = domainSize();
-    if (firstClearBit > domainSize) {
-      return -1;
-    }
-    if (bitSet.length() < domainSize) {
-      // The highest set bit in the bit set (which is at length() - 1) comes before the "length"
-      // Hence, the bit at length - 1 is contained in this set
-      return domainSize - 1;
-    }
-    int rightPivot = domainSize;
-    int leftPivot = firstClearBit;
-
-    while (true) {
-      assert leftPivot <= rightPivot;
-      int middle = (rightPivot + leftPivot) / 2;
-      int value = bitSet.nextClearBit(middle);
-      while (value > domainSize) {
-        assert leftPivot <= middle && middle <= rightPivot;
-        rightPivot = middle;
-        middle = (rightPivot + leftPivot) / 2;
-        value = bitSet.nextClearBit(middle);
-      }
-      leftPivot = value;
-      int nextClear = bitSet.nextClearBit(leftPivot + 1);
-      if (nextClear >= domainSize) {
-        return leftPivot;
-      }
-      leftPivot = nextClear;
-    }
-  }
-
   @Override
+  @SuppressFBWarnings({"TQ_COMPARING_VALUES_WITH_INCOMPATIBLE_TYPE_QUALIFIERS",
+                          "TQ_NEVER_VALUE_USED_WHERE_ALWAYS_REQUIRED"})
   public int lastInt() {
+    int lastInt = complement ? NatBitSets.findLastSetIndex(this, domainSize())
+        : bitSet.length() - 1;
     assert checkConsistency();
-    int lastInt = complement ? lastClearBit() : bitSet.length() - 1;
     if (lastInt == -1) {
       throw new NoSuchElementException();
     }
+    assert 0 <= lastInt && lastInt < domainSize();
     return lastInt;
   }
 
   @Override
-  public void or(IntCollection ints) {
+  public int nextAbsentIndex(int index) {
     assert checkConsistency();
-    // addAll
-    if (ints instanceof SparseBoundedNatBitSet) {
-      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) ints;
-      checkIndex(other.lastInt());
+    checkNonNegative(index);
+    if (index >= domainSize()) {
+      return index;
+    }
+    if (complement) {
+      int nextSet = bitSet.nextSetBit(index);
+      return nextSet == -1 ? domainSize() : nextSet;
+    }
+    return bitSet.nextClearBit(index);
+  }
+
+  @Override
+  public int nextPresentIndex(int index) {
+    assert checkConsistency();
+    checkNonNegative(index);
+    if (index >= domainSize()) {
+      return -1;
+    }
+    if (complement) {
+      int nextClear = bitSet.nextClearBit(index);
+      return nextClear >= domainSize() ? -1 : nextClear;
+    }
+    return bitSet.nextSetBit(index);
+  }
+
+  @Override
+  public void or(IntCollection indices) {
+    assert checkConsistency();
+    if (indices.isEmpty()) {
+      return;
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+      checkInDomain(other.lastInt());
+
       if (complement) {
         if (other.complement) {
-          bitSet.and(other.bitSet);
+          bitSet.and(0, other.domainSize(), other.bitSet);
         } else {
           bitSet.andNot(other.bitSet);
         }
       } else {
-        orWith(other.bitSet, other.complement);
+        if (other.complement) {
+          bitSet.or(other.complementBits());
+        } else {
+          bitSet.or(other.bitSet);
+        }
       }
     } else {
-      super.or(ints);
+      super.or(indices);
     }
     assert checkConsistency();
   }
 
   @Override
-  public void orNot(IntCollection ints) {
+  public void orNot(IntCollection indices) {
     assert checkConsistency();
-    if (ints instanceof SparseBoundedNatBitSet) {
-      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) ints;
-      checkIndex(other.lastInt());
+    if (indices.isEmpty()) {
+      if (complement) {
+        bitSet.clear();
+      } else {
+        bitSet.set(0, domainSize());
+      }
+    } else if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+      int domainSize = domainSize();
+      int otherDomainSize = other.domainSize();
+
       if (complement) {
         if (other.complement) {
           bitSet.andNot(other.bitSet);
+          if (otherDomainSize < domainSize) {
+            bitSet.clear(otherDomainSize, domainSize);
+          }
         } else {
           bitSet.and(other.bitSet);
         }
       } else {
-        orWith(other.bitSet, !other.complement);
+        if (other.complement) {
+          bitSet.or(0, domainSize(), other.bitSet);
+        } else {
+          int minDomainSize = Math.min(domainSize, otherDomainSize);
+          other.bitSet.flip(0, minDomainSize);
+          bitSet.or(0, domainSize, other.bitSet);
+          other.bitSet.flip(0, minDomainSize);
+        }
+        if (otherDomainSize < domainSize) {
+          bitSet.set(otherDomainSize, domainSize);
+        }
       }
     } else {
-      super.orNot(ints);
+      super.orNot(indices);
     }
     assert checkConsistency();
-  }
-
-  private void orWith(SparseBitSet bitSet, boolean flip) {
-    if (flip) {
-      SparseBitSet otherBitSet = bitSet.clone();
-      otherBitSet.flip(0, domainSize());
-      this.bitSet.or(otherBitSet);
-    } else {
-      this.bitSet.or(bitSet);
-    }
   }
 
   @Override
   public void set(int index) {
     assert checkConsistency();
-    checkIndex(index);
+    checkInDomain(index);
     bitSet.set(index, !complement);
     assert checkConsistency();
   }
@@ -309,7 +400,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public void set(int index, boolean value) {
     assert checkConsistency();
-    checkIndex(index);
+    checkInDomain(index);
     bitSet.set(index, value ^ complement);
     assert checkConsistency();
   }
@@ -317,7 +408,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public void set(int from, int to) {
     assert checkConsistency();
-    checkRange(from, to);
+    checkInDomain(from, to);
     if (complement) {
       bitSet.clear(from, to);
     } else {
@@ -331,5 +422,26 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     assert checkConsistency();
     int bitSetCardinality = bitSet.cardinality();
     return complement ? domainSize() - bitSetCardinality : bitSetCardinality;
+  }
+
+  @Override
+  public void xor(IntCollection indices) {
+    assert checkConsistency();
+    if (indices.isEmpty()) {
+      return;
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+      int otherDomainSize = other.domainSize();
+      checkInDomain(otherDomainSize - 1);
+
+      bitSet.xor(other.bitSet);
+      if (other.complement) {
+        bitSet.flip(0, otherDomainSize);
+      }
+    } else {
+      super.xor(indices);
+    }
+    assert checkConsistency();
   }
 }

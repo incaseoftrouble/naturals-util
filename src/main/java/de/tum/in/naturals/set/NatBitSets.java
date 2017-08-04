@@ -26,15 +26,68 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.IntConsumer;
+import javax.annotation.Nonnegative;
 
 public final class NatBitSets {
   public static final int UNKNOWN_LENGTH = -1;
   public static final int UNKNOWN_SIZE = -1;
-  private static final int SPARSE_THRESHOLD = 128;
+  private static final int SPARSE_THRESHOLD = Long.SIZE * 128;
 
   private NatBitSets() {}
+
+  /**
+   * Ensures that the given {@code set} is a {@link BoundedNatBitSet}. When possible, the backing
+   * data structure is shallow copied. For example, when passing a {@link SimpleNatBitSet}, a
+   * {@link SimpleBoundedNatBitSet} with the same backing bit set will be returned. Note that after
+   * this operation, only the returned set should be used to ensure integrity.
+   *
+   * <p><strong>Warning</strong>: If {@code set} already is a {@link BoundedNatBitSet} with
+   * different domain size, an exception will be thrown, to avoid potentially unexpected behavior
+   * </p>
+   *
+   * @throws IndexOutOfBoundsException
+   *     if {@code set} contains an index larger than {@code domainSize}.
+   * @throws IllegalArgumentException
+   *     if {@code set} already is a {@link BoundedNatBitSet} and has a differing domain size.
+   */
+  public static BoundedNatBitSet asBounded(NatBitSet set, @Nonnegative int domainSize) {
+    if (!set.isEmpty() && set.lastInt() >= domainSize) {
+      throw new IndexOutOfBoundsException();
+    }
+    if (set instanceof BoundedNatBitSet) {
+      BoundedNatBitSet boundedSet = (BoundedNatBitSet) set;
+      int oldDomainSize = boundedSet.domainSize();
+      if (oldDomainSize != domainSize) {
+        throw new IllegalArgumentException(String.format(
+            "Given set has domain size %d, expected %d", boundedSet.domainSize(), domainSize));
+      }
+      return boundedSet;
+    }
+    if (set instanceof SimpleNatBitSet) {
+      SimpleNatBitSet simpleSet = (SimpleNatBitSet) set;
+      return new SimpleBoundedNatBitSet(simpleSet.getBitSet(), domainSize);
+    }
+    if (set instanceof SparseNatBitSet) {
+      SparseNatBitSet sparseSet = (SparseNatBitSet) set;
+      return new SparseBoundedNatBitSet(sparseSet.getSparseBitSet(), domainSize);
+    }
+    if (set instanceof LongNatBitSet) {
+      LongNatBitSet longSet = (LongNatBitSet) set;
+      return new LongBoundedNatBitSet(longSet.getStore(), domainSize);
+    }
+    if (set instanceof MutableSingletonNatBitSet) {
+      MutableSingletonNatBitSet singletonSet = (MutableSingletonNatBitSet) set;
+      if (singletonSet.isEmpty()) {
+        return new BoundedMutableSingletonNatBitSet(domainSize);
+      }
+      return new BoundedMutableSingletonNatBitSet(singletonSet.firstInt(), domainSize);
+    }
+
+    return new BoundedWrapper(set, domainSize);
+  }
 
   /**
    * Return a view on the given {@code bitSet}.
@@ -43,7 +96,18 @@ public final class NatBitSets {
     return new SimpleNatBitSet(bitSet);
   }
 
+  public static BoundedNatBitSet boundedLongSet(int domainSize) {
+    return new LongBoundedNatBitSet(domainSize);
+  }
+
+  public static BoundedNatBitSet boundedSet(int domainSize) {
+    return boundedSet(domainSize, UNKNOWN_SIZE);
+  }
+
   public static BoundedNatBitSet boundedSet(int domainSize, int expectedSize) {
+    if (domainSize <= LongBoundedNatBitSet.maximalSize()) {
+      return new LongBoundedNatBitSet(domainSize);
+    }
     return (useSparse(expectedSize, domainSize))
         ? new SparseBoundedNatBitSet(new SparseBitSet(domainSize), domainSize)
         : new SimpleBoundedNatBitSet(new BitSet(), domainSize);
@@ -53,13 +117,17 @@ public final class NatBitSets {
     return new SimpleBoundedNatBitSet(new BitSet(), domainSize);
   }
 
+  public static BoundedNatBitSet boundedSingleton(int domainSize, int element) {
+    return new BoundedMutableSingletonNatBitSet(element, domainSize);
+  }
+
   public static BoundedNatBitSet boundedSparseSet(int domainSize) {
     return new SparseBoundedNatBitSet(new SparseBitSet(), domainSize);
   }
 
   /**
    * Try to compact the given set by potentially representing it as, e.g., empty or singleton set.
-   * The returned set might not be modifiable.
+   * The returned set might not be modifiable.}
    *
    * @param set
    *     The set to be compacted.
@@ -71,13 +139,18 @@ public final class NatBitSets {
       return set;
     }
     if (set.isEmpty()) {
-      return new MutableSingletonNatBitSet();
+      return emptySet();
     }
     if (set.size() == 1) {
-      return new MutableSingletonNatBitSet(set.lastInt());
+      return singleton(set.firstInt());
     }
     if (set.firstInt() == 0 && set.lastInt() == set.size() - 1) {
-      return new FixedSizeNatBitSet(set.lastInt());
+      return new FixedSizeNatBitSet(set.lastInt() + 1);
+    }
+    if (!(set instanceof LongNatBitSet) && set.lastInt() < LongNatBitSet.maximalSize()) {
+      LongNatBitSet copy = new LongNatBitSet();
+      set.forEach((IntConsumer) copy::set);
+      return copy;
     }
     // TODO Determine optimal representation (Sparse vs non-sparse, direct vs. complement)
     return set;
@@ -98,45 +171,6 @@ public final class NatBitSets {
     if (set.isEmpty() || set.firstInt() >= length) {
       return IntIterators.fromTo(0, length);
     }
-    if (set instanceof SimpleBoundedNatBitSet) {
-      SimpleBoundedNatBitSet boundedSet = (SimpleBoundedNatBitSet) set;
-      BitSet bitSet = boundedSet.getBitSet();
-      if (!boundedSet.isComplement()) {
-        return IntIterators.unmodifiable(BitSets.iterator(bitSet, length));
-      }
-      int domainSize = boundedSet.domainSize();
-      if (length <= domainSize) {
-        return IntIterators.unmodifiable(BitSets.complementIterator(bitSet, length));
-      }
-      return IntIterators.concat(new IntIterator[] {
-          IntIterators.unmodifiable(BitSets.complementIterator(bitSet, domainSize)),
-          IntIterators.fromTo(domainSize, length)
-      });
-    }
-    if (set instanceof SparseBoundedNatBitSet) {
-      SparseBoundedNatBitSet boundedSet = (SparseBoundedNatBitSet) set;
-      SparseBitSet bitSet = boundedSet.getSparseBitSet();
-      if (!boundedSet.isComplement()) {
-        return IntIterators.unmodifiable(BitSets.iterator(bitSet, length));
-      }
-      int domainSize = boundedSet.domainSize();
-      if (length <= domainSize) {
-        return IntIterators.unmodifiable(BitSets.complementIterator(bitSet, length));
-      }
-      return IntIterators.concat(new IntIterator[] {
-          IntIterators.unmodifiable(BitSets.complementIterator(bitSet, domainSize)),
-          IntIterators.fromTo(domainSize, length)
-      });
-    }
-    if (set instanceof SimpleNatBitSet) {
-      SimpleNatBitSet bitSet = (SimpleNatBitSet) set;
-      return IntIterators.unmodifiable(BitSets.complementIterator(bitSet.getBitSet(), length));
-    }
-    if (set instanceof SparseNatBitSet) {
-      SparseNatBitSet bitSet = (SparseNatBitSet) set;
-      return IntIterators.unmodifiable(
-          BitSets.complementIterator(bitSet.getSparseBitSet(), length));
-    }
     if (set instanceof FixedSizeNatBitSet) {
       int size = set.size();
       if (size >= length) {
@@ -156,31 +190,33 @@ public final class NatBitSets {
       return IntIterators.concat(new IntIterator[] {IntIterators.fromTo(0, element),
           IntIterators.fromTo(element + 1, length)});
     }
-    throw new IllegalArgumentException();
+    return IntIterators.unmodifiable(new NatBitSetComplementIterator(set, length));
   }
 
   /**
-   * Copies the given collection. The returned set might not be modifiable.
+   * Copies the given indices. The returned set might not be modifiable.
    *
-   * @param ints
-   *     The collection to be copied.
+   * @param indices
+   *     The indices to be copied.
    *
-   * @return a copy of the given collection.
+   * @return a copy of the given indices.
    *
    * @see #modifiableCopyOf(NatBitSet)
    */
-  public static NatBitSet copyOf(IntCollection ints) {
+  public static NatBitSet copyOf(IntCollection indices) {
     NatBitSet copy;
-    if (ints instanceof NatBitSet) {
-      copy = ((NatBitSet) ints).clone();
-    } else if (ints instanceof IntSortedSet) {
-      copy = set(ints.size(), ((IntSortedSet) ints).lastInt());
-      copy.or(ints);
+    if (indices.isEmpty()) {
+      copy = emptySet();
+    } else if (indices instanceof NatBitSet) {
+      copy = ((NatBitSet) indices).clone();
+    } else if (indices instanceof IntSortedSet) {
+      copy = set(indices.size(), ((IntSortedSet) indices).lastInt());
+      copy.or(indices);
     } else {
-      copy = set(ints.size(), UNKNOWN_LENGTH);
-      copy.or(ints);
+      copy = set(indices.size(), UNKNOWN_LENGTH);
+      copy.or(indices);
     }
-    assert copy.equals(ints instanceof Set ? ints : new IntAVLTreeSet(ints));
+    assert copy.equals(indices instanceof Set ? indices : new IntAVLTreeSet(indices));
     return copy;
   }
 
@@ -192,29 +228,116 @@ public final class NatBitSets {
   }
 
   /**
-   * Ensures that the given set can be modified with arbitrary values. If necessary, the set is
-   * copied into a general purpose representation if necessary.
-   *
-   * @see #isModifiable(NatBitSet)
+   * Returns an empty set over the given domain.
    */
-  public static NatBitSet ensureGeneral(NatBitSet set) {
-    if (isModifiable(set)) {
-      return set;
-    }
-    return modifiableCopyOf(set);
+  public static BoundedNatBitSet emptySet(int domainSize) {
+    return new FixedSizeNatBitSet(domainSize).complement();
   }
 
   /**
-   * Ensures that the given set can be modified with arbitrary values from {@code {0, ..., n}}. If
-   * necessary, the set is copied into a general purpose representation if necessary.
+   * Ensures that the given {@code set} is a {@link BoundedNatBitSet}, copying it if necessary.
+   * Note that this also clones the set if, e.g., it is a bounded set with a larger domain
+   *
+   * @throws IndexOutOfBoundsException
+   *     if {@code set} contains an index larger than {@code domainSize}.
+   */
+  public static BoundedNatBitSet ensureBounded(NatBitSet set, @Nonnegative int domainSize) {
+    if (!set.isEmpty() && set.lastInt() >= domainSize) {
+      throw new IndexOutOfBoundsException();
+    }
+    if (set instanceof BoundedNatBitSet) {
+      BoundedNatBitSet boundedSet = (BoundedNatBitSet) set;
+      int oldDomainSize = boundedSet.domainSize();
+      if (oldDomainSize == domainSize) {
+        return boundedSet;
+      }
+      if (set instanceof SimpleBoundedNatBitSet) {
+        SimpleBoundedNatBitSet simpleBoundedSet = (SimpleBoundedNatBitSet) set;
+        BitSet bitSetCopy = (BitSet) simpleBoundedSet.getBitSet().clone();
+        if (domainSize < oldDomainSize) {
+          bitSetCopy.clear(domainSize, oldDomainSize);
+        }
+        BoundedNatBitSet copy = new SimpleBoundedNatBitSet(bitSetCopy, domainSize);
+        return simpleBoundedSet.isComplement() ? copy.complement() : copy;
+      } else if (set instanceof SparseBoundedNatBitSet) {
+        SparseBoundedNatBitSet sparseBoundedSet = (SparseBoundedNatBitSet) set;
+        SparseBitSet bitSetCopy = sparseBoundedSet.getSparseBitSet().clone();
+        if (domainSize < oldDomainSize) {
+          bitSetCopy.clear(domainSize, oldDomainSize);
+        }
+        BoundedNatBitSet copy = new SparseBoundedNatBitSet(bitSetCopy, domainSize);
+        return sparseBoundedSet.isComplement() ? copy.complement() : copy;
+      } else if (set instanceof MutableSingletonNatBitSet) {
+        MutableSingletonNatBitSet singletonSet = (MutableSingletonNatBitSet) set;
+        if (singletonSet.isEmpty()) {
+          return new BoundedMutableSingletonNatBitSet(domainSize);
+        }
+        return new BoundedMutableSingletonNatBitSet(singletonSet.firstInt(), domainSize);
+      }
+    }
+    BoundedNatBitSet copy = boundedSet(domainSize, set.size());
+    copy.or(set);
+    return copy;
+  }
+
+  /**
+   * Ensures that the given {@code set} can be modified with arbitrary values. If necessary, the set
+   * is copied into a general purpose representation.
+   *
+   * @see #isModifiable(NatBitSet)
+   */
+  public static NatBitSet ensureModifiable(NatBitSet set) {
+    return isModifiable(set) ? set : modifiableCopyOf(set);
+  }
+
+  /**
+   * Ensures that the given {@code set} can be modified with arbitrary values from
+   * {@code {0, ..., n}}. If necessary, the set is copied into a general purpose representation.
    *
    * @see #isModifiable(NatBitSet, int)
    */
-  public static NatBitSet ensureGeneral(NatBitSet set, int length) {
-    if (isModifiable(set, length)) {
-      return set;
+  public static NatBitSet ensureModifiable(NatBitSet set, int length) {
+    return isModifiable(set, length) ? set : modifiableCopyOf(set, length);
+  }
+
+  /**
+   * Ensures that the given {@code set} can be modified in its domain. If necessary, the set is
+   * copied into a general purpose representation.
+   */
+  public static NatBitSet ensureModifiable(BoundedNatBitSet set) {
+    return isModifiable(set) ? set : modifiableCopyOf(set);
+  }
+
+  static int findLastSetIndex(NatBitSet set, int domainSize) {
+    // Binary search for the biggest clear bit with index <= length
+    int firstPresentIndex = set.nextPresentIndex(0);
+    if (firstPresentIndex == -1) {
+      return -1;
     }
-    return modifiableCopyOf(set, length);
+    int lastIndex = domainSize - 1;
+    if (set.contains(lastIndex)) {
+      return lastIndex;
+    }
+    int rightPivot = lastIndex;
+    int leftPivot = firstPresentIndex;
+
+    while (true) {
+      assert leftPivot <= rightPivot;
+      int middle = (rightPivot + leftPivot) / 2;
+      int value = set.nextPresentIndex(middle);
+      while (value == -1) {
+        assert leftPivot <= middle && middle <= rightPivot;
+        rightPivot = middle;
+        middle = (rightPivot + leftPivot) / 2;
+        value = set.nextPresentIndex(middle);
+      }
+      leftPivot = value;
+      int nextSet = set.nextPresentIndex(leftPivot + 1);
+      if (nextSet == -1) {
+        return leftPivot;
+      }
+      leftPivot = nextSet;
+    }
   }
 
   /**
@@ -232,6 +355,15 @@ public final class NatBitSets {
   }
 
   /**
+   * Determines whether the given {@code set} can handle arbitrary modifications within its domain.
+   */
+  public static boolean isModifiable(BoundedNatBitSet set) {
+    return set instanceof SimpleBoundedNatBitSet
+        || set instanceof SparseBoundedNatBitSet
+        || set instanceof LongBoundedNatBitSet;
+  }
+
+  /**
    * Determines whether the given {@code set} can handle arbitrary modifications of values between 0
    * and {@code length - 1}.
    */
@@ -240,9 +372,17 @@ public final class NatBitSets {
       return true;
     }
     if (set instanceof BoundedNatBitSet) {
-      return length <= ((BoundedNatBitSet) set).domainSize();
+      BoundedNatBitSet boundedSet = (BoundedNatBitSet) set;
+      return length <= boundedSet.domainSize() && isModifiable(boundedSet);
+    }
+    if (set instanceof LongNatBitSet) {
+      return length <= LongNatBitSet.maximalSize();
     }
     return set instanceof SimpleNatBitSet || set instanceof SparseNatBitSet;
+  }
+
+  public static NatBitSet longSet() {
+    return new LongNatBitSet();
   }
 
   /**
@@ -264,16 +404,30 @@ public final class NatBitSets {
     if (isModifiable(set, length)) {
       return set.clone();
     }
-    NatBitSet copy;
     if (set instanceof BoundedNatBitSet && length <= ((BoundedNatBitSet) set).domainSize()) {
-      copy = set.clone();
-    } else if (set instanceof SimpleNatBitSet || set instanceof SparseBoundedNatBitSet) {
-      copy = set.clone();
-    } else {
-      copy = set(set.size(), length);
-      copy.or(set);
+      return modifiableCopyOf((BoundedNatBitSet) set);
     }
+
+    NatBitSet copy = set(set.size(), length);
+    copy.or(set);
     assert isModifiable(copy, length) && copy.equals(set);
+    return copy;
+  }
+
+  /**
+   * Returns a copy of the given {@code set} which is guaranteed to be modifiable (within the
+   * domain).
+   *
+   * @see #isModifiable(BoundedNatBitSet)
+   */
+  public static BoundedNatBitSet modifiableCopyOf(BoundedNatBitSet set) {
+    if (isModifiable(set)) {
+      return set.clone();
+    }
+
+    BoundedNatBitSet copy = boundedSet(set.domainSize(), set.size());
+    copy.or(set);
+    assert isModifiable(copy, set.domainSize()) && copy.equals(set);
     return copy;
   }
 
@@ -330,29 +484,95 @@ public final class NatBitSets {
     return new SparseNatBitSet(new SparseBitSet(expectedSize));
   }
 
-  public static BitSet toBitSet(IntIterable ints) {
-    if (ints instanceof SimpleNatBitSet) {
-      return (BitSet) ((SimpleNatBitSet) ints).getBitSet().clone();
+  public static BitSet toBitSet(IntIterable indices) {
+    if (!(indices instanceof IntCollection)) {
+      BitSet bitSet = new BitSet();
+      indices.forEach((IntConsumer) bitSet::set);
+      return bitSet;
     }
-    if (ints instanceof SimpleBoundedNatBitSet) {
-      return (BitSet) ((SimpleBoundedNatBitSet) ints).getBitSet().clone();
+    if (((Collection<?>) indices).isEmpty()) {
+      return new BitSet(0);
     }
-    if (ints instanceof SparseNatBitSet) {
-      return BitSets.toBitSet(((SparseNatBitSet) ints).getSparseBitSet());
+
+    if (indices instanceof SimpleNatBitSet) {
+      return (BitSet) ((SimpleNatBitSet) indices).getBitSet().clone();
     }
-    if (ints instanceof SparseBoundedNatBitSet) {
-      return BitSets.toBitSet(((SparseBoundedNatBitSet) ints).getSparseBitSet());
+    if (indices instanceof SimpleBoundedNatBitSet) {
+      SimpleBoundedNatBitSet boundedSet = (SimpleBoundedNatBitSet) indices;
+      BitSet bitSet = (BitSet) boundedSet.getBitSet().clone();
+      if (boundedSet.isComplement()) {
+        bitSet.flip(0, boundedSet.domainSize());
+      }
+      return bitSet;
+    }
+    if (indices instanceof SparseNatBitSet) {
+      return BitSets.toBitSet(((SparseNatBitSet) indices).getSparseBitSet());
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet boundedSet = (SparseBoundedNatBitSet) indices;
+      if (boundedSet.isComplement()) {
+        BitSet bitSet = new BitSet(boundedSet.domainSize());
+        boundedSet.forEach((IntConsumer) bitSet::set);
+        return bitSet;
+      }
+      return BitSets.toBitSet(boundedSet.getSparseBitSet());
     }
 
     BitSet bitSet;
-    if (ints instanceof NatBitSet) {
-      bitSet = new BitSet(((NatBitSet) ints).lastInt());
-    } else if (ints instanceof IntSortedSet) {
-      bitSet = new BitSet(((IntSortedSet) ints).lastInt());
+    if (indices instanceof NatBitSet) {
+      bitSet = new BitSet(((NatBitSet) indices).lastInt());
+    } else if (indices instanceof IntSortedSet) {
+      bitSet = new BitSet(((IntSortedSet) indices).lastInt());
     } else {
       bitSet = new BitSet();
     }
-    ints.forEach((IntConsumer) bitSet::set);
+    indices.forEach((IntConsumer) bitSet::set);
+    return bitSet;
+  }
+
+  public static SparseBitSet toSparseBitSet(IntIterable indices) {
+    if (!(indices instanceof IntCollection)) {
+      SparseBitSet bitSet = new SparseBitSet();
+      indices.forEach((IntConsumer) bitSet::set);
+      return bitSet;
+    }
+    if (((Collection<?>) indices).isEmpty()) {
+      return new SparseBitSet(0);
+    }
+
+    if (indices instanceof SimpleNatBitSet) {
+      return BitSets.toSparse(((SimpleNatBitSet) indices).getBitSet());
+    }
+    if (indices instanceof SimpleBoundedNatBitSet) {
+      SimpleBoundedNatBitSet boundedSet = (SimpleBoundedNatBitSet) indices;
+      if (boundedSet.isComplement()) {
+        SparseBitSet bitSet = new SparseBitSet(boundedSet.domainSize());
+        boundedSet.forEach((IntConsumer) bitSet::set);
+        return bitSet;
+      }
+      return BitSets.toSparse(boundedSet.getBitSet());
+    }
+    if (indices instanceof SparseNatBitSet) {
+      return ((SparseNatBitSet) indices).getSparseBitSet().clone();
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet boundedSet = (SparseBoundedNatBitSet) indices;
+      SparseBitSet bitSet = boundedSet.getSparseBitSet().clone();
+      if (boundedSet.isComplement()) {
+        bitSet.flip(0, boundedSet.domainSize());
+      }
+      return bitSet;
+    }
+
+    SparseBitSet bitSet;
+    if (indices instanceof NatBitSet) {
+      bitSet = new SparseBitSet(((NatBitSet) indices).lastInt());
+    } else if (indices instanceof IntSortedSet) {
+      bitSet = new SparseBitSet(((IntSortedSet) indices).lastInt());
+    } else {
+      bitSet = new SparseBitSet();
+    }
+    indices.forEach((IntConsumer) bitSet::set);
     return bitSet;
   }
 

@@ -21,6 +21,7 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import javax.annotation.Nonnegative;
 
 abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet implements BoundedNatBitSet {
+  @Nonnegative
   private final int domainSize;
 
   protected AbstractBoundedNatBitSet(@Nonnegative int domainSize) {
@@ -31,31 +32,24 @@ abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet implements Bou
   }
 
   @Override
-  public boolean add(int key) {
-    checkIndex(key);
-    return super.add(key);
+  public boolean add(int index) {
+    checkInDomain(index);
+    return super.add(index);
   }
 
-  protected void checkIndex(int index) {
-    if (domainSize <= index) {
-      throw new IllegalArgumentException(String.format("Index %d too large for domain [0, %d)",
-          index, domainSize));
-    }
-    if (index < 0) {
-      throw new IllegalArgumentException(String.format("Negative index %d ", index));
-    }
-  }
-
-  protected void checkRange(int from, int to) {
-    if (to < from) {
-      throw new IllegalArgumentException(String.format("From %d bigger than to %d", from, to));
-    }
-    if (domainSize <= to) {
-      throw new IllegalArgumentException(String.format("To index %d too large for domain [0, %d)",
+  protected void checkInDomain(int from, int to) {
+    checkRange(from, to);
+    if (domainSize < to) {
+      throw new IndexOutOfBoundsException(String.format("To index %d too large for domain [0, %d)",
           to, domainSize));
     }
-    if (from < 0) {
-      throw new IllegalArgumentException(String.format("Negative from index %d ", from));
+  }
+
+  protected void checkInDomain(int index) {
+    checkNonNegative(index);
+    if (domainSize <= index) {
+      throw new IndexOutOfBoundsException(String.format("Index %d too large for domain [0, %d)",
+          index, domainSize));
     }
   }
 
@@ -70,20 +64,28 @@ abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet implements Bou
     return domainSize;
   }
 
-  protected boolean inRange(int index) {
+  protected boolean inDomain(int index) {
     return 0 <= index && index < domainSize;
   }
 
+  abstract boolean isComplement();
+
   @Override
-  public void orNot(IntCollection ints) {
-    // a && !b = !(!a || b)
-    complement().or(ints);
-    flip(0, domainSize());
+  public void orNot(IntCollection indices) {
+    if (indices.isEmpty()) {
+      set(0, domainSize);
+    } else {
+      for (int i = 0; i < domainSize(); i++) {
+        if (!indices.contains(i)) {
+          set(i);
+        }
+      }
+    }
   }
 
   @Override
-  public boolean remove(int key) {
-    checkIndex(key);
-    return super.remove(key);
+  public boolean remove(int index) {
+    checkInDomain(index);
+    return super.remove(index);
   }
 }

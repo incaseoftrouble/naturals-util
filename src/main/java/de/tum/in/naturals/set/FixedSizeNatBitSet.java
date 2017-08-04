@@ -25,31 +25,40 @@ import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
 final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
-  private final boolean empty;
-  private final FixedSizeNatBitSet emptyView;
+  private final FixedSizeNatBitSet complementView;
+  private final boolean complement;
 
   FixedSizeNatBitSet(int domainSize) {
     super(domainSize);
-    this.empty = false;
-    this.emptyView = new FixedSizeNatBitSet(this);
+    if (domainSize == 0) {
+      complement = true;
+      complementView = this;
+    } else {
+      this.complement = false;
+      this.complementView = new FixedSizeNatBitSet(this);
+    }
   }
 
-  private FixedSizeNatBitSet(FixedSizeNatBitSet fullSet) {
-    super(fullSet.domainSize());
-    empty = true;
-    emptyView = fullSet;
+  private FixedSizeNatBitSet(FixedSizeNatBitSet other) {
+    super(other.domainSize());
+    complement = !other.complement;
+    complementView = other;
   }
-
 
   @Override
   public void clear(int index) {
-    checkIndex(index);
+    checkInDomain(index);
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void clear(int from, int to) {
-    checkRange(from, to);
+    checkInDomain(from, to);
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void clear() {
     throw new UnsupportedOperationException();
   }
 
@@ -61,32 +70,34 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public BoundedNatBitSet complement() {
-    return emptyView;
+    return complementView;
   }
 
   @Override
-  public boolean contains(int key) {
-    return !empty && inRange(key);
+  public boolean contains(int index) {
+    return !complement && inDomain(index);
   }
 
   @Override
-  public boolean containsAll(IntCollection ints) {
-    if (ints instanceof NatBitSet) {
-      NatBitSet natBitSet = (NatBitSet) ints;
-      return contains(natBitSet.lastInt());
+  public boolean containsAll(IntCollection indices) {
+    if (complement) {
+      return indices.isEmpty();
     }
-    if (ints instanceof IntSortedSet) {
-      IntSortedSet sortedSet = (IntSortedSet) ints;
-      return contains(sortedSet.lastInt());
+    if (indices instanceof NatBitSet) {
+      NatBitSet natBitSet = (NatBitSet) indices;
+      return 0 <= natBitSet.firstInt() && natBitSet.lastInt() <= domainSize();
     }
-    if (ints instanceof SortedSet<?>) {
-      SortedSet<?> sortedSet = (SortedSet<?>) ints;
-      assert sortedSet.last() instanceof Integer;
-      int last = (Integer) sortedSet.last();
-      return contains(last);
+    if (indices instanceof IntSortedSet) {
+      IntSortedSet sortedSet = (IntSortedSet) indices;
+      return 0 <= sortedSet.firstInt() && sortedSet.lastInt() <= domainSize();
+    }
+    if (indices instanceof SortedSet<?>) {
+      //noinspection unchecked
+      SortedSet<Integer> sortedSet = (SortedSet<Integer>) indices;
+      return 0 <= sortedSet.first() && sortedSet.last() <= domainSize();
     }
 
-    IntIterator iterator = ints.iterator();
+    IntIterator iterator = indices.iterator();
     while (iterator.hasNext()) {
       if (!contains(iterator.nextInt())) {
         return false;
@@ -105,38 +116,50 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public void flip(int index) {
-    checkIndex(index);
+    checkInDomain(index);
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void flip(int from, int to) {
-    checkRange(from, to);
+    checkInDomain(from, to);
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public boolean intersects(IntCollection ints) {
-    if (isEmpty()) {
+  public boolean intersects(IntCollection indices) {
+    if (isEmpty() || indices.isEmpty()) {
       return false;
     }
-    if (ints instanceof IntSortedSet) {
-      IntSortedSet sortedInts = (IntSortedSet) ints;
-      return sortedInts.subSet(0, domainSize()).isEmpty();
+    if (indices instanceof NatBitSet) {
+      NatBitSet natBitSet = (NatBitSet) indices;
+      return contains(natBitSet.firstInt());
     }
-    if (ints.size() <= domainSize()) {
-      return IntIterators.any(ints.iterator(), this::contains);
+    if (indices instanceof IntSortedSet) {
+      IntSortedSet sortedInts = (IntSortedSet) indices;
+      return !sortedInts.subSet(0, domainSize()).isEmpty();
     }
-    return IntIterators.any(iterator(), ints::contains);
+    if (indices.size() <= domainSize()) {
+      return IntIterators.any(indices.iterator(), this::contains);
+    }
+    return IntIterators.any(iterator(), indices::contains);
+  }
+
+  @Override
+  boolean isComplement() {
+    return complement;
   }
 
   @Override
   public boolean isEmpty() {
-    return empty || domainSize() == 0;
+    return complement;
   }
 
   @Override
   public IntIterator iterator() {
+    if (isEmpty()) {
+      return IntIterators.EMPTY_ITERATOR;
+    }
     return IntIterators.fromTo(0, domainSize());
   }
 
@@ -149,25 +172,43 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
   }
 
   @Override
+  public int nextAbsentIndex(int index) {
+    checkNonNegative(index);
+    if (complement) {
+      return index;
+    }
+    return Math.max(index, domainSize());
+  }
+
+  @Override
+  public int nextPresentIndex(int index) {
+    checkNonNegative(index);
+    if (complement) {
+      return -1;
+    }
+    return index < domainSize() ? index : -1;
+  }
+
+  @Override
   public void set(int index) {
-    checkIndex(index);
+    checkInDomain(index);
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void set(int index, boolean value) {
-    checkIndex(index);
+    checkInDomain(index);
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void set(int from, int to) {
-    checkRange(from, to);
+    checkInDomain(from, to);
     throw new UnsupportedOperationException();
   }
 
   @Override
   public int size() {
-    return empty ? 0 : domainSize();
+    return isEmpty() ? 0 : domainSize();
   }
 }
