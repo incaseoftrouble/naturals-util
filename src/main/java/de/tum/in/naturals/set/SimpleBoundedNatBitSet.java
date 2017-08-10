@@ -264,6 +264,7 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return (complement ? ~bitSet.hashCode() : bitSet.hashCode()) ^ HashCommon.mix(domainSize());
   }
 
+  @Override
   boolean isComplement() {
     return complement;
   }

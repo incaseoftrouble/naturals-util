@@ -27,6 +27,7 @@ import it.unimi.dsi.fastutil.ints.IntIterators;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.IntConsumer;
 import javax.annotation.Nonnegative;
@@ -80,10 +81,9 @@ public final class NatBitSets {
     }
     if (set instanceof MutableSingletonNatBitSet) {
       MutableSingletonNatBitSet singletonSet = (MutableSingletonNatBitSet) set;
-      if (singletonSet.isEmpty()) {
-        return new BoundedMutableSingletonNatBitSet(domainSize);
-      }
-      return new BoundedMutableSingletonNatBitSet(singletonSet.firstInt(), domainSize);
+      return singletonSet.isEmpty()
+          ? new BoundedMutableSingletonNatBitSet(domainSize)
+          : new BoundedMutableSingletonNatBitSet(singletonSet.firstInt(), domainSize);
     }
 
     return new BoundedWrapper(set, domainSize);
@@ -94,6 +94,17 @@ public final class NatBitSets {
    */
   public static NatBitSet asSet(BitSet bitSet) {
     return new SimpleNatBitSet(bitSet);
+  }
+
+  /**
+   * Returns a modifiable set over the specified domain which contains the whole domain.
+   */
+  public static BoundedNatBitSet boundedFilledSet(int domainSize) {
+    return boundedFilledSet(domainSize, UNKNOWN_SIZE);
+  }
+
+  public static BoundedNatBitSet boundedFilledSet(int domainSize, int expectedSize) {
+    return boundedSet(domainSize, expectedSize).complement();
   }
 
   public static BoundedNatBitSet boundedLongSet(int domainSize) {
@@ -127,7 +138,7 @@ public final class NatBitSets {
 
   /**
    * Try to compact the given set by potentially representing it as, e.g., empty or singleton set.
-   * The returned set might not be modifiable.}
+   * The returned set might not be modifiable.
    *
    * @param set
    *     The set to be compacted.
@@ -135,6 +146,10 @@ public final class NatBitSets {
    * @return a potentially compacted representation of the given set.
    */
   public static NatBitSet compact(NatBitSet set) {
+    return compact(set, false);
+  }
+
+  public static NatBitSet compact(NatBitSet set, boolean forceCopy) {
     if (set instanceof MutableSingletonNatBitSet || set instanceof FixedSizeNatBitSet) {
       return set;
     }
@@ -153,7 +168,7 @@ public final class NatBitSets {
       return copy;
     }
     // TODO Determine optimal representation (Sparse vs non-sparse, direct vs. complement)
-    return set;
+    return forceCopy ? set.clone() : set;
   }
 
   /**
@@ -167,7 +182,7 @@ public final class NatBitSets {
    *
    * @return an unmodifiable iterator over the complement.
    */
-  public static IntIterator complementIterator(NatBitSet set, int length) {
+  public static IntIterator complementIterator(NatBitSet set, @Nonnegative int length) {
     if (set.isEmpty() || set.firstInt() >= length) {
       return IntIterators.fromTo(0, length);
     }
@@ -230,7 +245,7 @@ public final class NatBitSets {
   /**
    * Returns an empty set over the given domain.
    */
-  public static BoundedNatBitSet emptySet(int domainSize) {
+  public static BoundedNatBitSet emptySet(@Nonnegative int domainSize) {
     return new FixedSizeNatBitSet(domainSize).complement();
   }
 
@@ -269,10 +284,9 @@ public final class NatBitSets {
         return sparseBoundedSet.isComplement() ? copy.complement() : copy;
       } else if (set instanceof MutableSingletonNatBitSet) {
         MutableSingletonNatBitSet singletonSet = (MutableSingletonNatBitSet) set;
-        if (singletonSet.isEmpty()) {
-          return new BoundedMutableSingletonNatBitSet(domainSize);
-        }
-        return new BoundedMutableSingletonNatBitSet(singletonSet.firstInt(), domainSize);
+        return singletonSet.isEmpty()
+            ? new BoundedMutableSingletonNatBitSet(domainSize)
+            : new BoundedMutableSingletonNatBitSet(singletonSet.firstInt(), domainSize);
       }
     }
     BoundedNatBitSet copy = boundedSet(domainSize, set.size());
@@ -296,7 +310,7 @@ public final class NatBitSets {
    *
    * @see #isModifiable(NatBitSet, int)
    */
-  public static NatBitSet ensureModifiable(NatBitSet set, int length) {
+  public static NatBitSet ensureModifiable(NatBitSet set, @Nonnegative int length) {
     return isModifiable(set, length) ? set : modifiableCopyOf(set, length);
   }
 
@@ -308,42 +322,10 @@ public final class NatBitSets {
     return isModifiable(set) ? set : modifiableCopyOf(set);
   }
 
-  static int findLastSetIndex(NatBitSet set, int domainSize) {
-    // Binary search for the biggest clear bit with index <= length
-    int firstPresentIndex = set.nextPresentIndex(0);
-    if (firstPresentIndex == -1) {
-      return -1;
-    }
-    int lastIndex = domainSize - 1;
-    if (set.contains(lastIndex)) {
-      return lastIndex;
-    }
-    int rightPivot = lastIndex;
-    int leftPivot = firstPresentIndex;
-
-    while (true) {
-      assert leftPivot <= rightPivot;
-      int middle = (rightPivot + leftPivot) / 2;
-      int value = set.nextPresentIndex(middle);
-      while (value == -1) {
-        assert leftPivot <= middle && middle <= rightPivot;
-        rightPivot = middle;
-        middle = (rightPivot + leftPivot) / 2;
-        value = set.nextPresentIndex(middle);
-      }
-      leftPivot = value;
-      int nextSet = set.nextPresentIndex(leftPivot + 1);
-      if (nextSet == -1) {
-        return leftPivot;
-      }
-      leftPivot = nextSet;
-    }
-  }
-
   /**
    * Returns the set containing the full domain {@code {0, ..., length - 1}}.
    */
-  public static BoundedNatBitSet fullSet(int length) {
+  public static BoundedNatBitSet fullSet(@Nonnegative int length) {
     return new FixedSizeNatBitSet(length);
   }
 
@@ -367,7 +349,7 @@ public final class NatBitSets {
    * Determines whether the given {@code set} can handle arbitrary modifications of values between 0
    * and {@code length - 1}.
    */
-  public static boolean isModifiable(NatBitSet set, int length) {
+  public static boolean isModifiable(NatBitSet set, @Nonnegative int length) {
     if (length == 0) {
       return true;
     }
@@ -400,7 +382,7 @@ public final class NatBitSets {
    *
    * @see #isModifiable(NatBitSet, int)
    */
-  public static NatBitSet modifiableCopyOf(NatBitSet set, int length) {
+  public static NatBitSet modifiableCopyOf(NatBitSet set, @Nonnegative int length) {
     if (isModifiable(set, length)) {
       return set.clone();
     }
@@ -432,6 +414,58 @@ public final class NatBitSets {
   }
 
   /**
+   * Returns the set containing all subsets of the given basis.
+   * <strong>Warning</strong>: For performance reasons, the iterator of this set may modify the
+   * returned elements in place.
+   */
+  public static Set<NatBitSet> powerSet(NatBitSet basis) {
+    if (basis.isEmpty()) {
+      return Collections.singleton(emptySet());
+    }
+    return new PowerNatBitSet(basis);
+  }
+
+  /**
+   * Returns the set containing subsets of {0, ..., i-1}.
+   * <strong>Warning</strong>: For performance reasons, the iterator of this set may modify the
+   * returned elements in place.
+   */
+  public static Set<NatBitSet> powerSet(@Nonnegative int domainSize) {
+    return powerSet(fullSet(domainSize));
+  }
+
+  static int previousPresentIndex(NatBitSet set, @Nonnegative int index) {
+    // Binary search for the biggest set bit with index <= length
+    int firstPresentIndex = set.nextPresentIndex(0);
+    if (firstPresentIndex == -1) {
+      return -1;
+    }
+    if (set.contains(index)) {
+      return index;
+    }
+    int rightPivot = index;
+    int leftPivot = firstPresentIndex;
+
+    while (true) {
+      assert leftPivot <= rightPivot;
+      int middle = (rightPivot + leftPivot) / 2;
+      int value = set.nextPresentIndex(middle);
+      while (value == -1) {
+        assert leftPivot <= middle && middle <= rightPivot;
+        rightPivot = middle;
+        middle = (rightPivot + leftPivot) / 2;
+        value = set.nextPresentIndex(middle);
+      }
+      leftPivot = value;
+      int nextSet = set.nextPresentIndex(leftPivot + 1);
+      if (nextSet == -1) {
+        return leftPivot;
+      }
+      leftPivot = nextSet;
+    }
+  }
+
+  /**
    * Creates a modifiable set with the expected size and length.
    */
   public static NatBitSet set(int expectedSize, int expectedLength) {
@@ -453,26 +487,36 @@ public final class NatBitSets {
   /**
    * Creates a modifiable set with expected length.
    */
-  public static NatBitSet setWithExpectedLength(int expectedLength) {
+  public static NatBitSet setWithExpectedLength(@Nonnegative int expectedLength) {
     return set(UNKNOWN_SIZE, expectedLength);
   }
 
   /**
    * Creates a modifiable set with expected size.
    */
-  public static NatBitSet setWithExpectedSize(int expectedSize) {
+  public static NatBitSet setWithExpectedSize(@Nonnegative int expectedSize) {
     return set(expectedSize, UNKNOWN_LENGTH);
+  }
+
+  /**
+   * Creates a modifiable set which is modifiable up to {@code maximalLength}.
+   */
+  public static NatBitSet setWithMaximalLength(int maximalLength) {
+    if (maximalLength < LongNatBitSet.maximalSize()) {
+      return new LongNatBitSet();
+    }
+    return set(UNKNOWN_SIZE, maximalLength);
   }
 
   public static NatBitSet simpleSet() {
     return new SimpleNatBitSet(new BitSet());
   }
 
-  public static NatBitSet simpleSet(int expectedSize) {
+  public static NatBitSet simpleSet(@Nonnegative int expectedSize) {
     return new SimpleNatBitSet(new BitSet(expectedSize));
   }
 
-  public static NatBitSet singleton(int element) {
+  public static NatBitSet singleton(@Nonnegative int element) {
     return new MutableSingletonNatBitSet(element);
   }
 
@@ -480,7 +524,7 @@ public final class NatBitSets {
     return new SparseNatBitSet(new SparseBitSet());
   }
 
-  public static NatBitSet sparseSet(int expectedSize) {
+  public static NatBitSet sparseSet(@Nonnegative int expectedSize) {
     return new SparseNatBitSet(new SparseBitSet(expectedSize));
   }
 

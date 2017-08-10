@@ -18,6 +18,9 @@
 package de.tum.in.naturals.set;
 
 import it.unimi.dsi.fastutil.ints.IntSet;
+import java.util.Spliterator;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.annotation.Nonnegative;
 
 /**
@@ -34,6 +37,11 @@ public interface NatSet extends IntSet {
   boolean add(@Nonnegative int index);
 
   /**
+   * Returns an int stream compatible with the {@link #spliterator() spliterator}.
+   */
+  IntStream intStream();
+
+  /**
    * {@inheritDoc}
    *
    * @throws IndexOutOfBoundsException
@@ -41,4 +49,17 @@ public interface NatSet extends IntSet {
    */
   @Override
   boolean remove(@Nonnegative int index);
+
+  /**
+   * Returns a spliterator over this set. The spliterator is expected to be
+   * {@link Spliterator#SIZED sized}, {@link Spliterator#DISTINCT distinct},
+   * {@link Spliterator#ORDERED ordered}, and {@link Spliterator#SORTED sorted}.
+   */
+  @Override
+  Spliterator.OfInt spliterator();
+
+  @Override
+  default Stream<Integer> stream() {
+    return intStream().boxed();
+  }
 }

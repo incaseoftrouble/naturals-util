@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.BitSet;
 import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
 
 class SimpleNatBitSet extends AbstractNatBitSet {
   private final BitSet bitSet;
@@ -64,6 +65,11 @@ class SimpleNatBitSet extends AbstractNatBitSet {
   @Override
   public void clear() {
     bitSet.clear();
+  }
+
+  @Override
+  public IntStream intStream() {
+    return bitSet.stream();
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")

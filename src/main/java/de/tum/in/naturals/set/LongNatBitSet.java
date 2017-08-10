@@ -58,27 +58,37 @@ class LongNatBitSet extends AbstractNatBitSet {
 
   private void checkInDomain(int index) {
     checkNonNegative(index);
-    if (Long.SIZE <= index) {
+    if (!inDomain(index)) {
       throw new UnsupportedOperationException(String.format("Index %d out of bounds", index));
     }
   }
 
   @Override
   public void clear(int index) {
-    checkInDomain(index);
-    store &= ~(1L << index);
+    if (inDomain(index)) {
+      store &= ~(1L << index);
+    }
   }
 
   @Override
   public void clear(int from, int to) {
     checkRange(from, to);
-    checkInDomain(to);
-    store &= ~mask(from, to);
+    if (!inDomain(from)) {
+      return;
+    }
+    store &= ~mask(from, inDomain(to) ? to : Long.SIZE);
   }
 
   @Override
   public void clear() {
     store = 0L;
+  }
+
+  @Override
+  public void clearFrom(int from) {
+    if (from < Long.SIZE) {
+      store &= mask(0, from);
+    }
   }
 
   @Override

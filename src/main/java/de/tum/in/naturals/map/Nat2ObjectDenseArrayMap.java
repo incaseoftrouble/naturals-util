@@ -92,8 +92,11 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
 
   private void checkNotAbsent(@Nullable V value) {
     if (isAbsent(value)) {
+      // The Map contract prescribes throwing a null pointer exception when null entries are not
+      // supported.
+
       //noinspection ProhibitedExceptionThrown
-      throw new NullPointerException("Null value not allowed");
+      throw new NullPointerException("Null value not allowed"); // NOPMD
     }
   }
 

@@ -258,6 +258,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return (complement ? ~bitSet.hashCode() : bitSet.hashCode()) ^ HashCommon.mix(domainSize());
   }
 
+  @Override
   boolean isComplement() {
     return complement;
   }
@@ -277,10 +278,11 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   }
 
   @Override
-  @SuppressFBWarnings({"TQ_COMPARING_VALUES_WITH_INCOMPATIBLE_TYPE_QUALIFIERS",
-                          "TQ_NEVER_VALUE_USED_WHERE_ALWAYS_REQUIRED"})
+  @SuppressFBWarnings(value = {"TQ_COMPARING_VALUES_WITH_INCOMPATIBLE_TYPE_QUALIFIERS",
+      "TQ_NEVER_VALUE_USED_WHERE_ALWAYS_REQUIRED"},
+                      justification = "Findbugs doesn't infer @Nonnull from control flow")
   public int lastInt() {
-    int lastInt = complement ? NatBitSets.findLastSetIndex(this, domainSize())
+    int lastInt = complement ? NatBitSets.previousPresentIndex(this, domainSize() - 1)
         : bitSet.length() - 1;
     assert checkConsistency();
     if (lastInt == -1) {

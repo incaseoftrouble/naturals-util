@@ -61,6 +61,19 @@ public interface BoundedNatBitSet extends NatBitSet {
   @Override
   void clear(int from, int to);
 
+  /**
+   * Removes all indices larger or equal than {@code from}. Equivalent to calling<pre>
+   * set.clear(from, set.domainSize());
+   * </pre>
+   *
+   * @throws IndexOutOfBoundsException
+   *     if {@code from} is negative or greater or equal to the {@link #domainSize()}.
+   * @see #clear(int, int)
+   * @see #lastInt()
+   */
+  @Override
+  void clearFrom(@Nonnegative int from);
+
   @Override
   BoundedNatBitSet clone();
 

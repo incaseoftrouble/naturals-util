@@ -37,7 +37,7 @@ public final class NaturalsTransformer implements IntIterator {
   public NaturalsTransformer(PrimitiveIterator.OfInt original, IntUnaryOperator transformer) {
     this.original = original;
     this.transformer = transformer;
-    getNext();
+    next = getNext();
   }
 
   private int getNext() {

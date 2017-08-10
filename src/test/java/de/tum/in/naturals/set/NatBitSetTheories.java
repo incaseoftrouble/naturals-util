@@ -18,8 +18,11 @@
 package de.tum.in.naturals.set;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
@@ -27,7 +30,6 @@ import static org.junit.Assume.assumeThat;
 
 import de.tum.in.naturals.bitset.BitSets;
 import de.tum.in.naturals.bitset.SparseBitSet;
-import it.unimi.dsi.fastutil.ints.AbstractIntCollection;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntCollection;
@@ -40,9 +42,11 @@ import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
@@ -198,6 +202,10 @@ public class NatBitSetTheories {
       int second = intSupplier.getAsInt();
       return new ClearRange(Math.min(first, second), Math.max(first, second));
     }
+    if (actionId < 29) {
+      int from = intSupplier.getAsInt();
+      return new ClearFrom(from);
+    }
 
     if (actionId < 30) {
       return new Flip(intSupplier.getAsInt());
@@ -347,6 +355,37 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
+  public void testPowerSet(
+      @FromDataPoints("implementations") Supplier<NatBitSet> implementation,
+      @FromDataPoints("basis") IntCollection basis) {
+    assumeThat(basis.size(), lessThan(12));
+    NatBitSet set = implementation.get();
+    assumeThat(NatBitSets.isModifiable(set, MAXIMAL_KEY), is(true));
+    set.addAll(basis);
+
+    Set<NatBitSet> powerSet = NatBitSets.powerSet(set);
+    assertThat(powerSet, hasSize(1 << set.size()));
+
+    int iteratorSize = 0;
+    Iterator<NatBitSet> iterator = powerSet.iterator();
+    //noinspection WhileLoopReplaceableByForEach
+    while (iterator.hasNext()) {
+      iterator.next();
+      iteratorSize += 1;
+    }
+    assertThat(iteratorSize, is(powerSet.size()));
+
+    BitSet reference = new BitSet();
+    basis.forEach((IntConsumer) reference::set);
+    Set<BitSet> referencePowerSet = BitSets.powerSet(reference);
+    for (BitSet subset : referencePowerSet) {
+      BitSets.forEach(subset, index -> assertThat(set, hasItem(index)));
+      assertThat(powerSet, hasItem(NatBitSets.asSet(subset)));
+    }
+    assertThat(powerSet, hasSize(referencePowerSet.size()));
+  }
+
+  @Theory(nullsAccepted = false)
   public void testAsBounded(
       @FromDataPoints("implementations") Supplier<NatBitSet> implementation,
       @FromDataPoints("basis") IntCollection basis) {
@@ -374,6 +413,18 @@ public class NatBitSetTheories {
 
     NatBitSet ints = NatBitSets.asSet(set);
     assertThat(ints, is(reference));
+  }
+
+  @Theory(nullsAccepted = false)
+  public void testClear(
+      @FromDataPoints("implementations") Supplier<NatBitSet> implementation,
+      @FromDataPoints("basis") IntCollection basis) {
+    NatBitSet set = implementation.get();
+    assumeThat(NatBitSets.isModifiable(set, MAXIMAL_KEY), is(true));
+    set.addAll(basis);
+
+    set.clear();
+    assertThat(set.isEmpty(), is(true));
   }
 
   @Theory(nullsAccepted = false)
@@ -835,6 +886,22 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
+  public void testStream(
+      @FromDataPoints("implementations") Supplier<NatBitSet> implementation,
+      @FromDataPoints("basis") IntCollection basis) {
+    NatBitSet set = implementation.get();
+    assumeThat(NatBitSets.isModifiable(set, MAXIMAL_KEY), is(true));
+    set.addAll(basis);
+    IntSet reference = new IntAVLTreeSet(basis);
+
+    IntSet streamAdd = new IntAVLTreeSet();
+    set.intStream().forEach(streamAdd::add);
+    assertThat(streamAdd, is(reference));
+
+    assertThat(set.intStream().allMatch(basis::contains), is(true));
+  }
+
+  @Theory(nullsAccepted = false)
   public void testToBitSet(
       @FromDataPoints("implementations") Supplier<NatBitSet> implementation,
       @FromDataPoints("basis") IntCollection basis) {
@@ -935,6 +1002,24 @@ public class NatBitSetTheories {
     }
   }
 
+  private static class ClearFrom implements Consumer<NatBitSet> {
+    final int fromIndex;
+
+    public ClearFrom(int fromIndex) {
+      this.fromIndex = fromIndex;
+    }
+
+    @Override
+    public void accept(NatBitSet ints) {
+      ints.clearFrom(fromIndex);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("clearFrom{%d}", fromIndex);
+    }
+  }
+
   private static class ClearIndex implements Consumer<NatBitSet> {
     final int index;
 
@@ -1011,7 +1096,7 @@ public class NatBitSetTheories {
     }
   }
 
-  private static class ForwardingNatBitSet extends AbstractIntCollection implements NatBitSet {
+  private static class ForwardingNatBitSet extends AbstractNatBitSet {
     private final IntSortedSet delegate;
 
     public ForwardingNatBitSet(IntSortedSet delegate) {
@@ -1051,6 +1136,11 @@ public class NatBitSetTheories {
     @Override
     public void clear() {
       delegate.clear();
+    }
+
+    @Override
+    public void clearFrom(int from) {
+      delegate.tailSet(from).clear();
     }
 
     @SuppressWarnings("MethodDoesntCallSuperMethod")
@@ -1323,5 +1413,4 @@ public class NatBitSetTheories {
       return String.format("xor{%s}", collection);
     }
   }
-
 }

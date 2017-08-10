@@ -23,9 +23,17 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.NoSuchElementException;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 abstract class AbstractNatBitSet extends AbstractIntSet implements NatBitSet {
+  static int SPLITERATOR_CHARACTERISTICS = Spliterator.ORDERED | Spliterator.SORTED
+      | Spliterator.DISTINCT | Spliterator.NONNULL
+      | Spliterator.SIZED;
+
   protected static void checkNonNegative(int index) {
     if (index < 0) {
       throw new IndexOutOfBoundsException(String.format("Negative index %d ", index));
@@ -80,6 +88,12 @@ abstract class AbstractNatBitSet extends AbstractIntSet implements NatBitSet {
   }
 
   @Override
+  public void clearFrom(int from) {
+    checkNonNegative(from);
+    clear(from, Integer.MAX_VALUE);
+  }
+
+  @Override
   public AbstractNatBitSet clone() {
     try {
       return (AbstractNatBitSet) super.clone();
@@ -95,6 +109,11 @@ abstract class AbstractNatBitSet extends AbstractIntSet implements NatBitSet {
       throw new NoSuchElementException();
     }
     return firstPresent;
+  }
+
+  @Override
+  public IntStream intStream() {
+    return StreamSupport.intStream(this::spliterator, SPLITERATOR_CHARACTERISTICS, false);
   }
 
   @Override
@@ -135,6 +154,11 @@ abstract class AbstractNatBitSet extends AbstractIntSet implements NatBitSet {
     }
     and(indices);
     return true;
+  }
+
+  @Override
+  public Spliterator.OfInt spliterator() {
+    return Spliterators.spliterator(iterator(), (long) size(), SPLITERATOR_CHARACTERISTICS);
   }
 
   @Override

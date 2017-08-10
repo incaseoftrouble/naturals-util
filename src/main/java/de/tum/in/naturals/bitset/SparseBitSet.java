@@ -155,7 +155,7 @@ public class SparseBitSet implements Cloneable, Serializable {
     if ((i + 1) < 1) {
       throw new IndexOutOfBoundsException("i=" + i);
     }
-    if (i > bitsLength) {
+    if (i >= bitsLength) {
       return;
     }
     final int w = i >> SHIFT3;

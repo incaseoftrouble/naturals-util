@@ -71,6 +71,18 @@ public interface NatBitSet extends NatSet, Cloneable {
    */
   void clear(@Nonnegative int from, @Nonnegative int to);
 
+  /**
+   * Removes all indices larger or equal than {@code from}. Equivalent to calling<pre>
+   * set.clear(from, Integer.MAX_VALUE);
+   * </pre>
+   *
+   * @throws IndexOutOfBoundsException
+   *     if {@code from} is negative.
+   * @see #clear(int, int)
+   * @see #lastInt()
+   */
+  void clearFrom(@Nonnegative int from);
+
   NatBitSet clone();
 
   /**

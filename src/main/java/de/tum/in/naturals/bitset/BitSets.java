@@ -19,6 +19,7 @@ package de.tum.in.naturals.bitset;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.BitSet;
+import java.util.Set;
 import java.util.function.IntConsumer;
 
 /**
@@ -77,6 +78,16 @@ public final class BitSets {
     }
   }
 
+  public static boolean isSubset(BitSet first, BitSet second) {
+    for (int i = first.nextSetBit(0); i >= 0; i = first.nextSetBit(i + 1)) {
+      if (!second.get(i)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   public static IntIterator iterator(BitSet bitSet) {
     return new BitSetIterator(bitSet);
   }
@@ -91,6 +102,26 @@ public final class BitSets {
 
   public static IntIterator iterator(SparseBitSet bitSet, int length) {
     return new SparseBitSetIterator(bitSet, length);
+  }
+
+  /**
+   * Returns the set containing all subsets of the given basis.
+   * <strong>Warning</strong>: For performance reasons, the iterator of this set may modify the
+   * returned elements in place.
+   */
+  public static Set<BitSet> powerSet(BitSet basis) {
+    return new PowerBitSet(basis);
+  }
+
+  /**
+   * Returns the set containing subsets of {0, ..., i-1}.
+   * <strong>Warning</strong>: For performance reasons, the iterator of this set may modify the
+   * returned elements in place.
+   */
+  public static Set<BitSet> powerSet(int i) {
+    BitSet bs = new BitSet(i);
+    bs.set(0, i);
+    return powerSet(bs);
   }
 
   public static BitSet toBitSet(SparseBitSet sparseBitSet) {

@@ -54,6 +54,12 @@ abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet implements Bou
   }
 
   @Override
+  public void clearFrom(int from) {
+    checkInDomain(from);
+    clear(from, domainSize());
+  }
+
+  @Override
   public AbstractBoundedNatBitSet clone() {
     return (AbstractBoundedNatBitSet) super.clone();
   }

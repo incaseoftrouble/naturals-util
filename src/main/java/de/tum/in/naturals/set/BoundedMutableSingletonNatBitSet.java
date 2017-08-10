@@ -29,7 +29,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
   private final BoundedMutableSingletonNatBitSet complementView;
   private final int[] store;
 
-  private BoundedMutableSingletonNatBitSet(@Nonnegative int element, @Nonnegative int domainSize,
+  private BoundedMutableSingletonNatBitSet(int element, @Nonnegative int domainSize,
       boolean complement) {
     super(domainSize);
     checkNonNegative(element);
