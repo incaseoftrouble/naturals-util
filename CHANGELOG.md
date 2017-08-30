@@ -1,5 +1,9 @@
 # 0.x
 
+### 0.3.1 (2017-08-30)
+
+  * Fix bug in `IntPreOrder`
+
 ### 0.3.0 (2017-08-28)
 
   * Added streams and `clearFrom` method

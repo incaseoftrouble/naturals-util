@@ -201,6 +201,10 @@ public class IntPreOrder {
     return array[index];
   }
 
+  private boolean inDomain(int i) {
+    return 0 <= i && i < size;
+  }
+
   /**
    * Computes the pre-order obtained by declaring {@code newborn} as the smallest elements.
    *
@@ -215,15 +219,15 @@ public class IntPreOrder {
       return this;
     }
     // Can't rebirth what is not existing
-    assert IntIterators.all(newborn.iterator(), i -> 0 <= i && i < size);
+    assert IntIterators.all(newborn.iterator(), this::inDomain);
 
     int newbornCount = newborn.size();
-    if (newbornCount == this.size) {
-      if (this.array.length == 1) {
+    if (newbornCount == size) {
+      if (array.length == 1) {
         return this;
       }
       // Whole domain is reborn - the returned set is the coarsest element
-      return coarsest(this.size);
+      return coarsest(size);
     }
 
     int[] newbornArray = newborn.toIntArray();
@@ -231,12 +235,12 @@ public class IntPreOrder {
       Arrays.sort(newbornArray);
     }
 
-    if (newbornCount == this.size - 1) {
+    if (newbornCount == size - 1) {
       // All but one element is reborn - this uniquely defines the order
 
       // Find the one element which is not reborn
       int senior = -1;
-      for (int i = 0; i < this.size; i++) {
+      for (int i = 0; i < size; i++) {
         if (!newborn.contains(i)) {
           senior = i;
           break;
@@ -262,6 +266,7 @@ public class IntPreOrder {
         // The equivalence classes are immutable - we can share common classes
         newArrayTmp[newClassIndex] = equivalenceClass;
         newClassIndex += 1;
+        continue;
       }
       assert equivalenceClass.length > 0;
 
@@ -270,7 +275,7 @@ public class IntPreOrder {
       int newClassSize = 0;
       int[] newClassElements = new int[equivalenceClass.length];
       for (int value : equivalenceClass) {
-        if (newborn.contains(value)) {
+        if (Arrays.binarySearch(newbornArray, value) >= 0) {
           foundReborn += 1;
           continue;
         }
