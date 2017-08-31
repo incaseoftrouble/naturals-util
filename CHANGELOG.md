@@ -1,8 +1,12 @@
 # 0.x
 
-### 0.4.0
+### 0.4.1 (2017-08-31)
 
-  * Added `CartesianProductIterator`
+  * The `NatCartesianProductSet` and -iterator now copy the input array.
+
+### 0.4.0 (2017-08-31)
+
+  * Added `NatCartesianProductSet` and corresponding iterator
 
 ### 0.3.1 (2017-08-30)
 

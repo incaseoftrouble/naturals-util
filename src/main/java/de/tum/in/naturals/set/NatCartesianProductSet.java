@@ -36,13 +36,13 @@ public class NatCartesianProductSet extends AbstractSet<int[]> implements Size64
   private final long size;
 
   public NatCartesianProductSet(int[] domainMaximalElements) {
-    for (int domainSize : domainMaximalElements) {
+    this.domainMaximalElements = domainMaximalElements.clone();
+    for (int domainSize : this.domainMaximalElements) {
       if (domainSize < 0) {
         throw new IllegalArgumentException("Domain maximum must be non-negative");
       }
     }
-    this.domainMaximalElements = domainMaximalElements;
-    this.size = numberOfElements(domainMaximalElements);
+    this.size = numberOfElements(this.domainMaximalElements);
   }
 
   public static long numberOfElements(int[] domainMaximalElements) {
