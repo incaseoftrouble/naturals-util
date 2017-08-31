@@ -1,5 +1,9 @@
 # 0.x
 
+### 0.4.0
+
+  * Added `CartesianProductIterator`
+
 ### 0.3.1 (2017-08-30)
 
   * Fix bug in `IntPreOrder`
