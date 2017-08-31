@@ -29,7 +29,7 @@ import java.util.NoSuchElementException;
  */
 @SuppressFBWarnings(value = "EI_EXPOSE_REP",
                     justification = "We deliberately return the array in-place.")
-public final class NatCartesianProductIterator implements Iterator<int[]> {
+public class NatCartesianProductIterator implements Iterator<int[]> {
   private final int[] domainMaximalElements;
   private final int[] element;
   private final long size;

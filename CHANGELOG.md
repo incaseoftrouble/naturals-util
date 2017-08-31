@@ -1,5 +1,9 @@
 # 0.x
 
+### 0.5.0 (2017-08-31)
+
+  * Added some support for boolean arrays, namely `PowerSetIterator` and `Indices.indexMap`.
+
 ### 0.4.1 (2017-08-31)
 
   * The `NatCartesianProductSet` and -iterator now copy the input array.

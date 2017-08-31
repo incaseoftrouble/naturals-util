@@ -24,7 +24,6 @@ import java.util.AbstractSet;
 import java.util.Iterator;
 import javax.annotation.Nullable;
 
-
 class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
   private final NatBitSet baseSet;
   private final int baseSize;
@@ -85,5 +84,4 @@ class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
   public String toString() {
     return String.format("powerSet(%s)", baseSet);
   }
-
 }
