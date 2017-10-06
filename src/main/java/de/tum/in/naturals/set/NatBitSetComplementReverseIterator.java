@@ -20,20 +20,18 @@ package de.tum.in.naturals.set;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
 
-class NatBitSetComplementIterator implements IntIterator {
-  private final int length;
+class NatBitSetComplementReverseIterator implements IntIterator {
   private final NatBitSet set;
   private int current;
 
-  public NatBitSetComplementIterator(NatBitSet set, int length) {
+  public NatBitSetComplementReverseIterator(NatBitSet set, int length) {
     this.set = set;
-    this.length = length;
-    current = set.nextAbsentIndex(0);
+    current = set.previousAbsentIndex(length);
   }
 
   @Override
   public boolean hasNext() {
-    return current < length;
+    return current != -1;
   }
 
   @Override
@@ -42,7 +40,7 @@ class NatBitSetComplementIterator implements IntIterator {
       throw new NoSuchElementException();
     }
     int result = current;
-    current = set.nextAbsentIndex(current + 1);
+    current = set.previousAbsentIndex(current - 1);
     return result;
   }
 

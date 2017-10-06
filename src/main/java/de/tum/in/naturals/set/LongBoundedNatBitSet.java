@@ -17,6 +17,9 @@
 
 package de.tum.in.naturals.set;
 
+import static de.tum.in.naturals.BitUtil.mask;
+import static de.tum.in.naturals.BitUtil.maskTo;
+
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
@@ -35,7 +38,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
     }
     this.store = new long[] {store};
     this.complement = complement;
-    domainMask = mask(0, domainSize());
+    domainMask = maskTo(domainSize());
     this.complementView = new LongBoundedNatBitSet(this);
     assert checkConsistency();
   }
@@ -56,14 +59,6 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
     this(0L, domainSize, false);
   }
 
-  private static long mask(int from, int to) {
-    long mask = 0L;
-    for (int i = from; i < to; i++) {
-      mask |= 1L << i;
-    }
-    return mask;
-  }
-
   public static int maximalSize() {
     return Long.SIZE;
   }
@@ -77,10 +72,10 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
       LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
 
       if (complement) {
-        store[0] |= other.complement ? other.store[0] : ~other.store[0];
+        store[0] |= other.complement ? other.store[0] | ~other.domainMask : ~other.store[0];
         store[0] &= domainMask;
       } else {
-        store[0] &= other.complement ? ~other.store[0] : other.store[0];
+        store[0] &= other.complement ? other.complementBits() : other.store[0];
       }
     } else {
       super.and(indices);
@@ -98,10 +93,10 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
       LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
 
       if (complement) {
-        store[0] |= other.complement ? ~other.store[0] : other.store[0];
+        store[0] |= other.complement ? other.complementBits() : other.store[0];
         store[0] &= domainMask;
       } else {
-        store[0] &= other.complement ? other.store[0] : other.complementBits();
+        store[0] &= other.complement ? other.store[0] | ~other.domainMask : ~other.store[0];
       }
     } else {
       super.andNot(indices);
@@ -183,7 +178,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
       LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
 
       long otherSetBits = other.complement ? other.complementBits() : other.store[0];
-      long unsetBits = complement ? store[0] : ~store[0];
+      long unsetBits = complement ? store[0] | ~domainMask : ~store[0];
 
       return (unsetBits & otherSetBits) == 0L;
     }
@@ -271,12 +266,12 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (index >= domainSize() || isEmpty()) {
       return index;
     }
-    long masked = (complement ? store[0] : complementBits()) & ~mask(0, index);
+    long masked = (complement ? store[0] : complementBits()) & ~maskTo(index);
     if (masked == 0L) {
       return domainSize();
     }
     int next = Long.numberOfTrailingZeros(masked);
-    assert next < Long.SIZE && !containsIndex(next);
+    assert next < Long.SIZE && !containsIndex(next) : next;
     return next;
   }
 
@@ -287,7 +282,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (index >= domainSize() || isEmpty()) {
       return -1;
     }
-    long masked = (complement ? complementBits() : store[0]) & ~mask(0, index);
+    long masked = (complement ? complementBits() : store[0]) & ~maskTo(index);
     if (masked == 0L) {
       return -1;
     }
@@ -334,6 +329,40 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
       super.orNot(indices);
     }
     assert checkConsistency();
+  }
+
+  @Override
+  public int previousAbsentIndex(int index) {
+    assert checkConsistency();
+    checkNonNegative(index);
+    if (index >= domainSize() || isEmpty()) {
+      return index;
+    }
+    long mask = maskTo(index + 1);
+    long masked = (complement ? store[0] : complementBits()) & mask;
+    if (masked == 0L) {
+      return -1;
+    }
+    int previous = Long.SIZE - Long.numberOfLeadingZeros(masked) - 1;
+    assert !containsIndex(previous) : previous;
+    return previous;
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    assert checkConsistency();
+    checkNonNegative(index);
+    if (isEmpty()) {
+      return -1;
+    }
+
+    long masked = (complement ? complementBits() : store[0]) & maskTo(index + 1);
+    if (masked == 0L) {
+      return -1;
+    }
+    int previous = Long.SIZE - Long.numberOfLeadingZeros(masked) - 1;
+    assert containsIndex(previous) : previous;
+    return previous;
   }
 
   @Override

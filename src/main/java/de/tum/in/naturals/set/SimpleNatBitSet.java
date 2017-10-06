@@ -67,11 +67,6 @@ class SimpleNatBitSet extends AbstractNatBitSet {
     bitSet.clear();
   }
 
-  @Override
-  public IntStream intStream() {
-    return bitSet.stream();
-  }
-
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public SimpleNatBitSet clone() {
@@ -132,6 +127,11 @@ class SimpleNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
+  public IntStream intStream() {
+    return bitSet.stream();
+  }
+
+  @Override
   public boolean intersects(IntCollection indices) {
     if (indices instanceof SimpleNatBitSet) {
       SimpleNatBitSet other = (SimpleNatBitSet) indices;
@@ -177,6 +177,16 @@ class SimpleNatBitSet extends AbstractNatBitSet {
     } else {
       super.or(indices);
     }
+  }
+
+  @Override
+  public int previousAbsentIndex(int index) {
+    return bitSet.previousClearBit(index);
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    return bitSet.previousSetBit(index);
   }
 
   @Override

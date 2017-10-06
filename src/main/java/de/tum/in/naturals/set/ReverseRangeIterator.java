@@ -20,37 +20,45 @@ package de.tum.in.naturals.set;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
 
-class NatBitSetComplementIterator implements IntIterator {
-  private final int length;
-  private final NatBitSet set;
+/**
+ * An iterator which yields all integers in {@code [from, to)} in descending order.
+ */
+public class ReverseRangeIterator implements IntIterator {
+  private final int from;
   private int current;
 
-  public NatBitSetComplementIterator(NatBitSet set, int length) {
-    this.set = set;
-    this.length = length;
-    current = set.nextAbsentIndex(0);
+  public ReverseRangeIterator(int from, int to) {
+    if (to < from) {
+      throw new IllegalArgumentException("To must be larger or equal than from");
+    }
+    this.from = from;
+    current = to - 1;
   }
 
   @Override
   public boolean hasNext() {
-    return current < length;
+    return current >= from;
   }
 
   @Override
-  public int nextInt() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
+  public int skip(int n) {
+    int pos = current - n;
+    if (pos >= from) {
+      current = pos;
+      return n;
     }
-    int result = current;
-    current = set.nextAbsentIndex(current + 1);
+    int result = current - from + 1;
+    current = from - 1;
     return result;
   }
 
   @Override
-  public void remove() {
-    if (set.contains(current)) {
-      throw new IllegalStateException();
+  public int nextInt() {
+    if (current < from) {
+      throw new NoSuchElementException();
     }
-    set.set(current);
+    int result = current;
+    current -= 1;
+    return result;
   }
 }

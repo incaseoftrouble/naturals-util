@@ -26,6 +26,7 @@ import javax.annotation.Nonnegative;
  */
 public interface BoundedNatBitSet extends NatBitSet {
   /**
+   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -33,6 +34,7 @@ public interface BoundedNatBitSet extends NatBitSet {
   boolean add(@Nonnegative int index);
 
   /**
+   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if any index is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -40,6 +42,7 @@ public interface BoundedNatBitSet extends NatBitSet {
   boolean addAll(Collection<? extends Integer> indices);
 
   /**
+   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if any index is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -47,6 +50,7 @@ public interface BoundedNatBitSet extends NatBitSet {
   boolean addAll(IntCollection indices);
 
   /**
+   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -54,6 +58,7 @@ public interface BoundedNatBitSet extends NatBitSet {
   void clear(@Nonnegative int index);
 
   /**
+   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code from} or {@code to} is negative or greater or equal to the {@link #domainSize()},
    *     or {@code to} is less than {@code from}.
@@ -92,6 +97,7 @@ public interface BoundedNatBitSet extends NatBitSet {
   int domainSize();
 
   /**
+   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -99,6 +105,7 @@ public interface BoundedNatBitSet extends NatBitSet {
   void flip(int index);
 
   /**
+   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code from} or {@code to} is negative or greater or equal to the {@link #domainSize()},
    *     or {@code to} is less than {@code from}.
@@ -112,7 +119,7 @@ public interface BoundedNatBitSet extends NatBitSet {
   /**
    * Adds all elements of the domain which are not contained in the given indices to this set. This
    * is equivalent to<pre>
-   *   for(int i = 0; i < domainSize(); i++) {
+   *   for(int i = 0; i &lt; domainSize(); i++) {
    *     if (!indices.contains(i)) add(i);
    *   }
    * </pre>
@@ -120,6 +127,7 @@ public interface BoundedNatBitSet extends NatBitSet {
   void orNot(IntCollection indices);
 
   /**
+   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -127,6 +135,7 @@ public interface BoundedNatBitSet extends NatBitSet {
   boolean remove(int index);
 
   /**
+   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if any index is negative or greater or equal to the {@link #domainSize()}.
    */

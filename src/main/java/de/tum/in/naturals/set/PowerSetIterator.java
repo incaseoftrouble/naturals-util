@@ -17,13 +17,19 @@
 
 package de.tum.in.naturals.set;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
  * This iterator yields all elements of the power set of the given {@code base}. More specifically
  * it yields all boolean arrays of length {@code base.length} which are a subset of {@code base}.
+ * The iteration always returns the elements in the order and always starts with the empty array.
+ *
+ * <strong>Warning</strong>: For performance, the returned array is modified in place.
  */
+@SuppressFBWarnings(value = "EI_EXPOSE_REP",
+                    justification = "We deliberately return the array in-place.")
 public class PowerSetIterator implements Iterator<boolean[]> {
   private final boolean[] base;
   private final boolean[] current;

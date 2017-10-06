@@ -4,14 +4,10 @@
     "http://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
 
 <suppressions>
-  <!-- We avoid final modifier -->
-  <suppress checks="VariableDeclarationUsageDistanceCheck" files=".*"/>
+    <!-- We avoid final modifier -->
+    <suppress checks="VariableDeclarationUsageDistanceCheck" files=".*" />
 
-  <!-- Test don't need doc and checkstyle doesn't recognize @Theory methods as tests -->
-  <suppress checks="JavadocMethod" files=".*"/>
-  <suppress checks="JavadocPackage" files=".*"/>
-
-  <!-- There are a ton of single-letter variables -->
-  <suppress checks="ParameterName" files=".*"/>
-  <suppress checks="LocalVariableName" files=".*"/>
+    <!-- Test don't need doc and checkstyle doesn't recognize @Theory methods as tests -->
+    <suppress checks="JavadocMethod" files=".*"/>
+    <suppress checks="JavadocPackage" files=".*"/>
 </suppressions>

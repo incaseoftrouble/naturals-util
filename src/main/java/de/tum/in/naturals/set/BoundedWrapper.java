@@ -209,7 +209,7 @@ class BoundedWrapper extends AbstractBoundedNatBitSet {
       if (isEmpty()) {
         throw new NoSuchElementException();
       }
-      return NatBitSets.previousPresentIndex(delegate, domainSize() - 1);
+      return delegate.previousPresentIndex(domainSize() - 1);
     }
     return delegate.lastInt();
   }
@@ -253,6 +253,18 @@ class BoundedWrapper extends AbstractBoundedNatBitSet {
   }
 
   @Override
+  public int previousAbsentIndex(int index) {
+    assert checkConsistency();
+    return delegate.previousAbsentIndex(index);
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    assert checkConsistency();
+    return delegate.previousPresentIndex(index);
+  }
+
+  @Override
   public boolean remove(int index) {
     checkInDomain(index);
     return complement ? delegate.add(index) : delegate.remove(index);
@@ -269,6 +281,14 @@ class BoundedWrapper extends AbstractBoundedNatBitSet {
       return super.retainAll(indices);
     }
     return delegate.retainAll(indices);
+  }
+
+  @Override
+  public IntIterator reverseIterator() {
+    assert checkConsistency();
+    return complement
+        ? NatBitSets.complementReverseIterator(delegate, domainSize())
+        : delegate.reverseIterator();
   }
 
   @Override

@@ -17,20 +17,15 @@
 
 package de.tum.in.naturals.set;
 
+import static de.tum.in.naturals.BitUtil.mask;
+import static de.tum.in.naturals.BitUtil.maskTo;
+
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
 
 class LongNatBitSet extends AbstractNatBitSet {
   private long store = 0L;
-
-  private static long mask(int from, int to) {
-    long mask = 0L;
-    for (int i = from; i < to; i++) {
-      mask |= 1L << i;
-    }
-    return mask;
-  }
 
   public static int maximalSize() {
     return Long.SIZE;
@@ -87,7 +82,7 @@ class LongNatBitSet extends AbstractNatBitSet {
   @Override
   public void clearFrom(int from) {
     if (from < Long.SIZE) {
-      store &= mask(0, from);
+      store &= maskTo(from);
     }
   }
 
@@ -177,13 +172,11 @@ class LongNatBitSet extends AbstractNatBitSet {
   @Override
   public int nextAbsentIndex(int index) {
     checkNonNegative(index);
-    if (isEmpty()) {
+    if (isEmpty() || index >= Long.SIZE) {
       return index;
     }
-    if (index >= Long.SIZE) {
-      return index;
-    }
-    long masked = ~(store | mask(0, index));
+
+    long masked = ~(store | maskTo(index));
     if (masked == 0L) {
       return Long.SIZE;
     }
@@ -198,7 +191,8 @@ class LongNatBitSet extends AbstractNatBitSet {
     if (index >= Long.SIZE || isEmpty()) {
       return -1;
     }
-    long masked = store & ~mask(0, index);
+
+    long masked = store & ~maskTo(index);
     if (masked == 0L) {
       return -1;
     }
@@ -215,6 +209,39 @@ class LongNatBitSet extends AbstractNatBitSet {
     } else {
       super.or(indices);
     }
+  }
+
+  @Override
+  public int previousAbsentIndex(int index) {
+    checkNonNegative(index);
+    if (isEmpty() || index >= Long.SIZE) {
+      return index;
+    }
+
+    long mask = maskTo(index + 1);
+    long masked = ~store & mask;
+    if (masked == 0L) {
+      return -1;
+    }
+    int previous = Long.SIZE - Long.numberOfLeadingZeros(masked) - 1;
+    assert !containsIndex(previous);
+    return previous;
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    checkNonNegative(index);
+    if (isEmpty()) {
+      return -1;
+    }
+
+    long masked = store & maskTo(index + 1);
+    if (masked == 0L) {
+      return -1;
+    }
+    int previous = Long.SIZE - Long.numberOfLeadingZeros(masked) - 1;
+    assert containsIndex(previous) : previous;
+    return previous;
   }
 
   @Override

@@ -17,40 +17,42 @@
 
 package de.tum.in.naturals.set;
 
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import java.util.NoSuchElementException;
+import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
 
-class NatBitSetComplementIterator implements IntIterator {
-  private final int length;
-  private final NatBitSet set;
-  private int current;
+public class ReverseIntBidiIterator implements IntBidirectionalIterator {
+  private final IntBidirectionalIterator iterator;
 
-  public NatBitSetComplementIterator(NatBitSet set, int length) {
-    this.set = set;
-    this.length = length;
-    current = set.nextAbsentIndex(0);
+  public ReverseIntBidiIterator(IntBidirectionalIterator iterator) {
+    this.iterator = iterator;
+  }
+
+  @Override
+  public int back(int n) {
+    return iterator.skip(n);
   }
 
   @Override
   public boolean hasNext() {
-    return current < length;
+    return iterator.hasPrevious();
+  }
+
+  @Override
+  public boolean hasPrevious() {
+    return iterator.hasNext();
   }
 
   @Override
   public int nextInt() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
-    }
-    int result = current;
-    current = set.nextAbsentIndex(current + 1);
-    return result;
+    return iterator.previousInt();
   }
 
   @Override
-  public void remove() {
-    if (set.contains(current)) {
-      throw new IllegalStateException();
-    }
-    set.set(current);
+  public int previousInt() {
+    return iterator.nextInt();
+  }
+
+  @Override
+  public int skip(int n) {
+    return iterator.back(n);
   }
 }

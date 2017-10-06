@@ -211,8 +211,7 @@ public class IntPreOrder {
    * @param newborn
    *     The new smallest elements.
    *
-   * @return The pre-order with {@code newborn} as new smallest elements, but otherwise same
-   * ordering as {@code this}.
+   * @return The pre-order with {@code newborn} as new smallest elements.
    */
   public IntPreOrder generation(IntSet newborn) {
     if (newborn.isEmpty()) {

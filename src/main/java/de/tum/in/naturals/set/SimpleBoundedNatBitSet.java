@@ -65,10 +65,18 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
         int otherDomainSize = other.domainSize();
         if (domainSize < otherDomainSize) {
           bitSet.clear(domainSize, otherDomainSize);
+        } else {
+          bitSet.set(otherDomainSize, domainSize);
         }
       } else {
         if (other.complement) {
           bitSet.andNot(other.bitSet);
+
+          int domainSize = domainSize();
+          int otherDomainSize = other.domainSize();
+          if (otherDomainSize < domainSize) {
+            bitSet.clear(otherDomainSize, domainSize);
+          }
         } else {
           bitSet.and(other.bitSet);
         }
@@ -98,7 +106,15 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
         }
       } else {
         if (other.complement) {
-          bitSet.and(other.bitSet);
+          int domainSize = domainSize();
+          int otherDomainSize = other.domainSize();
+          if (otherDomainSize < domainSize) {
+            BitSet clone = (BitSet) other.bitSet.clone();
+            clone.set(otherDomainSize, domainSize);
+            bitSet.and(clone);
+          } else {
+            bitSet.and(other.bitSet);
+          }
         } else {
           bitSet.andNot(other.bitSet);
         }
@@ -359,6 +375,26 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
       super.or(indices);
     }
     assert checkConsistency();
+  }
+
+  @Override
+  public int previousAbsentIndex(int index) {
+    assert checkConsistency();
+    checkNonNegative(index);
+    if (index >= domainSize()) {
+      return index;
+    }
+    return complement ? bitSet.previousSetBit(index) : bitSet.previousClearBit(index);
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    assert checkConsistency();
+    checkNonNegative(index);
+    int clampedIndex = Math.min(index, domainSize() - 1);
+    return complement
+        ? bitSet.previousClearBit(clampedIndex)
+        : bitSet.previousSetBit(clampedIndex);
   }
 
   @Override

@@ -25,8 +25,8 @@ import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
 final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
-  private final FixedSizeNatBitSet complementView;
   private final boolean complement;
+  private final FixedSizeNatBitSet complementView;
 
   FixedSizeNatBitSet(int domainSize) {
     super(domainSize);
@@ -80,21 +80,25 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public boolean containsAll(IntCollection indices) {
+    if (indices.isEmpty()) {
+      return true;
+    }
     if (complement) {
-      return indices.isEmpty();
+      // indices is not empty here
+      return false;
     }
     if (indices instanceof NatBitSet) {
       NatBitSet natBitSet = (NatBitSet) indices;
-      return 0 <= natBitSet.firstInt() && natBitSet.lastInt() <= domainSize();
+      return 0 <= natBitSet.firstInt() && natBitSet.lastInt() < domainSize();
     }
     if (indices instanceof IntSortedSet) {
       IntSortedSet sortedSet = (IntSortedSet) indices;
-      return 0 <= sortedSet.firstInt() && sortedSet.lastInt() <= domainSize();
+      return 0 <= sortedSet.firstInt() && sortedSet.lastInt() < domainSize();
     }
     if (indices instanceof SortedSet<?>) {
       //noinspection unchecked
       SortedSet<Integer> sortedSet = (SortedSet<Integer>) indices;
-      return 0 <= sortedSet.first() && sortedSet.last() <= domainSize();
+      return 0 <= sortedSet.first() && sortedSet.last() < domainSize();
     }
 
     IntIterator iterator = indices.iterator();
@@ -157,10 +161,7 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public IntIterator iterator() {
-    if (isEmpty()) {
-      return IntIterators.EMPTY_ITERATOR;
-    }
-    return IntIterators.fromTo(0, domainSize());
+    return isEmpty() ? IntIterators.EMPTY_ITERATOR : IntIterators.fromTo(0, domainSize());
   }
 
   @Override
@@ -187,6 +188,29 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
       return -1;
     }
     return index < domainSize() ? index : -1;
+  }
+
+  @Override
+  public int previousAbsentIndex(int index) {
+    checkNonNegative(index);
+    if (complement) {
+      return index;
+    }
+    return index >= domainSize() ? index : -1;
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    checkNonNegative(index);
+    if (complement) {
+      return -1;
+    }
+    return index >= domainSize() ? domainSize() - 1 : index;
+  }
+
+  @Override
+  public IntIterator reverseIterator() {
+    return isEmpty() ? IntIterators.EMPTY_ITERATOR : new ReverseRangeIterator(0, domainSize());
   }
 
   @Override

@@ -1,13 +1,16 @@
 plugins {
     id 'io.codearte.nexus-staging' version '0.9.0'
+    id  'com.github.spotbugs' version '1.4'
 }
 
 group 'de.tum.in'
-version '0.5.0'
+version '0.6.0'
 
 apply plugin: 'java'
 
-apply plugin: 'findbugs'
+spotbugs {
+    toolVersion = '3.1.0-RC6'
+}
 apply plugin: 'pmd'
 apply plugin: 'checkstyle'
 
@@ -23,7 +26,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly group: 'com.google.code.findbugs', name: 'annotations', version: '3.0.1'
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:3.1.0-RC6'
+    compileOnly 'javax.annotation:javax.annotation-api:1.3.1'
     compile group: 'it.unimi.dsi', name: 'fastutil', version:'8.1.0'
     // compile group: 'com.zaxxer', name: 'SparseBitSet', version:'1.0'
 
@@ -34,16 +38,17 @@ dependencies {
     testCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.19'
 }
 
-// Findbugs
+// Spotbugs
+// https://plugins.gradle.org/plugin/com.github.spotbugs
 // https://docs.gradle.org/current/dsl/org.gradle.api.plugins.quality.FindBugs.html
-findbugs {
-    reportsDir = file("$project.buildDir/reports/findbugs")
+spotbugs {
+    reportsDir = file("$project.buildDir/reports/spotbugs")
     effort = "max"
     reportLevel = "low"
-    excludeFilter = file("$project.projectDir/config/findbugs-exclude.xml")
+    excludeFilter = file("$project.projectDir/config/spotbugs-exclude.xml")
     ignoreFailures = false
 }
-tasks.withType(FindBugs) {
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
     reports {
         xml.enabled = false
         html.enabled = true
@@ -53,6 +58,7 @@ tasks.withType(FindBugs) {
 // PMD
 // https://docs.gradle.org/current/dsl/org.gradle.api.plugins.quality.Pmd.html
 pmd {
+    toolVersion = "5.8.1"
     reportsDir = file("$project.buildDir/reports/pmd")
     ruleSetFiles = files("$project.rootDir/config/pmd-rules.xml")
     ruleSets = [] // We specify all rules in rules.xml
@@ -69,9 +75,10 @@ tasks.withType(Pmd) {
 // Checkstyle
 // https://docs.gradle.org/current/dsl/org.gradle.api.plugins.quality.Checkstyle.html
 checkstyle {
-    toolVersion = "7.8.1"
+    toolVersion = "8.2"
     configFile = file("$project.rootDir/config/checkstyle.xml")
     ignoreFailures = false
+    maxWarnings = 0
     showViolations = false // Don't litter console
     checkstyleMain {
         configProperties = ['suppression-file':
@@ -80,17 +87,6 @@ checkstyle {
     checkstyleTest {
         configProperties = ['suppression-file':
                                     "$project.rootDir/config/checkstyle-test-suppression.xml"]
-    }
-}
-// See https://github.com/gradle/gradle/issues/881
-tasks.withType(Checkstyle).each { checkstyleTask ->
-    checkstyleTask.doLast {
-        reports.all { report ->
-            def outputFile = report.destination
-            if (outputFile.exists() && outputFile.text.contains("<error ")) {
-                throw new GradleException("There were checkstyle warnings! See $outputFile")
-            }
-        }
     }
 }
 

@@ -227,7 +227,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     assert index < size;
     int nextIndex = index + 1;
     if (nextIndex < size) {
-      int tail = size - (nextIndex);
+      int tail = size - nextIndex;
       System.arraycopy(keys, nextIndex, keys, index, tail);
       System.arraycopy(values, nextIndex, values, index, tail);
     }

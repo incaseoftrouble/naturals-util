@@ -177,6 +177,16 @@ class SparseNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
+  public int previousAbsentIndex(int index) {
+    return NatBitSets.previousAbsentIndex(bitSet, index);
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    return NatBitSets.previousPresentIndex(bitSet, index);
+  }
+
+  @Override
   public void set(int i) {
     bitSet.set(i);
   }

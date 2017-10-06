@@ -55,6 +55,7 @@ public final class NatBitSets {
    *     if {@code set} already is a {@link BoundedNatBitSet} and has a differing domain size.
    */
   public static BoundedNatBitSet asBounded(NatBitSet set, @Nonnegative int domainSize) {
+    assert domainSize >= 0;
     if (!set.isEmpty() && set.lastInt() >= domainSize) {
       throw new IndexOutOfBoundsException();
     }
@@ -183,8 +184,11 @@ public final class NatBitSets {
    * @return an unmodifiable iterator over the complement.
    */
   public static IntIterator complementIterator(NatBitSet set, @Nonnegative int length) {
-    if (set.isEmpty() || set.firstInt() >= length) {
+    if (set.isEmpty()) {
       return IntIterators.fromTo(0, length);
+    }
+    if (set.firstInt() >= length) {
+      throw new IllegalArgumentException();
     }
     if (set instanceof FixedSizeNatBitSet) {
       int size = set.size();
@@ -194,7 +198,6 @@ public final class NatBitSets {
       return IntIterators.fromTo(size, length);
     }
     if (set instanceof MutableSingletonNatBitSet) {
-      assert !set.isEmpty();
       int element = set.firstInt();
       if (element == 0) {
         return IntIterators.fromTo(1, length);
@@ -206,6 +209,35 @@ public final class NatBitSets {
           IntIterators.fromTo(element + 1, length)});
     }
     return IntIterators.unmodifiable(new NatBitSetComplementIterator(set, length));
+  }
+
+  public static IntIterator complementReverseIterator(NatBitSet set, @Nonnegative int length) {
+    if (set.firstInt() >= length) {
+      throw new IllegalArgumentException();
+    }
+    if (set.isEmpty()) {
+      return new ReverseRangeIterator(0, length);
+    }
+    if (set instanceof FixedSizeNatBitSet) {
+      int size = set.size();
+      if (size >= length) {
+        return IntIterators.EMPTY_ITERATOR;
+      }
+      return new ReverseRangeIterator(size, length);
+    }
+    if (set instanceof MutableSingletonNatBitSet) {
+      int element = set.firstInt();
+      if (element == 0) {
+        return new ReverseRangeIterator(1, length);
+      }
+      if (length <= element + 1) {
+        return IntIterators.fromTo(0, length);
+      }
+      IntIterator firstIterator = new ReverseRangeIterator(element + 1, length);
+      IntIterator secondIterator = new ReverseRangeIterator(0, element);
+      return IntIterators.concat(new IntIterator[] {firstIterator, secondIterator});
+    }
+    return IntIterators.unmodifiable(new NatBitSetComplementReverseIterator(set, length));
   }
 
   /**
@@ -251,7 +283,7 @@ public final class NatBitSets {
 
   /**
    * Ensures that the given {@code set} is a {@link BoundedNatBitSet}, copying it if necessary.
-   * Note that this also clones the set if, e.g., it is a bounded set with a larger domain
+   * Note that this also clones the set if, e.g., it is a bounded set with a larger domain.
    *
    * @throws IndexOutOfBoundsException
    *     if {@code set} contains an index larger than {@code domainSize}.
@@ -269,16 +301,24 @@ public final class NatBitSets {
       if (set instanceof SimpleBoundedNatBitSet) {
         SimpleBoundedNatBitSet simpleBoundedSet = (SimpleBoundedNatBitSet) set;
         BitSet bitSetCopy = (BitSet) simpleBoundedSet.getBitSet().clone();
-        if (domainSize < oldDomainSize) {
-          bitSetCopy.clear(domainSize, oldDomainSize);
+        if (simpleBoundedSet.isComplement()) {
+          if (domainSize < oldDomainSize) {
+            bitSetCopy.clear(domainSize, oldDomainSize);
+          } else {
+            bitSetCopy.set(oldDomainSize, domainSize);
+          }
         }
         BoundedNatBitSet copy = new SimpleBoundedNatBitSet(bitSetCopy, domainSize);
         return simpleBoundedSet.isComplement() ? copy.complement() : copy;
       } else if (set instanceof SparseBoundedNatBitSet) {
         SparseBoundedNatBitSet sparseBoundedSet = (SparseBoundedNatBitSet) set;
         SparseBitSet bitSetCopy = sparseBoundedSet.getSparseBitSet().clone();
-        if (domainSize < oldDomainSize) {
-          bitSetCopy.clear(domainSize, oldDomainSize);
+        if (sparseBoundedSet.isComplement()) {
+          if (domainSize < oldDomainSize) {
+            bitSetCopy.clear(domainSize, oldDomainSize);
+          } else {
+            bitSetCopy.set(oldDomainSize, domainSize);
+          }
         }
         BoundedNatBitSet copy = new SparseBoundedNatBitSet(bitSetCopy, domainSize);
         return sparseBoundedSet.isComplement() ? copy.complement() : copy;
@@ -434,34 +474,71 @@ public final class NatBitSets {
     return powerSet(fullSet(domainSize));
   }
 
-  static int previousPresentIndex(NatBitSet set, @Nonnegative int index) {
-    // Binary search for the biggest set bit with index <= length
-    int firstPresentIndex = set.nextPresentIndex(0);
-    if (firstPresentIndex == -1) {
-      return -1;
-    }
-    if (set.contains(index)) {
+  static int previousAbsentIndex(SparseBitSet set, @Nonnegative int index) {
+    // Binary search for the biggest clear bit with index <= length
+    if (!set.get(index)) {
       return index;
     }
-    int rightPivot = index;
-    int leftPivot = firstPresentIndex;
+
+    int firstAbsentIndex = set.nextClearBit(0);
+    if (firstAbsentIndex > index) {
+      return -1;
+    }
+
+    int high = index - 1;
+    int low = firstAbsentIndex;
 
     while (true) {
-      assert leftPivot <= rightPivot;
-      int middle = (rightPivot + leftPivot) / 2;
-      int value = set.nextPresentIndex(middle);
-      while (value == -1) {
-        assert leftPivot <= middle && middle <= rightPivot;
-        rightPivot = middle;
-        middle = (rightPivot + leftPivot) / 2;
-        value = set.nextPresentIndex(middle);
+      assert low <= high;
+      int mid = (high + low) / 2;
+      int next = set.nextClearBit(mid);
+      while (next > index) {
+        assert low <= mid && mid <= high;
+        high = mid;
+        mid = (high + low) / 2;
+        next = set.nextClearBit(mid);
       }
-      leftPivot = value;
-      int nextSet = set.nextPresentIndex(leftPivot + 1);
-      if (nextSet == -1) {
-        return leftPivot;
+      assert !set.get(next);
+      low = next;
+      int nextClear = set.nextClearBit(low + 1);
+      if (nextClear > index) {
+        return low;
       }
-      leftPivot = nextSet;
+      low = nextClear;
+    }
+  }
+
+  static int previousPresentIndex(SparseBitSet set, @Nonnegative int index) {
+    // Binary search for the biggest set bit with index <= length
+    if (set.get(index)) {
+      return index;
+    }
+
+    int firstPresentIndex = set.nextSetBit(0);
+    if (firstPresentIndex == -1 || firstPresentIndex > index) {
+      return -1;
+    }
+
+    int high = index - 1;
+    int low = firstPresentIndex;
+
+    while (true) {
+      assert low <= high;
+      int mid = (high + low) / 2;
+      int next = set.nextSetBit(mid);
+      while (next == -1 || next > index) {
+        assert low <= mid && mid <= high;
+        high = mid;
+        mid = (high + low) / 2;
+        next = set.nextSetBit(mid);
+      }
+      assert set.get(next);
+      low = next;
+      int nextSet = set.nextSetBit(low + 1);
+      if (nextSet == -1 || nextSet > index) {
+        return low;
+      }
+      low = nextSet;
     }
   }
 

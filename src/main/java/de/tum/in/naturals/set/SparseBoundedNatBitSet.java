@@ -61,10 +61,22 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     } else if (indices instanceof SparseBoundedNatBitSet) {
       SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
       if (complement) {
-        bitSet.or(0, domainSize(), other.complement ? other.bitSet : other.complementBits());
+        int domainSize = domainSize();
+        int otherDomainSize = other.domainSize();
+        bitSet.or(0, domainSize, other.complement ? other.bitSet : other.complementBits());
+
+        if (otherDomainSize < domainSize) {
+          bitSet.set(otherDomainSize, domainSize);
+        }
       } else {
         if (other.complement) {
           bitSet.andNot(other.bitSet);
+
+          int domainSize = domainSize();
+          int otherDomainSize = other.domainSize();
+          if (otherDomainSize < domainSize) {
+            bitSet.clear(otherDomainSize, domainSize);
+          }
         } else {
           bitSet.and(other.bitSet);
         }
@@ -88,7 +100,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
         bitSet.or(0, domainSize(), other.complement ? other.complementBits() : other.bitSet);
       } else {
         if (other.complement) {
-          bitSet.and(other.bitSet);
+          bitSet.and(0, other.domainSize(), other.bitSet);
         } else {
           bitSet.andNot(other.bitSet);
         }
@@ -282,7 +294,8 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
       "TQ_NEVER_VALUE_USED_WHERE_ALWAYS_REQUIRED"},
                       justification = "Findbugs doesn't infer @Nonnull from control flow")
   public int lastInt() {
-    int lastInt = complement ? NatBitSets.previousPresentIndex(this, domainSize() - 1)
+    int lastInt = complement
+        ? NatBitSets.previousAbsentIndex(bitSet, domainSize() - 1)
         : bitSet.length() - 1;
     assert checkConsistency();
     if (lastInt == -1) {
@@ -389,6 +402,28 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
       super.orNot(indices);
     }
     assert checkConsistency();
+  }
+
+  @Override
+  public int previousAbsentIndex(int index) {
+    assert checkConsistency();
+    checkNonNegative(index);
+    if (index >= domainSize()) {
+      return index;
+    }
+    return complement
+        ? NatBitSets.previousPresentIndex(bitSet, index)
+        : NatBitSets.previousAbsentIndex(bitSet, index);
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    assert checkConsistency();
+    checkNonNegative(index);
+    int clampedIndex = Math.min(index, domainSize() - 1);
+    return complement
+        ? NatBitSets.previousAbsentIndex(bitSet, clampedIndex)
+        : NatBitSets.previousPresentIndex(bitSet, clampedIndex);
   }
 
   @Override

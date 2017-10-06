@@ -1,5 +1,13 @@
 # 0.x
 
+### 0.6.0 (2017-10-06)
+
+  * Added `IntArraySortedSet`, which is not a sorted set yet but uses a sorted array as backing data structure, yielding `O(log n)` runtime for `contains`. Methods like `addAll`, `containsAll` etc. can be optimized for the case of sorted arguments. 
+  * Added `previousPresentIndex` and `previousAbsentIndex` to `NatBitSet`
+  * Reworked testing theories
+  * Fixed some more bugs
+  * Upgraded gradle, findbugs (now spotbugs), PMD and checkstyle
+  
 ### 0.5.0 (2017-08-31)
 
   * Added some support for boolean arrays, namely `PowerSetIterator` and `Indices.indexMap`.

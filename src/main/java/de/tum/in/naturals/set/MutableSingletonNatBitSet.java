@@ -148,6 +148,16 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
+  public int previousAbsentIndex(int index) {
+    return (!isEmpty() && index == element) ? element - 1 : index;
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    return (!isEmpty() && index >= element) ? element : -1;
+  }
+
+  @Override
   public boolean remove(int index) {
     checkNonNegative(index);
     if (isEmpty()) {

@@ -18,6 +18,8 @@
 package de.tum.in.naturals.set;
 
 import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntIterators;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.NoSuchElementException;
@@ -101,7 +103,7 @@ public interface NatBitSet extends NatSet, Cloneable {
    * <p>This is equivalent to<pre>
    * if (contains(index)) remove(index);
    * else add(index);
-   * </pre></p>
+   * </pre>
    *
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative.
@@ -126,6 +128,12 @@ public interface NatBitSet extends NatSet, Cloneable {
    * @see BitSet#intersects(BitSet)
    */
   boolean intersects(IntCollection indices);
+
+  /**
+   * Returns an {@link IntIterator iterator} returning the elements of this set in ascending order.
+   */
+  @Override
+  IntIterator iterator();
 
   /**
    * Returns the last (highest) element currently in this set.
@@ -163,6 +171,41 @@ public interface NatBitSet extends NatSet, Cloneable {
    * @see BitSet#or(BitSet)
    */
   void or(IntCollection indices);
+
+  /**
+   * Returns the largest index smaller or equal to {@code index} which is not contained in this set
+   * or -1 if none.
+   *
+   * @throws IndexOutOfBoundsException
+   *     if {@code index} is negative.
+   * @see BitSet#nextSetBit(int)
+   */
+  int previousAbsentIndex(@Nonnegative int index);
+
+  /**
+   * Returns the largest index smaller or equal to {@code index} which is contained in this set or
+   * -1 if none.
+   *
+   * @throws IndexOutOfBoundsException
+   *     if {@code index} is negative.
+   * @see BitSet#nextSetBit(int)
+   */
+  int previousPresentIndex(@Nonnegative int index);
+
+  /**
+   * Returns an {@link IntIterator iterator} returning the elements of this set in descending order.
+   *
+   * @see #iterator()
+   */
+  default IntIterator reverseIterator() {
+    if (isEmpty()) {
+      return IntIterators.EMPTY_ITERATOR;
+    }
+    if (size() == 1) {
+      return IntIterators.singleton(firstInt());
+    }
+    return new ReverseIntBidiIterator(new NatBitSetBidiIterator(this, lastInt() + 1));
+  }
 
   /**
    * Adds the given index to this set.

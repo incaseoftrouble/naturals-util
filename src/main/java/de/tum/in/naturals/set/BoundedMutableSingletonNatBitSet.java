@@ -19,7 +19,6 @@ package de.tum.in.naturals.set;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
 import java.util.NoSuchElementException;
 import javax.annotation.Nonnegative;
 
@@ -32,7 +31,6 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
   private BoundedMutableSingletonNatBitSet(int element, @Nonnegative int domainSize,
       boolean complement) {
     super(domainSize);
-    checkNonNegative(element);
     this.store = new int[] {element};
     this.complement = complement;
     this.complementView = new BoundedMutableSingletonNatBitSet(this);
@@ -47,6 +45,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
 
   BoundedMutableSingletonNatBitSet(@Nonnegative int element, @Nonnegative int domainSize) {
     this(element, domainSize, false);
+    checkNonNegative(element);
   }
 
   BoundedMutableSingletonNatBitSet(@Nonnegative int domainSize) {
@@ -117,11 +116,6 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
   }
 
   @Override
-  boolean isComplement() {
-    return complement;
-  }
-
-  @Override
   public BoundedNatBitSet complement() {
     return complementView;
   }
@@ -167,6 +161,11 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
   }
 
   @Override
+  boolean isComplement() {
+    return complement;
+  }
+
+  @Override
   public boolean isEmpty() {
     return complement ? (domainSize() == 1 && !isStoreEmpty()) : isStoreEmpty();
   }
@@ -181,8 +180,8 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
       return complement ? IntIterators.fromTo(0, domainSize()) : IntIterators.EMPTY_ITERATOR;
     }
     if (complement) {
-      IntListIterator first = IntIterators.fromTo(0, store[0]);
-      IntListIterator second = IntIterators.fromTo(store[0] + 1, domainSize());
+      IntIterator first = IntIterators.fromTo(0, store[0]);
+      IntIterator second = IntIterators.fromTo(store[0] + 1, domainSize());
       return IntIterators.concat(new IntIterator[] {first, second});
     }
     return IntIterators.singleton(store[0]);
@@ -204,7 +203,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
   public int nextAbsentIndex(int index) {
     checkNonNegative(index);
     if (complement) {
-      return index < store[0] ? store[0] : domainSize();
+      return index <= store[0] ? store[0] : domainSize();
     }
     return (!isEmpty() && index == store[0]) ? store[0] + 1 : index;
   }
@@ -223,6 +222,43 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
       return index == store[0] ? index + 1 : index;
     }
     return index <= store[0] ? store[0] : -1;
+  }
+
+  @Override
+  public int previousAbsentIndex(int index) {
+    checkNonNegative(index);
+    if (isEmpty()) {
+      return index;
+    }
+    if (complement) {
+      return index >= store[0] ? store[0] : -1;
+    }
+    return index == store[0] ? store[0] - 1 : index;
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    checkNonNegative(index);
+    if (isEmpty()) {
+      return -1;
+    }
+    if (complement) {
+      return index == store[0] ? store[0] - 1 : index;
+    }
+    return index >= store[0] ? store[0] : -1;
+  }
+
+  @Override
+  public IntIterator reverseIterator() {
+    if (isStoreEmpty()) {
+      return complement ? new ReverseRangeIterator(0, domainSize()) : IntIterators.EMPTY_ITERATOR;
+    }
+    if (complement) {
+      IntIterator first = new ReverseRangeIterator(store[0] + 1, domainSize());
+      IntIterator second = new ReverseRangeIterator(0, store[0]);
+      return IntIterators.concat(new IntIterator[] {first, second});
+    }
+    return IntIterators.singleton(store[0]);
   }
 
   @Override
