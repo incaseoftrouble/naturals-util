@@ -110,6 +110,10 @@ public final class BitSets {
    * returned elements in place.
    */
   public static Set<BitSet> powerSet(BitSet basis) {
+    int length = basis.length();
+    if (length == basis.cardinality()) {
+      return powerSet(length);
+    }
     return new PowerBitSet(basis);
   }
 
@@ -119,9 +123,7 @@ public final class BitSets {
    * returned elements in place.
    */
   public static Set<BitSet> powerSet(int i) {
-    BitSet bs = new BitSet(i);
-    bs.set(0, i);
-    return powerSet(bs);
+    return new PowerBitSetSimple(i);
   }
 
   public static BitSet toBitSet(SparseBitSet sparseBitSet) {

@@ -52,7 +52,7 @@ class LongNatBitSet extends AbstractNatBitSet {
   }
 
   private void checkInDomain(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (!inDomain(index)) {
       throw new UnsupportedOperationException(String.format("Index %d out of bounds", index));
     }
@@ -67,7 +67,7 @@ class LongNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void clear(int from, int to) {
-    checkRange(from, to);
+    NatBitSetsUtil.checkRange(from, to);
     if (!inDomain(from)) {
       return;
     }
@@ -127,7 +127,7 @@ class LongNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void flip(int from, int to) {
-    checkRange(from, to);
+    NatBitSetsUtil.checkRange(from, to);
     checkInDomain(to);
     store ^= mask(from, to);
   }
@@ -171,7 +171,7 @@ class LongNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int nextAbsentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty() || index >= Long.SIZE) {
       return index;
     }
@@ -187,7 +187,7 @@ class LongNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int nextPresentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (index >= Long.SIZE || isEmpty()) {
       return -1;
     }
@@ -213,7 +213,7 @@ class LongNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int previousAbsentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty() || index >= Long.SIZE) {
       return index;
     }
@@ -230,7 +230,7 @@ class LongNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int previousPresentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       return -1;
     }
@@ -261,7 +261,7 @@ class LongNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void set(int from, int to) {
-    checkRange(from, to);
+    NatBitSetsUtil.checkRange(from, to);
     checkInDomain(to);
     store |= mask(from, to);
   }

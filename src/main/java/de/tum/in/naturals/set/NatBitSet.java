@@ -95,7 +95,12 @@ public interface NatBitSet extends NatSet, Cloneable {
    * @see SortedSet#first()
    */
   @Nonnegative
-  int firstInt();
+  default int firstInt() {
+    if (isEmpty()) {
+      throw new NoSuchElementException();
+    }
+    return iterator().nextInt();
+  }
 
   /**
    * Flips the given index.
@@ -127,13 +132,29 @@ public interface NatBitSet extends NatSet, Cloneable {
    *
    * @see BitSet#intersects(BitSet)
    */
-  boolean intersects(IntCollection indices);
+  default boolean intersects(IntCollection indices) {
+    IntIterator iterator = iterator();
+    while (iterator.hasNext()) {
+      if (indices.contains(iterator.nextInt())) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /**
    * Returns an {@link IntIterator iterator} returning the elements of this set in ascending order.
    */
   @Override
-  IntIterator iterator();
+  default IntIterator iterator() {
+    if (isEmpty()) {
+      return IntIterators.EMPTY_ITERATOR;
+    }
+    if (size() == 1) {
+      return IntIterators.singleton(firstInt());
+    }
+    return new NatBitSetIterator(this);
+  }
 
   /**
    * Returns the last (highest) element currently in this set.
@@ -143,7 +164,12 @@ public interface NatBitSet extends NatSet, Cloneable {
    * @see SortedSet#last()
    */
   @Nonnegative
-  int lastInt();
+  default int lastInt() {
+    if (isEmpty()) {
+      throw new NoSuchElementException();
+    }
+    return reverseIterator().nextInt();
+  }
 
   /**
    * Returns the smallest index larger or equal to {@code index} which is not contained in this set.
@@ -192,11 +218,7 @@ public interface NatBitSet extends NatSet, Cloneable {
    */
   int previousPresentIndex(@Nonnegative int index);
 
-  /**
-   * Returns an {@link IntIterator iterator} returning the elements of this set in descending order.
-   *
-   * @see #iterator()
-   */
+  @Override
   default IntIterator reverseIterator() {
     if (isEmpty()) {
       return IntIterators.EMPTY_ITERATOR;

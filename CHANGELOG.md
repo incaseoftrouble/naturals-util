@@ -1,5 +1,14 @@
 # 0.x
 
+### 0.7.0 (2017-11-14)
+
+  * Refactoring of some utilities
+  * Made abstract implementations public
+  * Added unmodifiable implementations
+  * Fixed bug in `Nat2ObjectDenseArrayMap`
+  * Change iteration order of power set to be lexicographic
+  * Added efficient power set for the `{0, ..., n-1}` case
+
 ### 0.6.0 (2017-10-06)
 
   * Added `IntArraySortedSet`, which is not a sorted set yet but uses a sorted array as backing data structure, yielding `O(log n)` runtime for `contains`. Methods like `addAll`, `containsAll` etc. can be optimized for the case of sorted arguments. 

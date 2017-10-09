@@ -362,8 +362,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testAddAll(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testAddAll(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("implementation") Pair other) {
     assumeThat(implementation.modifiable(other.length()), is(true));
     NatBitSet set = implementation.checkedCopy();
@@ -378,8 +377,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testAnd(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testAnd(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("implementation") Pair other) {
     assumeThat(implementation.modifiableType(), is(true));
     NatBitSet set = implementation.checkedCopy();
@@ -392,8 +390,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testAndNot(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testAndNot(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("implementation") Pair other) {
     assumeThat(implementation.modifiableType(), is(true));
     NatBitSet set = implementation.checkedCopy();
@@ -535,8 +532,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testContainsAll(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testContainsAll(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("implementation") Pair other) {
     assertThat(implementation.set.containsAll(other.set),
         is(implementation.reference.containsAll(other.set)));
@@ -598,15 +594,13 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testEquals(
-      @FromDataPoints("implementation") Pair oneSet,
+  public void testEquals(@FromDataPoints("implementation") Pair oneSet,
       @FromDataPoints("implementation") Pair otherSet) {
     assertThat(oneSet.set.equals(otherSet.set), is(oneSet.reference.equals(otherSet.reference)));
   }
 
   @Theory(nullsAccepted = false)
-  public void testFirstInt(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testFirstInt(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
     IntSortedSet reference = new IntAVLTreeSet(implementation.reference);
 
@@ -617,8 +611,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testIterator(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testIterator(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
 
     IntIterator iterator = set.iterator();
@@ -631,8 +624,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testIteratorAscending(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testIteratorAscending(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
     int previous = -1;
     IntIterator iterator = set.iterator();
@@ -644,16 +636,14 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testLargeMutations(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testLargeMutations(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("large") Iterable<Consumer<NatBitSet>> sequence) {
     assumeThat(NatBitSets.isModifiable(implementation.set, MAXIMAL_SUBSET_SIZE), is(true));
     testMutations(implementation, sequence);
   }
 
   @Theory(nullsAccepted = false)
-  public void testLastInt(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testLastInt(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
     IntSortedSet reference = new IntAVLTreeSet(implementation.reference);
 
@@ -664,8 +654,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testModifiableCopyOf(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testModifiableCopyOf(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
 
     NatBitSet copy = NatBitSets.modifiableCopyOf(set, 2 * MAXIMAL_SUBSET_SIZE);
@@ -708,8 +697,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testNextAbsentIndex(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testNextAbsentIndex(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
 
     for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
@@ -718,8 +706,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testNextPresentIndex(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testNextPresentIndex(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
 
     for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
@@ -728,8 +715,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testOr(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testOr(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("implementation") Pair other) {
     assumeThat(implementation.modifiable(other.length()), is(true));
     NatBitSet set = implementation.checkedCopy();
@@ -745,8 +731,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testOrNot(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testOrNot(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("implementation") Pair other) {
     assumeThat(implementation.modifiableType(), is(true));
     assumeThat(implementation.set, instanceOf(BoundedNatBitSet.class));
@@ -768,8 +753,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testPowerSet(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testPowerSet(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
     assumeThat(set.size(), lessThan(POWER_SET_MAXIMUM));
 
@@ -794,8 +778,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testPreviousAbsentIndex(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testPreviousAbsentIndex(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
 
     for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
@@ -804,8 +787,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testPreviousPresentIndex(
-      @FromDataPoints("implementation") Pair implementation) {
+  public void testPreviousPresentIndex(@FromDataPoints("implementation") Pair implementation) {
     NatBitSet set = implementation.set;
 
     for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
@@ -829,8 +811,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testRemoveAll(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testRemoveAll(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("implementation") Pair other) {
     assumeThat(implementation.modifiable(other.length()), is(true));
     NatBitSet set = implementation.checkedCopy();
@@ -844,8 +825,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testRetainAll(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testRetainAll(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("implementation") Pair other) {
     assumeThat(implementation.modifiableType(), is(true));
     NatBitSet set = implementation.checkedCopy();
@@ -876,8 +856,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testSmallMutations(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testSmallMutations(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("small") Iterable<Consumer<NatBitSet>> sequence) {
     assumeThat(NatBitSets.isModifiable(implementation.set, SMALL_SUBSET_SIZE), is(true));
     testMutations(implementation, sequence);
@@ -914,8 +893,7 @@ public class NatBitSetTheories {
   }
 
   @Theory(nullsAccepted = false)
-  public void testXor(
-      @FromDataPoints("implementation") Pair implementation,
+  public void testXor(@FromDataPoints("implementation") Pair implementation,
       @FromDataPoints("implementation") Pair other) {
     int maximal = Math.max(implementation.length(), other.length());
     assumeThat(implementation.modifiable(maximal), is(true));
@@ -1382,7 +1360,6 @@ public class NatBitSetTheories {
     public String toString() {
       return set.getClass().getSimpleName() + " " + set.toString();
     }
-
   }
 
   private static class SetIndex implements Consumer<NatBitSet> {

@@ -38,7 +38,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public boolean add(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (index == element) {
       return false;
     }
@@ -58,7 +58,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void clear(int from, int to) {
-    checkRange(from, to);
+    NatBitSetsUtil.checkRange(from, to);
     if (isEmpty()) {
       return;
     }
@@ -92,7 +92,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void flip(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       element = index;
     } else if (index == element) {
@@ -104,7 +104,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void flip(int from, int to) {
-    checkRange(from, to);
+    NatBitSetsUtil.checkRange(from, to);
     if (from == to) {
       return;
     }
@@ -134,13 +134,13 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int nextAbsentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     return (!isEmpty() && index == element) ? element + 1 : index;
   }
 
   @Override
   public int nextPresentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       return -1;
     }
@@ -159,7 +159,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public boolean remove(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       return false;
     }
@@ -172,7 +172,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void set(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       element = index;
     } else if (index != element) {
@@ -182,7 +182,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void set(int index, boolean value) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       if (value) {
         setValue(index);
@@ -194,7 +194,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void set(int from, int to) {
-    checkRange(from, to);
+    NatBitSetsUtil.checkRange(from, to);
     if (from == to) {
       return;
     }

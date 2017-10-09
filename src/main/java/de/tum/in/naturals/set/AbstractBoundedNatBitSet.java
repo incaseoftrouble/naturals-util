@@ -20,7 +20,8 @@ package de.tum.in.naturals.set;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import javax.annotation.Nonnegative;
 
-abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet implements BoundedNatBitSet {
+public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet
+    implements BoundedNatBitSet {
   @Nonnegative
   private final int domainSize;
 
@@ -38,19 +39,11 @@ abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet implements Bou
   }
 
   protected void checkInDomain(int from, int to) {
-    checkRange(from, to);
-    if (domainSize < to) {
-      throw new IndexOutOfBoundsException(String.format("To index %d too large for domain [0, %d)",
-          to, domainSize));
-    }
+    NatBitSetsUtil.checkInDomain(domainSize, from, to);
   }
 
   protected void checkInDomain(int index) {
-    checkNonNegative(index);
-    if (domainSize <= index) {
-      throw new IndexOutOfBoundsException(String.format("Index %d too large for domain [0, %d)",
-          index, domainSize));
-    }
+    NatBitSetsUtil.checkInDomain(domainSize, index);
   }
 
   @Override

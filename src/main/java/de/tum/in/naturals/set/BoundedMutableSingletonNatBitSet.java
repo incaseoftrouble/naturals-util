@@ -45,15 +45,15 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
 
   BoundedMutableSingletonNatBitSet(@Nonnegative int element, @Nonnegative int domainSize) {
     this(element, domainSize, false);
-    checkNonNegative(element);
+    NatBitSetsUtil.checkNonNegative(element);
   }
 
   BoundedMutableSingletonNatBitSet(@Nonnegative int domainSize) {
     this(EMPTY, domainSize, false);
   }
 
-  private static void throwOperationUnsupported() {
-    throw new UnsupportedOperationException("Singleton can hold at most one value");
+  private static UnsupportedOperationException unsupportedOperation() {
+    return new UnsupportedOperationException("Singleton can hold at most one value");
   }
 
   @Override
@@ -64,7 +64,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
       if (isStoreEmpty()) {
         setStoreValue(index);
       } else if (index != store[0]) {
-        throwOperationUnsupported();
+        throw unsupportedOperation();
       }
     } else {
       assert index != EMPTY;
@@ -86,12 +86,12 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
 
     if (complement) {
       if (from + 1 != to) {
-        throwOperationUnsupported();
+        throw unsupportedOperation();
       }
       if (isStoreEmpty()) {
         setStoreValue(from);
       } else if (from != store[0]) {
-        throwOperationUnsupported();
+        throw unsupportedOperation();
       }
     } else if (from <= store[0] && store[0] < to) {
       setStoreEmpty();
@@ -102,7 +102,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
   public void clear() {
     if (complement) {
       if (domainSize() > 1) {
-        throwOperationUnsupported();
+        throw unsupportedOperation();
       }
       setStoreValue(0);
     } else {
@@ -144,7 +144,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
     } else if (isStoreEmpty()) {
       setStoreValue(index);
     } else {
-      throwOperationUnsupported();
+      throw unsupportedOperation();
     }
   }
 
@@ -155,7 +155,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
       return;
     }
     if (from + 1 != to) {
-      throwOperationUnsupported();
+      throw unsupportedOperation();
     }
     flip(from);
   }
@@ -201,7 +201,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public int nextAbsentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (complement) {
       return index <= store[0] ? store[0] : domainSize();
     }
@@ -210,7 +210,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public int nextPresentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       return -1;
     }
@@ -226,7 +226,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public int previousAbsentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       return index;
     }
@@ -238,7 +238,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public int previousPresentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       return -1;
     }
@@ -273,7 +273,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
       if (isStoreEmpty()) {
         store[0] = index;
       } else if (index != store[0]) {
-        throwOperationUnsupported();
+        throw unsupportedOperation();
       }
     }
   }
@@ -294,7 +294,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
       return;
     }
     if (from + 1 != to) {
-      throwOperationUnsupported();
+      throw unsupportedOperation();
     }
     set(from);
   }

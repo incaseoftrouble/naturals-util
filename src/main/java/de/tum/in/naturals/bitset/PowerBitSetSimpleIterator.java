@@ -17,27 +17,24 @@
 
 package de.tum.in.naturals.bitset;
 
-import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.BitSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-final class PowerBitSetIterator implements Iterator<BitSet> {
-  private final BitSet baseSet;
+final class PowerBitSetSimpleIterator implements Iterator<BitSet> {
   private boolean first = true;
   private final BitSet iteration;
-  private final int baseCardinality;
+  private final int size;
   private int numSetBits = 0;
 
-  PowerBitSetIterator(BitSet baseSet) {
-    this.baseSet = baseSet;
-    this.baseCardinality = baseSet.cardinality();
-    this.iteration = new BitSet(baseSet.length());
+  PowerBitSetSimpleIterator(int size) {
+    this.size = size;
+    this.iteration = new BitSet(size);
   }
 
   @Override
   public boolean hasNext() {
-    return first || (numSetBits < baseCardinality);
+    return first || (numSetBits < size);
   }
 
   @Override
@@ -47,13 +44,11 @@ final class PowerBitSetIterator implements Iterator<BitSet> {
       return iteration;
     }
 
-    if (numSetBits == baseCardinality) {
+    if (numSetBits == size) {
       throw new NoSuchElementException("No next element");
     }
 
-    IntIterator iterator = BitSets.iterator(baseSet);
-    while (iterator.hasNext()) {
-      int index = iterator.nextInt();
+    for (int index = 0; index < size; index++) {
       if (iteration.get(index)) {
         iteration.clear(index);
         numSetBits -= 1;

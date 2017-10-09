@@ -68,7 +68,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   @SuppressWarnings("unchecked")
   public Nat2ObjectDenseArrayMap(int size) {
     this.array = (V[]) new Object[size];
-    Arrays.fill(this.array, Integer.MIN_VALUE);
+    Arrays.fill(this.array, null);
   }
 
   @SuppressWarnings("unchecked")

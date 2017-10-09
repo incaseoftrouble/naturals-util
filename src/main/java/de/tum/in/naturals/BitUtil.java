@@ -39,4 +39,14 @@ public final class BitUtil {
     }
     return (1L << to) - 1L;
   }
+
+  public static int nextBit(long store, int index) {
+    long shifted = store >>> (index - 1);
+    int num = Long.numberOfTrailingZeros(shifted);
+    if (num == Long.SIZE) {
+      return -1;
+    }
+    assert num < Long.SIZE - index;
+    return num + index + 1;
+  }
 }

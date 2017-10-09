@@ -262,7 +262,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int nextAbsentIndex(int index) {
     assert checkConsistency();
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (index >= domainSize() || isEmpty()) {
       return index;
     }
@@ -278,7 +278,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int nextPresentIndex(int index) {
     assert checkConsistency();
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (index >= domainSize() || isEmpty()) {
       return -1;
     }
@@ -334,7 +334,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int previousAbsentIndex(int index) {
     assert checkConsistency();
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (index >= domainSize() || isEmpty()) {
       return index;
     }
@@ -351,7 +351,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int previousPresentIndex(int index) {
     assert checkConsistency();
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (isEmpty()) {
       return -1;
     }

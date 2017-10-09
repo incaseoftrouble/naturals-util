@@ -17,10 +17,15 @@
 
 package de.tum.in.naturals.set;
 
+import static de.tum.in.naturals.set.NatBitSetsUtil.SPLITERATOR_CHARACTERISTICS;
+
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nonnegative;
 
 /**
@@ -39,7 +44,9 @@ public interface NatSet extends IntSet {
   /**
    * Returns an int stream compatible with the {@link #spliterator() spliterator}.
    */
-  IntStream intStream();
+  default IntStream intStream() {
+    return StreamSupport.intStream(this::spliterator, SPLITERATOR_CHARACTERISTICS, false);
+  }
 
   /**
    * {@inheritDoc}
@@ -56,10 +63,19 @@ public interface NatSet extends IntSet {
    * {@link Spliterator#ORDERED ordered}, and {@link Spliterator#SORTED sorted}.
    */
   @Override
-  Spliterator.OfInt spliterator();
+  default Spliterator.OfInt spliterator() {
+    return Spliterators.spliterator(iterator(), (long) size(), SPLITERATOR_CHARACTERISTICS);
+  }
 
   @Override
   default Stream<Integer> stream() {
     return intStream().boxed();
   }
+
+  /**
+   * Returns an {@link IntIterator iterator} returning the elements of this set in descending order.
+   *
+   * @see #iterator()
+   */
+  IntIterator reverseIterator();
 }

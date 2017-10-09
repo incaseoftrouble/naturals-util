@@ -308,7 +308,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int nextAbsentIndex(int index) {
     assert checkConsistency();
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (index >= domainSize()) {
       return index;
     }
@@ -322,7 +322,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int nextPresentIndex(int index) {
     assert checkConsistency();
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (index >= domainSize()) {
       return -1;
     }
@@ -407,7 +407,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int previousAbsentIndex(int index) {
     assert checkConsistency();
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (index >= domainSize()) {
       return index;
     }
@@ -419,7 +419,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int previousPresentIndex(int index) {
     assert checkConsistency();
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     int clampedIndex = Math.min(index, domainSize() - 1);
     return complement
         ? NatBitSets.previousAbsentIndex(bitSet, clampedIndex)

@@ -24,18 +24,16 @@ import java.util.BitSet;
 import java.util.Iterator;
 import javax.annotation.Nullable;
 
-class PowerBitSet extends AbstractSet<BitSet> implements Size64 {
-  private final BitSet baseSet;
+class PowerBitSetSimple extends AbstractSet<BitSet> implements Size64 {
   private final int baseSize;
 
-  PowerBitSet(BitSet baseSet) {
-    this.baseSet = (BitSet) baseSet.clone();
-    baseSize = this.baseSet.cardinality();
+  PowerBitSetSimple(int size) {
+    baseSize = size;
   }
 
   @Override
   public boolean contains(@Nullable Object obj) {
-    return obj instanceof BitSet && BitSets.isSubset((BitSet) obj, baseSet);
+    return obj instanceof BitSet && ((BitSet) obj).length() <= size();
   }
 
   @Override
@@ -43,20 +41,20 @@ class PowerBitSet extends AbstractSet<BitSet> implements Size64 {
     if (this == obj) {
       return true;
     }
-    if (obj instanceof PowerBitSet) {
-      PowerBitSet other = (PowerBitSet) obj;
-      return baseSet.equals(other.baseSet);
-    }
     if (obj instanceof PowerBitSetSimple) {
       PowerBitSetSimple other = (PowerBitSetSimple) obj;
-      return getBaseCardinality() == other.getBaseSize() && getBaseLength() == other.getBaseSize();
+      return baseSize == other.baseSize;
+    }
+    if (obj instanceof PowerBitSet) {
+      PowerBitSet other = (PowerBitSet) obj;
+      return baseSize == other.getBaseCardinality() && baseSize == other.getBaseLength();
     }
     return super.equals(obj);
   }
 
   @Override
   public int hashCode() {
-    return HashCommon.mix(baseSet.hashCode());
+    return HashCommon.mix(baseSize);
   }
 
   @Override
@@ -70,7 +68,7 @@ class PowerBitSet extends AbstractSet<BitSet> implements Size64 {
    */
   @Override
   public Iterator<BitSet> iterator() {
-    return new PowerBitSetIterator(baseSet);
+    return new PowerBitSetSimpleIterator(baseSize);
   }
 
   @Override
@@ -85,14 +83,13 @@ class PowerBitSet extends AbstractSet<BitSet> implements Size64 {
 
   @Override
   public String toString() {
-    return String.format("powerSet(%s)", baseSet);
+    if (baseSize == 0) {
+      return "powerSet({})";
+    }
+    return String.format("powerSet({0,..,%s})", baseSize);
   }
 
-  int getBaseCardinality() {
+  int getBaseSize() {
     return baseSize;
-  }
-
-  int getBaseLength() {
-    return baseSet.length();
   }
 }

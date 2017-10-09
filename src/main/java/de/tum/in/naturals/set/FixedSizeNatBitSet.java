@@ -174,7 +174,7 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public int nextAbsentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (complement) {
       return index;
     }
@@ -183,7 +183,7 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public int nextPresentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (complement) {
       return -1;
     }
@@ -192,7 +192,7 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public int previousAbsentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (complement) {
       return index;
     }
@@ -201,7 +201,7 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public int previousPresentIndex(int index) {
-    checkNonNegative(index);
+    NatBitSetsUtil.checkNonNegative(index);
     if (complement) {
       return -1;
     }
