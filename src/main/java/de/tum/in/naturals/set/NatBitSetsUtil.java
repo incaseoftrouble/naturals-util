@@ -21,8 +21,7 @@ import java.util.Spliterator;
 
 public final class NatBitSetsUtil {
   public static final int SPLITERATOR_CHARACTERISTICS = Spliterator.ORDERED | Spliterator.SORTED
-      | Spliterator.DISTINCT | Spliterator.NONNULL
-      | Spliterator.SIZED;
+      | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SIZED;
 
   private NatBitSetsUtil() {}
 

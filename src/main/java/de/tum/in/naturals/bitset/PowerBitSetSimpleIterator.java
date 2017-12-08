@@ -22,10 +22,9 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 final class PowerBitSetSimpleIterator implements Iterator<BitSet> {
-  private boolean first = true;
   private final BitSet iteration;
   private final int size;
-  private int numSetBits = 0;
+  private int numSetBits = -1;
 
   PowerBitSetSimpleIterator(int size) {
     this.size = size;
@@ -34,13 +33,13 @@ final class PowerBitSetSimpleIterator implements Iterator<BitSet> {
 
   @Override
   public boolean hasNext() {
-    return first || (numSetBits < size);
+    return numSetBits < size;
   }
 
   @Override
   public BitSet next() {
-    if (first) {
-      first = false;
+    if (numSetBits == -1) {
+      numSetBits = 0;
       return iteration;
     }
 

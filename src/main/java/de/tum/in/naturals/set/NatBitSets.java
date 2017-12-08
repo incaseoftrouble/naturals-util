@@ -17,16 +17,15 @@
 
 package de.tum.in.naturals.set;
 
+import com.zaxxer.sparsebits.SparseBitSet;
 import de.tum.in.naturals.bitset.BitSets;
-import de.tum.in.naturals.bitset.SparseBitSet;
+import de.tum.in.naturals.bitset.SparseBitSets;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntCollection;
-import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.IntConsumer;
@@ -474,7 +473,7 @@ public final class NatBitSets {
     return powerSet(fullSet(domainSize));
   }
 
-  static int previousAbsentIndex(SparseBitSet set, @Nonnegative int index) {
+  public static int previousAbsentIndex(SparseBitSet set, @Nonnegative int index) {
     // Binary search for the biggest clear bit with index <= length
     if (!set.get(index)) {
       return index;
@@ -508,7 +507,7 @@ public final class NatBitSets {
     }
   }
 
-  static int previousPresentIndex(SparseBitSet set, @Nonnegative int index) {
+  public static int previousPresentIndex(SparseBitSet set, @Nonnegative int index) {
     // Binary search for the biggest set bit with index <= length
     if (set.get(index)) {
       return index;
@@ -605,16 +604,10 @@ public final class NatBitSets {
     return new SparseNatBitSet(new SparseBitSet(expectedSize));
   }
 
-  public static BitSet toBitSet(IntIterable indices) {
-    if (!(indices instanceof IntCollection)) {
-      BitSet bitSet = new BitSet();
-      indices.forEach((IntConsumer) bitSet::set);
-      return bitSet;
-    }
-    if (((Collection<?>) indices).isEmpty()) {
+  public static BitSet toBitSet(NatBitSet indices) {
+    if (indices.isEmpty()) {
       return new BitSet(0);
     }
-
     if (indices instanceof SimpleNatBitSet) {
       return (BitSet) ((SimpleNatBitSet) indices).getBitSet().clone();
     }
@@ -627,7 +620,7 @@ public final class NatBitSets {
       return bitSet;
     }
     if (indices instanceof SparseNatBitSet) {
-      return BitSets.toBitSet(((SparseNatBitSet) indices).getSparseBitSet());
+      return BitSets.of(((SparseNatBitSet) indices).getSparseBitSet());
     }
     if (indices instanceof SparseBoundedNatBitSet) {
       SparseBoundedNatBitSet boundedSet = (SparseBoundedNatBitSet) indices;
@@ -636,33 +629,20 @@ public final class NatBitSets {
         boundedSet.forEach((IntConsumer) bitSet::set);
         return bitSet;
       }
-      return BitSets.toBitSet(boundedSet.getSparseBitSet());
+      return BitSets.of(boundedSet.getSparseBitSet());
     }
 
-    BitSet bitSet;
-    if (indices instanceof NatBitSet) {
-      bitSet = new BitSet(((NatBitSet) indices).lastInt());
-    } else if (indices instanceof IntSortedSet) {
-      bitSet = new BitSet(((IntSortedSet) indices).lastInt());
-    } else {
-      bitSet = new BitSet();
-    }
+    BitSet bitSet = new BitSet(indices.lastInt() + 1);
     indices.forEach((IntConsumer) bitSet::set);
     return bitSet;
   }
 
-  public static SparseBitSet toSparseBitSet(IntIterable indices) {
-    if (!(indices instanceof IntCollection)) {
-      SparseBitSet bitSet = new SparseBitSet();
-      indices.forEach((IntConsumer) bitSet::set);
-      return bitSet;
+  public static SparseBitSet toSparseBitSet(NatBitSet indices) {
+    if (indices.isEmpty()) {
+      return new SparseBitSet(1); // 0 is buggy here
     }
-    if (((Collection<?>) indices).isEmpty()) {
-      return new SparseBitSet(0);
-    }
-
     if (indices instanceof SimpleNatBitSet) {
-      return BitSets.toSparse(((SimpleNatBitSet) indices).getBitSet());
+      return SparseBitSets.of(((SimpleNatBitSet) indices).getBitSet());
     }
     if (indices instanceof SimpleBoundedNatBitSet) {
       SimpleBoundedNatBitSet boundedSet = (SimpleBoundedNatBitSet) indices;
@@ -671,7 +651,7 @@ public final class NatBitSets {
         boundedSet.forEach((IntConsumer) bitSet::set);
         return bitSet;
       }
-      return BitSets.toSparse(boundedSet.getBitSet());
+      return SparseBitSets.of(boundedSet.getBitSet());
     }
     if (indices instanceof SparseNatBitSet) {
       return ((SparseNatBitSet) indices).getSparseBitSet().clone();
@@ -685,14 +665,7 @@ public final class NatBitSets {
       return bitSet;
     }
 
-    SparseBitSet bitSet;
-    if (indices instanceof NatBitSet) {
-      bitSet = new SparseBitSet(((NatBitSet) indices).lastInt());
-    } else if (indices instanceof IntSortedSet) {
-      bitSet = new SparseBitSet(((IntSortedSet) indices).lastInt());
-    } else {
-      bitSet = new SparseBitSet();
-    }
+    SparseBitSet bitSet = new SparseBitSet(indices.lastInt() + 1);
     indices.forEach((IntConsumer) bitSet::set);
     return bitSet;
   }

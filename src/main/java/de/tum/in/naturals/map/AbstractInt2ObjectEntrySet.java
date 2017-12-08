@@ -27,6 +27,7 @@ public abstract class AbstractInt2ObjectEntrySet<V, M extends Int2ObjectMap<V>>
     extends AbstractObjectSet<Int2ObjectMap.Entry<V>> implements FastEntrySet<V> {
   protected final M map;
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   public AbstractInt2ObjectEntrySet(M map) {
     this.map = map;
   }

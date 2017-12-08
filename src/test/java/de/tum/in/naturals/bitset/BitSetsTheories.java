@@ -19,6 +19,7 @@ package de.tum.in.naturals.bitset;
 
 import static org.hamcrest.Matchers.is;
 
+import com.zaxxer.sparsebits.SparseBitSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -59,7 +60,7 @@ public class BitSetsTheories {
 
   @DataPoints
   public static List<IntCollection> getIndices() {
-    return indices;
+    return Collections.unmodifiableList(indices);
   }
 
   @Theory(nullsAccepted = false)
@@ -128,7 +129,8 @@ public class BitSetsTheories {
     ints.forEach((IntConsumer) bitSet::set);
 
     IntSet result = new IntOpenHashSet(bitSet.cardinality());
-    BitSets.complementIterator(bitSet, COMPLEMENT_SIZE).forEachRemaining((IntConsumer) result::add);
+    SparseBitSets.complementIterator(bitSet, COMPLEMENT_SIZE)
+        .forEachRemaining((IntConsumer) result::add);
 
     IntSet expected = new IntOpenHashSet();
     for (int i = 0; i < COMPLEMENT_SIZE; i++) {
@@ -146,7 +148,7 @@ public class BitSetsTheories {
     ints.forEach((IntConsumer) bitSet::set);
 
     IntSet result = new IntOpenHashSet(bitSet.cardinality());
-    BitSets.forEach(bitSet, result::add);
+    SparseBitSets.forEach(bitSet, result::add);
 
     IntSet expected = new IntOpenHashSet(ints);
 
@@ -159,7 +161,7 @@ public class BitSetsTheories {
     ints.forEach((IntConsumer) bitSet::set);
 
     IntSet result = new IntOpenHashSet(bitSet.cardinality());
-    BitSets.iterator(bitSet).forEachRemaining((IntConsumer) result::add);
+    SparseBitSets.iterator(bitSet).forEachRemaining((IntConsumer) result::add);
 
     IntSet expected = new IntOpenHashSet(ints);
 

@@ -156,6 +156,7 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return new SimpleBoundedNatBitSet((BitSet) bitSet.clone(), domainSize(), complement);
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public SimpleBoundedNatBitSet complement() {
     return complementView;

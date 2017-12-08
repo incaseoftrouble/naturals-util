@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
  */
 @SuppressWarnings("AssignmentToNull")
 public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
+  public static final int DEFAULT_SIZE = 16;
   private static final long serialVersionUID = 630710213786009957L;
 
   private final V[] array;
@@ -176,6 +177,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     return size == 0;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public IntSet keySet() {
     if (keySetView == null) {
@@ -221,6 +223,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     return size;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public ObjectCollection<V> values() {
     if (valuesView == null) {
@@ -315,8 +318,8 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
 
   @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
   private static class FastMapEntry<V> extends AbstractInt2ObjectMap.BasicEntry<V> {
-    private final Nat2ObjectDenseArrayMap<V> map;
     int index = -1;
+    private final Nat2ObjectDenseArrayMap<V> map;
 
     FastMapEntry(Nat2ObjectDenseArrayMap<V> map) {
       this.map = map;
@@ -384,7 +387,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
 
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
-    public KeySetView clone() throws CloneNotSupportedException {
+    public KeySetView clone() {
       return this;
     }
 

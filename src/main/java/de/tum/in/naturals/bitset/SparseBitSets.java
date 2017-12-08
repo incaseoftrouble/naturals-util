@@ -24,70 +24,63 @@ import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.BitSet;
-import java.util.Set;
 import java.util.function.IntConsumer;
 
 /**
- * Utility class to help interacting with {@link BitSet}.
+ * Utility class to help interacting with {@link SparseBitSet}.
  */
-public final class BitSets {
-  private BitSets() {}
+public final class SparseBitSets {
+  private SparseBitSets() {}
 
-  public static BitSet of(int index) {
-    BitSet bitSet = new BitSet(index + 1);
-    bitSet.set(index);
-    return bitSet;
-  }
-
-  public static BitSet of(int... indices) {
-    BitSet bitSet = new BitSet();
+  public static SparseBitSet of(int... indices) {
+    SparseBitSet bitSet = new SparseBitSet();
     for (int index : indices) {
       bitSet.set(index);
     }
     return bitSet;
   }
 
-  public static BitSet of(IntIterable iterable) {
+  public static SparseBitSet of(IntIterable iterable) {
     if (iterable instanceof NatBitSet) {
-      return NatBitSets.toBitSet((NatBitSet) iterable);
+      return NatBitSets.toSparseBitSet((NatBitSet) iterable);
     }
 
-    BitSet bitSet;
+    SparseBitSet bitSet;
     if (iterable instanceof IntSortedSet) {
       IntSortedSet sortedSet = (IntSortedSet) iterable;
       if (sortedSet.comparator() == null) {
-        bitSet = new BitSet(sortedSet.lastInt());
+        bitSet = new SparseBitSet(sortedSet.lastInt());
       } else {
-        bitSet = new BitSet();
+        bitSet = new SparseBitSet();
       }
     } else {
-      bitSet = new BitSet();
+      bitSet = new SparseBitSet();
     }
     iterable.forEach((IntConsumer) bitSet::set);
     return bitSet;
   }
 
-  public static BitSet of(Iterable<Integer> iterable) {
+  public static SparseBitSet of(Iterable<Integer> iterable) {
     if (iterable instanceof IntIterable) {
       return of((IntIterable) iterable);
     }
 
-    BitSet bitSet = new BitSet();
+    SparseBitSet bitSet = new SparseBitSet();
     iterable.forEach(bitSet::set);
     return bitSet;
   }
 
-  public static BitSet of(SparseBitSet sparseBitSet) {
-    BitSet bitSet = new BitSet(sparseBitSet.length());
-    SparseBitSets.forEach(sparseBitSet, bitSet::set);
-    return bitSet;
+  public static SparseBitSet of(BitSet bitSet) {
+    SparseBitSet sparseBitSet = new SparseBitSet(bitSet.length());
+    BitSets.forEach(bitSet, sparseBitSet::set);
+    return sparseBitSet;
   }
 
-  public static IntIterator complementIterator(BitSet bitSet, int length) {
-    return new BitSetComplementIterator(bitSet, length);
+  public static IntIterator complementIterator(SparseBitSet bitSet, int length) {
+    return new SparseBitSetComplementIterator(bitSet, length);
   }
 
-  public static void forEach(BitSet bitSet, IntConsumer consumer) {
+  public static void forEach(SparseBitSet bitSet, IntConsumer consumer) {
     int length = bitSet.length();
     int cardinality = bitSet.cardinality();
     if (length < cardinality * 2) {
@@ -108,43 +101,11 @@ public final class BitSets {
     }
   }
 
-  public static boolean isSubset(BitSet first, BitSet second) {
-    for (int i = first.nextSetBit(0); i >= 0; i = first.nextSetBit(i + 1)) {
-      if (!second.get(i)) {
-        return false;
-      }
-    }
-
-    return true;
+  public static IntIterator iterator(SparseBitSet bitSet) {
+    return new SparseBitSetIterator(bitSet);
   }
 
-  public static IntIterator iterator(BitSet bitSet) {
-    return new BitSetIterator(bitSet);
-  }
-
-  public static IntIterator iterator(BitSet bitSet, int length) {
-    return new BitSetIterator(bitSet, length);
-  }
-
-  /**
-   * Returns the set containing all subsets of the given basis.
-   * <strong>Warning</strong>: For performance reasons, the iterator of this set may modify the
-   * returned elements in place.
-   */
-  public static Set<BitSet> powerSet(BitSet basis) {
-    int length = basis.length();
-    if (length == basis.cardinality()) {
-      return powerSet(length);
-    }
-    return new PowerBitSet(basis);
-  }
-
-  /**
-   * Returns the set containing subsets of {0, ..., i-1}.
-   * <strong>Warning</strong>: For performance reasons, the iterator of this set may modify the
-   * returned elements in place.
-   */
-  public static Set<BitSet> powerSet(int i) {
-    return new PowerBitSetSimple(i);
+  public static IntIterator iterator(SparseBitSet bitSet, int length) {
+    return new SparseBitSetIterator(bitSet, length);
   }
 }

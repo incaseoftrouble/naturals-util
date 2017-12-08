@@ -115,6 +115,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
     return (BoundedMutableSingletonNatBitSet) super.clone();
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public BoundedNatBitSet complement() {
     return complementView;

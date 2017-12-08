@@ -31,6 +31,7 @@ import java.util.function.IntUnaryOperator;
 public final class Indices {
   private Indices() {}
 
+  @SuppressWarnings("TypeMayBeWeakened")
   public static IntUnaryOperator elementToIndexMap(IntCollection ints) {
     return elementToIndexMap(ints.iterator());
   }
@@ -51,6 +52,7 @@ public final class Indices {
     };
   }
 
+  @SuppressWarnings("TypeMayBeWeakened")
   public static DoubleToIntFunction elementToIndexMap(DoubleCollection doubles) {
     return elementToIndexMap(doubles.iterator());
   }
@@ -84,6 +86,7 @@ public final class Indices {
       }
     }
     if (elementCount == 0) {
+      //noinspection AssignmentOrReturnOfFieldWithMutableType
       return IntArrays.EMPTY_ARRAY;
     }
     int[] indexArray = new int[elementCount];

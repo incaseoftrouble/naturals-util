@@ -17,6 +17,7 @@
 
 package de.tum.in.naturals.bitset;
 
+import com.zaxxer.sparsebits.SparseBitSet;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
 

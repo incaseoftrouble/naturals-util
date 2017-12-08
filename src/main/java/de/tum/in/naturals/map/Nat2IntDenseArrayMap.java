@@ -172,6 +172,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     return size == 0;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public IntSet keySet() {
     if (keySetView == null) {
@@ -217,6 +218,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     return size;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public IntCollection values() {
     if (valuesView == null) {
@@ -309,7 +311,9 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     }
   }
 
-  private static class FastMapEntry extends BasicInt2IntEntry {
+  @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS",
+                      justification = "BasicEntry implements the semantic comparison")
+  private static class FastMapEntry extends AbstractInt2IntMap.BasicEntry {
     private final Nat2IntDenseArrayMap map;
     int index = -1;
 
@@ -379,7 +383,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
 
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
-    public KeySetView clone() throws CloneNotSupportedException {
+    public KeySetView clone() {
       return this;
     }
 

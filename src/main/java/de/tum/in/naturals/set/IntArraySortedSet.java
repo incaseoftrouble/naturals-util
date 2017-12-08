@@ -91,6 +91,7 @@ public class IntArraySortedSet extends AbstractIntSet {
    * @param size
    *     the number of valid elements in {@code a}.
    */
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Intended to expose")
   public IntArraySortedSet(int[] array, int size) {
     if (size > array.length) {
@@ -111,6 +112,7 @@ public class IntArraySortedSet extends AbstractIntSet {
    * @param array
    *     the backing array.
    */
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Intended to expose")
   public IntArraySortedSet(int[] array) {
     assert isSortedUnique(array, array.length);

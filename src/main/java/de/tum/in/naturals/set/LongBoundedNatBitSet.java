@@ -150,6 +150,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return new LongBoundedNatBitSet(store[0], domainSize(), complement);
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public BoundedNatBitSet complement() {
     return complementView;
@@ -214,10 +215,6 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
     checkInDomain(from, to);
     store[0] ^= mask(from, to);
     assert checkConsistency();
-  }
-
-  long[] getStore() {
-    return store;
   }
 
   @Override

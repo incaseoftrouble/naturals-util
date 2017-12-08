@@ -17,8 +17,8 @@
 
 package de.tum.in.naturals.set;
 
-import de.tum.in.naturals.bitset.BitSets;
-import de.tum.in.naturals.bitset.SparseBitSet;
+import com.zaxxer.sparsebits.SparseBitSet;
+import de.tum.in.naturals.bitset.SparseBitSets;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
@@ -116,7 +116,7 @@ class SparseNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void forEach(IntConsumer consumer) {
-    BitSets.forEach(bitSet, consumer);
+    SparseBitSets.forEach(bitSet, consumer);
   }
 
   SparseBitSet getSparseBitSet() {
@@ -144,7 +144,7 @@ class SparseNatBitSet extends AbstractNatBitSet {
 
   @Override
   public IntIterator iterator() {
-    return BitSets.iterator(bitSet);
+    return SparseBitSets.iterator(bitSet);
   }
 
   @Override

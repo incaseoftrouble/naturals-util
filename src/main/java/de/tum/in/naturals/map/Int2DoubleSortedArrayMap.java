@@ -17,6 +17,7 @@
 
 package de.tum.in.naturals.map;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unimi.dsi.fastutil.doubles.AbstractDoubleCollection;
 import it.unimi.dsi.fastutil.doubles.DoubleArrays;
 import it.unimi.dsi.fastutil.doubles.DoubleCollection;
@@ -129,6 +130,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     return Arrays.hashCode(keys) ^ Arrays.hashCode(values);
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public ObjectSet<Entry> int2DoubleEntrySet() {
     if (entrySetView == null) {
@@ -146,6 +148,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     return Arrays.binarySearch(keys, 0, size, key);
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public IntSet keySet() {
     if (keySetView == null) {
@@ -177,7 +180,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
 
     if (size == keys.length) {
       int newSize = size * 2;
-      assert 0 < size && size < newSize;
+      assert size < newSize;
       if (insertionPoint == size) {
         keys = Arrays.copyOf(keys, newSize);
         values = Arrays.copyOf(values, newSize);
@@ -262,6 +265,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     values = Arrays.copyOf(values, size);
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public DoubleCollection values() {
     if (valuesView == null) {
@@ -358,7 +362,9 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  private static class FastMapEntry extends BasicInt2DoubleEntry {
+  @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS",
+                      justification = "BasicEntry implements the semantic comparison")
+  private static class FastMapEntry extends AbstractInt2DoubleMap.BasicEntry {
     private final Int2DoubleSortedArrayMap map;
     int index = -1;
 
@@ -393,7 +399,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
 
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
-    public KeySetView clone() throws CloneNotSupportedException {
+    public KeySetView clone() {
       return this;
     }
 
@@ -425,7 +431,9 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  private static class MapEntry extends BasicInt2DoubleEntry {
+  @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS",
+                      justification = "BasicEntry implements the semantic comparison")
+  private static class MapEntry extends AbstractInt2DoubleMap.BasicEntry {
     private final int index;
     private final Int2DoubleSortedArrayMap map;
 

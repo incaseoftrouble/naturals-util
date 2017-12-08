@@ -30,8 +30,9 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
 
+import com.zaxxer.sparsebits.SparseBitSet;
 import de.tum.in.naturals.bitset.BitSets;
-import de.tum.in.naturals.bitset.SparseBitSet;
+import de.tum.in.naturals.bitset.SparseBitSets;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntCollection;
@@ -45,6 +46,7 @@ import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -297,22 +299,22 @@ public class NatBitSetTheories {
 
   @DataPoints("base")
   public static Set<IntCollection> getBases() {
-    return fixedSets;
+    return Collections.unmodifiableSet(fixedSets);
   }
 
   @DataPoints("implementation")
   public static List<Pair> getImplementations() {
-    return implementations;
+    return Collections.unmodifiableList(implementations);
   }
 
   @DataPoints("small")
   public static List<List<Consumer<NatBitSet>>> getLargeMutations() {
-    return smallMutations;
+    return Collections.unmodifiableList(smallMutations);
   }
 
   @DataPoints("large")
   public static List<List<Consumer<NatBitSet>>> getSmallMutations() {
-    return largeMutations;
+    return Collections.unmodifiableList(largeMutations);
   }
 
   private void checkEquality(NatBitSet actual, NatBitSet expected) {
@@ -888,7 +890,7 @@ public class NatBitSetTheories {
 
     SparseBitSet bitSet = NatBitSets.toSparseBitSet(set);
     IntSet reference = new IntAVLTreeSet();
-    BitSets.forEach(bitSet, reference::add);
+    SparseBitSets.forEach(bitSet, reference::add);
     assertThat(set, is(reference));
   }
 
@@ -1270,7 +1272,7 @@ public class NatBitSetTheories {
 
       clear();
       collection.xor(other);
-      BitSets.forEach(collection, this::set);
+      SparseBitSets.forEach(collection, this::set);
     }
   }
 

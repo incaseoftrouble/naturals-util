@@ -62,12 +62,14 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
     throw new UnsupportedOperationException();
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public FixedSizeNatBitSet clone() {
     // Immutable object
     return this;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public BoundedNatBitSet complement() {
     return complementView;
@@ -89,7 +91,7 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
     }
     if (indices instanceof NatBitSet) {
       NatBitSet natBitSet = (NatBitSet) indices;
-      return 0 <= natBitSet.firstInt() && natBitSet.lastInt() < domainSize();
+      return natBitSet.lastInt() < domainSize();
     }
     if (indices instanceof IntSortedSet) {
       IntSortedSet sortedSet = (IntSortedSet) indices;

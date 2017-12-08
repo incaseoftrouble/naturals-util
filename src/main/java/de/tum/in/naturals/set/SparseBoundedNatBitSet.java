@@ -17,8 +17,8 @@
 
 package de.tum.in.naturals.set;
 
-import de.tum.in.naturals.bitset.BitSets;
-import de.tum.in.naturals.bitset.SparseBitSet;
+import com.zaxxer.sparsebits.SparseBitSet;
+import de.tum.in.naturals.bitset.SparseBitSets;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.ints.IntCollection;
@@ -142,6 +142,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return new SparseBoundedNatBitSet(bitSet.clone(), domainSize(), complement);
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public BoundedNatBitSet complement() {
     return complementView;
@@ -285,8 +286,8 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   public IntIterator iterator() {
     assert checkConsistency();
     return complement
-        ? BitSets.complementIterator(bitSet, domainSize())
-        : BitSets.iterator(bitSet, domainSize());
+        ? SparseBitSets.complementIterator(bitSet, domainSize())
+        : SparseBitSets.iterator(bitSet, domainSize());
   }
 
   @Override

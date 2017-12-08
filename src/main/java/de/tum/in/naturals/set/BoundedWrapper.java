@@ -109,6 +109,7 @@ class BoundedWrapper extends AbstractBoundedNatBitSet {
     return new BoundedWrapper(delegate, domainSize());
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public BoundedNatBitSet complement() {
     return complementView;

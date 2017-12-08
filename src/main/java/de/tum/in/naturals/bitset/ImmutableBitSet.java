@@ -77,6 +77,7 @@ public final class ImmutableBitSet extends BitSet {
     throw new UnsupportedOperationException();
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public ImmutableBitSet clone() {
     return this;
