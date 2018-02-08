@@ -1,5 +1,10 @@
 # 0.x
 
+### 0.9.0 (2018-02-07)
+
+  * Some more utility in `Indices`, `BitSets`, and `SparseBitSets`
+  * Added `Arrays2`, a (small) collection of array utilities
+
 ### 0.8.0 (2017-12-08)
 
   * Split `BitSets` in `SparseBitSets` and `BitSets`

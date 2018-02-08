@@ -56,7 +56,7 @@ public final class BitSets {
     if (iterable instanceof IntSortedSet) {
       IntSortedSet sortedSet = (IntSortedSet) iterable;
       if (sortedSet.comparator() == null) {
-        bitSet = new BitSet(sortedSet.lastInt());
+        bitSet = new BitSet(sortedSet.lastInt() + 1);
       } else {
         bitSet = new BitSet();
       }
@@ -81,6 +81,10 @@ public final class BitSets {
     BitSet bitSet = new BitSet(sparseBitSet.length());
     SparseBitSets.forEach(sparseBitSet, bitSet::set);
     return bitSet;
+  }
+
+  public static BitSet copyOf(BitSet bitset) {
+    return (BitSet) bitset.clone();
   }
 
   public static IntIterator complementIterator(BitSet bitSet, int length) {
@@ -118,6 +122,10 @@ public final class BitSets {
     return true;
   }
 
+  public static boolean isDisjoint(BitSet first, BitSet second) {
+    return !first.intersects(second);
+  }
+
   public static IntIterator iterator(BitSet bitSet) {
     return new BitSetIterator(bitSet);
   }
@@ -139,11 +147,6 @@ public final class BitSets {
     return new PowerBitSet(basis);
   }
 
-  /**
-   * Returns the set containing subsets of {0, ..., i-1}.
-   * <strong>Warning</strong>: For performance reasons, the iterator of this set may modify the
-   * returned elements in place.
-   */
   public static Set<BitSet> powerSet(int i) {
     return new PowerBitSetSimple(i);
   }

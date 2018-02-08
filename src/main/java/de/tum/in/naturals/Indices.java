@@ -24,14 +24,16 @@ import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import it.unimi.dsi.fastutil.ints.Int2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntIterable;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.PrimitiveIterator;
 import java.util.function.DoubleToIntFunction;
 import java.util.function.IntUnaryOperator;
 
+@SuppressWarnings("TypeMayBeWeakened")
 public final class Indices {
   private Indices() {}
 
-  @SuppressWarnings("TypeMayBeWeakened")
   public static IntUnaryOperator elementToIndexMap(IntCollection ints) {
     return elementToIndexMap(ints.iterator());
   }
@@ -52,7 +54,6 @@ public final class Indices {
     };
   }
 
-  @SuppressWarnings("TypeMayBeWeakened")
   public static DoubleToIntFunction elementToIndexMap(DoubleCollection doubles) {
     return elementToIndexMap(doubles.iterator());
   }
@@ -85,6 +86,7 @@ public final class Indices {
         elementCount += 1;
       }
     }
+
     if (elementCount == 0) {
       //noinspection AssignmentOrReturnOfFieldWithMutableType
       return IntArrays.EMPTY_ARRAY;
@@ -98,5 +100,44 @@ public final class Indices {
       }
     }
     return indexArray;
+  }
+
+  public static <E> void forEachIndexed(Iterable<E> elements, IndexConsumer<E> action) {
+    int index = 0;
+    for (E element : elements) {
+      action.accept(index, element);
+      index += 1;
+    }
+  }
+
+  public static void forEachIndexed(IntIterable elements, IntIndexConsumer action) {
+    int index = 0;
+    IntIterator iterator = elements.iterator();
+    while (iterator.hasNext()) {
+      action.accept(index, iterator.nextInt());
+      index += 1;
+    }
+  }
+
+  public static <E> void forEachIndexed(E[] elements, IndexConsumer<E> action) {
+    for (int i = 0; i < elements.length; i++) {
+      action.accept(i, elements[i]);
+    }
+  }
+
+  public static void forEachIndexed(int[] elements, IntIndexConsumer action) {
+    for (int i = 0; i < elements.length; i++) {
+      action.accept(i, elements[i]);
+    }
+  }
+
+  @FunctionalInterface
+  interface IndexConsumer<E> {
+    void accept(int index, E element);
+  }
+
+  @FunctionalInterface
+  interface IntIndexConsumer {
+    void accept(int index, int element);
   }
 }

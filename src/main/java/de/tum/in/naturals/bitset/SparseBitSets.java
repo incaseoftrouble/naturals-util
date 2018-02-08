@@ -49,7 +49,7 @@ public final class SparseBitSets {
     if (iterable instanceof IntSortedSet) {
       IntSortedSet sortedSet = (IntSortedSet) iterable;
       if (sortedSet.comparator() == null) {
-        bitSet = new SparseBitSet(sortedSet.lastInt());
+        bitSet = new SparseBitSet(sortedSet.lastInt() + 1);
       } else {
         bitSet = new SparseBitSet();
       }
@@ -99,6 +99,20 @@ public final class SparseBitSets {
         consumer.accept(i);
       }
     }
+  }
+
+  public static boolean isSubset(SparseBitSet first, SparseBitSet second) {
+    for (int i = first.nextSetBit(0); i >= 0; i = first.nextSetBit(i + 1)) {
+      if (!second.get(i)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean isDisjoint(SparseBitSet first, SparseBitSet second) {
+    return !first.intersects(second);
   }
 
   public static IntIterator iterator(SparseBitSet bitSet) {
