@@ -17,7 +17,6 @@
 
 package de.tum.in.naturals.map;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unimi.dsi.fastutil.doubles.AbstractDoubleCollection;
 import it.unimi.dsi.fastutil.doubles.DoubleArrays;
 import it.unimi.dsi.fastutil.doubles.DoubleCollection;
@@ -362,8 +361,6 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS",
-                      justification = "BasicEntry implements the semantic comparison")
   private static class FastMapEntry extends AbstractInt2DoubleMap.BasicEntry {
     private final Int2DoubleSortedArrayMap map;
     int index = -1;
@@ -431,8 +428,6 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS",
-                      justification = "BasicEntry implements the semantic comparison")
   private static class MapEntry extends AbstractInt2DoubleMap.BasicEntry {
     private final int index;
     private final Int2DoubleSortedArrayMap map;

@@ -680,6 +680,6 @@ public final class NatBitSets {
       }
     }
     return expectedLength > SPARSE_THRESHOLD
-        || expectedSize != UNKNOWN_SIZE && expectedSize > SPARSE_THRESHOLD;
+        || (expectedSize != UNKNOWN_SIZE && expectedSize > SPARSE_THRESHOLD);
   }
 }

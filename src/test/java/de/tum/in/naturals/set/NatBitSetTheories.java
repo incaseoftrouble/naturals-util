@@ -1322,9 +1322,7 @@ public class NatBitSetTheories {
 
     @Override
     public boolean equals(Object o) {
-      return this == o
-          || o instanceof Pair
-          && set.equals(((Pair) o).set);
+      return this == o || (o instanceof Pair && set.equals(((Pair) o).set));
     }
 
     @Override

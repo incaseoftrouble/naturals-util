@@ -10,7 +10,7 @@ You can either build the jar using gradle (see below) or fetch it from maven cen
     <dependency>
       <groupId>de.tum.in</groupId>
       <artifactId>naturals-util</artifactId>
-      <version>0.8.0</version>
+      <version>0.10.0</version>
     </dependency>
 
 ## Building

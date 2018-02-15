@@ -119,25 +119,13 @@ public final class Indices {
     }
   }
 
-  public static <E> void forEachIndexed(E[] elements, IndexConsumer<E> action) {
-    for (int i = 0; i < elements.length; i++) {
-      action.accept(i, elements[i]);
-    }
-  }
-
-  public static void forEachIndexed(int[] elements, IntIndexConsumer action) {
-    for (int i = 0; i < elements.length; i++) {
-      action.accept(i, elements[i]);
-    }
-  }
-
   @FunctionalInterface
-  interface IndexConsumer<E> {
+  public interface IndexConsumer<E> {
     void accept(int index, E element);
   }
 
   @FunctionalInterface
-  interface IntIndexConsumer {
+  public interface IntIndexConsumer {
     void accept(int index, int element);
   }
 }

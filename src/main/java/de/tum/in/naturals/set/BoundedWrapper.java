@@ -17,7 +17,6 @@
 
 package de.tum.in.naturals.set;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -142,8 +141,6 @@ class BoundedWrapper extends AbstractBoundedNatBitSet {
 
   @Override
   @Nonnegative
-  @SuppressFBWarnings(value = "TQ_NEVER_VALUE_USED_WHERE_ALWAYS_REQUIRED",
-                      justification = "Findbugs doesn't infer @Nonnull from control flow")
   public int firstInt() {
     if (complement) {
       int nextPresent = nextPresentIndex(0);

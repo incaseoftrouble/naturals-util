@@ -17,7 +17,6 @@
 
 package de.tum.in.naturals.set;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unimi.dsi.fastutil.ints.AbstractIntSet;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntCollection;
@@ -92,7 +91,6 @@ public class IntArraySortedSet extends AbstractIntSet {
    *     the number of valid elements in {@code a}.
    */
   @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Intended to expose")
   public IntArraySortedSet(int[] array, int size) {
     if (size > array.length) {
       throw new IllegalArgumentException(String.format("Size %d larger than array %d",
@@ -113,7 +111,6 @@ public class IntArraySortedSet extends AbstractIntSet {
    *     the backing array.
    */
   @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Intended to expose")
   public IntArraySortedSet(int[] array) {
     assert isSortedUnique(array, array.length);
     this.array = array;

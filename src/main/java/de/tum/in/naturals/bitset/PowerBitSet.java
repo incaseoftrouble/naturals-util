@@ -73,6 +73,7 @@ class PowerBitSet extends AbstractSet<BitSet> implements Size64 {
     return new PowerBitSetIterator(baseSet);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public int size() {
     return baseSize >= Integer.SIZE ? Integer.MAX_VALUE : 1 << baseSize;

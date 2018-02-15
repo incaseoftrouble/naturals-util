@@ -17,7 +17,6 @@
 
 package de.tum.in.naturals.set;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -28,8 +27,6 @@ import java.util.NoSuchElementException;
  *
  * <strong>Warning</strong>: For performance, the returned array is modified in place.
  */
-@SuppressFBWarnings(value = "EI_EXPOSE_REP",
-                    justification = "We deliberately return the array in-place.")
 public class PowerSetIterator implements Iterator<boolean[]> {
   private final boolean[] base;
   private final boolean[] current;

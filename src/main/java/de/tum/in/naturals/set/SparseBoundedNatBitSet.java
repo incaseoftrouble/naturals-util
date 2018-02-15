@@ -19,7 +19,6 @@ package de.tum.in.naturals.set;
 
 import com.zaxxer.sparsebits.SparseBitSet;
 import de.tum.in.naturals.bitset.SparseBitSets;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -291,9 +290,6 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   }
 
   @Override
-  @SuppressFBWarnings(value = {"TQ_COMPARING_VALUES_WITH_INCOMPATIBLE_TYPE_QUALIFIERS",
-      "TQ_NEVER_VALUE_USED_WHERE_ALWAYS_REQUIRED"},
-                      justification = "Findbugs doesn't infer @Nonnull from control flow")
   public int lastInt() {
     int lastInt = complement
         ? NatBitSets.previousAbsentIndex(bitSet, domainSize() - 1)

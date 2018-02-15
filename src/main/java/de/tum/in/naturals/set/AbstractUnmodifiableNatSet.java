@@ -63,6 +63,7 @@ public abstract class AbstractUnmodifiableNatSet extends AbstractIntSet implemen
     throw new UnsupportedOperationException();
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public boolean removeIf(Predicate<? super Integer> filter) {
     throw new UnsupportedOperationException();

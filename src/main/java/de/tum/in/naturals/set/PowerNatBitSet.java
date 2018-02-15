@@ -70,6 +70,7 @@ class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
     return new PowerNatBitSetIterator(baseSet);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public int size() {
     return baseSize >= Integer.SIZE ? Integer.MAX_VALUE : 1 << baseSize;

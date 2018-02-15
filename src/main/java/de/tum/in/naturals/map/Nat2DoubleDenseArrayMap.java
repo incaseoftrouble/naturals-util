@@ -17,7 +17,6 @@
 
 package de.tum.in.naturals.map;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.doubles.AbstractDoubleCollection;
 import it.unimi.dsi.fastutil.doubles.DoubleCollection;
@@ -55,7 +54,6 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   @Nullable
   private transient ValuesView valuesView = null;
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public Nat2DoubleDenseArrayMap(double[] array) {
     //noinspection AssignmentToCollectionOrArrayFieldFromParameter
     this.array = array;
@@ -310,8 +308,6 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS",
-                      justification = "BasicEntry implements the semantic comparison")
   private static class FastMapEntry extends AbstractInt2DoubleMap.BasicEntry {
     private final Nat2DoubleDenseArrayMap map;
     int index = -1;

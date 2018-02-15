@@ -312,6 +312,7 @@ public class IntPreOrder {
    * Determines whether the pre-order defined by this object <strong>strictly</strong> refines the
    * {@code other}.
    */
+  @SuppressWarnings("ReferenceEquality")
   public boolean refines(IntPreOrder other) {
     //noinspection ObjectEquality
     if (this == other) {

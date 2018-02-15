@@ -24,6 +24,7 @@ import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.BitSet;
+import java.util.PrimitiveIterator;
 import java.util.function.IntConsumer;
 
 /**
@@ -68,6 +69,13 @@ public final class SparseBitSets {
     SparseBitSet bitSet = new SparseBitSet();
     iterable.forEach(bitSet::set);
     return bitSet;
+  }
+
+  @SuppressWarnings("TypeMayBeWeakened")
+  public static SparseBitSet of(PrimitiveIterator.OfInt iterator) {
+    SparseBitSet sparseBitSet = new SparseBitSet();
+    iterator.forEachRemaining((IntConsumer) sparseBitSet::set);
+    return sparseBitSet;
   }
 
   public static SparseBitSet of(BitSet bitSet) {

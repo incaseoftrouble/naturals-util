@@ -24,6 +24,7 @@ import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.BitSet;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.function.IntConsumer;
 
@@ -74,6 +75,13 @@ public final class BitSets {
 
     BitSet bitSet = new BitSet();
     iterable.forEach(bitSet::set);
+    return bitSet;
+  }
+
+  @SuppressWarnings("TypeMayBeWeakened")
+  public static BitSet of(PrimitiveIterator.OfInt iterator) {
+    BitSet bitSet = new BitSet();
+    iterator.forEachRemaining((IntConsumer) bitSet::set);
     return bitSet;
   }
 
