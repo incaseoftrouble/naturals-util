@@ -22,6 +22,7 @@ import static de.tum.in.naturals.BitUtil.maskTo;
 
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 
 class LongNatBitSet extends AbstractNatBitSet {
@@ -141,7 +142,7 @@ class LongNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public boolean intersects(IntCollection indices) {
+  public boolean intersects(Collection<Integer> indices) {
     if (indices instanceof LongNatBitSet) {
       LongNatBitSet other = (LongNatBitSet) indices;
       return (store & other.store) != 0L;

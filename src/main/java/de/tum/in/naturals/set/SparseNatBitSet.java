@@ -21,6 +21,7 @@ import com.zaxxer.sparsebits.SparseBitSet;
 import de.tum.in.naturals.bitset.SparseBitSets;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
 
@@ -79,15 +80,29 @@ class SparseNatBitSet extends AbstractNatBitSet {
 
   @Override
   public boolean containsAll(IntCollection indices) {
+    if (isEmpty()) {
+      return indices.isEmpty();
+    }
     if (indices.isEmpty()) {
       return true;
     }
     if (indices instanceof SparseNatBitSet) {
       SparseNatBitSet other = (SparseNatBitSet) indices;
+      if (lastInt() < other.lastInt()) {
+        return false;
+      }
+      return SparseBitSets.isSubset(other.bitSet, bitSet);
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+      int lastInt = lastInt();
+      if (lastInt < other.lastInt()) {
+        return false;
+      }
 
-      SparseBitSet clone = other.bitSet.clone();
-      clone.andNot(bitSet);
-      return clone.isEmpty();
+      return other.isComplement()
+          ? SparseBitSets.isSubsetConsuming(other.complementBits(), bitSet)
+          : SparseBitSets.isSubset(other.getSparseBitSet(), bitSet);
     }
     return super.containsAll(indices);
   }
@@ -129,7 +144,7 @@ class SparseNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public boolean intersects(IntCollection indices) {
+  public boolean intersects(Collection<Integer> indices) {
     if (indices instanceof SparseNatBitSet) {
       SparseNatBitSet other = (SparseNatBitSet) indices;
       return bitSet.intersects(other.bitSet);
@@ -178,12 +193,12 @@ class SparseNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int previousAbsentIndex(int index) {
-    return NatBitSets.previousAbsentIndex(bitSet, index);
+    return NatBitSetsUtil.previousAbsentIndex(bitSet, index);
   }
 
   @Override
   public int previousPresentIndex(int index) {
-    return NatBitSets.previousPresentIndex(bitSet, index);
+    return NatBitSetsUtil.previousPresentIndex(bitSet, index);
   }
 
   @Override

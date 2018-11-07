@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
 
@@ -89,8 +90,11 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
   }
 
   @Override
-  public boolean intersects(IntCollection indices) {
-    return IntIterators.any(indices.iterator(), this::contains);
+  public boolean intersects(Collection<Integer> indices) {
+    if (indices instanceof IntCollection) {
+      return IntIterators.any(((IntCollection) indices).iterator(), this::contains);
+    }
+    return NatBitSet.super.intersects(indices);
   }
 
   @Override

@@ -20,6 +20,7 @@ package de.tum.in.naturals.set;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import javax.annotation.Nonnegative;
 
@@ -174,7 +175,7 @@ class BoundedWrapper extends AbstractBoundedNatBitSet {
   }
 
   @Override
-  public boolean intersects(IntCollection indices) {
+  public boolean intersects(Collection<Integer> indices) {
     if (complement) {
       return super.intersects(indices);
     }

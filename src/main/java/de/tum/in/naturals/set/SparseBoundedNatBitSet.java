@@ -147,7 +147,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return complementView;
   }
 
-  private SparseBitSet complementBits() {
+  SparseBitSet complementBits() {
     SparseBitSet copy = bitSet.clone();
     copy.flip(0, domainSize());
     return copy;
@@ -175,6 +175,18 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
       }
 
       SparseBitSet otherSetBits = other.complement ? other.complementBits() : other.bitSet;
+      SparseBitSet unsetBits = complement ? bitSet : complementBits();
+
+      return !unsetBits.intersects(otherSetBits);
+    }
+    if (indices instanceof SparseNatBitSet) {
+      SparseNatBitSet other = (SparseNatBitSet) indices;
+      int otherLastInt = other.lastInt();
+      if (!inDomain(otherLastInt) || lastInt() < otherLastInt) {
+        return false;
+      }
+
+      SparseBitSet otherSetBits = other.getSparseBitSet();
       SparseBitSet unsetBits = complement ? bitSet : complementBits();
 
       return !unsetBits.intersects(otherSetBits);
@@ -292,7 +304,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public int lastInt() {
     int lastInt = complement
-        ? NatBitSets.previousAbsentIndex(bitSet, domainSize() - 1)
+        ? NatBitSetsUtil.previousAbsentIndex(bitSet, domainSize() - 1)
         : bitSet.length() - 1;
     assert checkConsistency();
     if (lastInt == -1) {
@@ -409,8 +421,8 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
       return index;
     }
     return complement
-        ? NatBitSets.previousPresentIndex(bitSet, index)
-        : NatBitSets.previousAbsentIndex(bitSet, index);
+        ? NatBitSetsUtil.previousPresentIndex(bitSet, index)
+        : NatBitSetsUtil.previousAbsentIndex(bitSet, index);
   }
 
   @Override
@@ -419,8 +431,8 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     NatBitSetsUtil.checkNonNegative(index);
     int clampedIndex = Math.min(index, domainSize() - 1);
     return complement
-        ? NatBitSets.previousAbsentIndex(bitSet, clampedIndex)
-        : NatBitSets.previousPresentIndex(bitSet, clampedIndex);
+        ? NatBitSetsUtil.previousAbsentIndex(bitSet, clampedIndex)
+        : NatBitSetsUtil.previousPresentIndex(bitSet, clampedIndex);
   }
 
   @Override

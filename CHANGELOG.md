@@ -1,5 +1,12 @@
 # 0.x
 
+### 0.11.0
+
+ * Improve `containsAll` for bounded/unbounded pairs
+ * Add `NatBitSetFactory` - Useful to transparently change used implementation
+ * Extract some factory methods to `NatBitSetProvider`
+ * Update some dependencies
+
 ### 0.10.0 (2018-02-15)
 
  * Fixed a visibility issue in `Indices`, removed superfluous method

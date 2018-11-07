@@ -21,6 +21,7 @@ import de.tum.in.naturals.bitset.BitSets;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
@@ -80,12 +81,22 @@ class SimpleNatBitSet extends AbstractNatBitSet {
 
   @Override
   public boolean containsAll(IntCollection indices) {
+    if (isEmpty()) {
+      return indices.isEmpty();
+    }
+    if (indices.isEmpty()) {
+      return true;
+    }
     if (indices instanceof SimpleNatBitSet) {
       SimpleNatBitSet other = (SimpleNatBitSet) indices;
+      return BitSets.isSubset(other.bitSet, bitSet);
+    }
+    if (indices instanceof SimpleBoundedNatBitSet) {
+      SimpleBoundedNatBitSet other = (SimpleBoundedNatBitSet) indices;
 
-      BitSet clone = (BitSet) other.bitSet.clone();
-      clone.andNot(bitSet);
-      return clone.isEmpty();
+      return other.isComplement()
+          ? BitSets.isSubsetConsuming(other.complementBits(), bitSet)
+          : BitSets.isSubset(other.getBitSet(), bitSet);
     }
     return super.containsAll(indices);
   }
@@ -132,7 +143,7 @@ class SimpleNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public boolean intersects(IntCollection indices) {
+  public boolean intersects(Collection<Integer> indices) {
     if (indices instanceof SimpleNatBitSet) {
       SimpleNatBitSet other = (SimpleNatBitSet) indices;
       return bitSet.intersects(other.bitSet);

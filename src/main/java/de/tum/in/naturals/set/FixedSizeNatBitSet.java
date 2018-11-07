@@ -21,6 +21,7 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
@@ -133,22 +134,26 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
   }
 
   @Override
-  public boolean intersects(IntCollection indices) {
+  public boolean intersects(Collection<Integer> indices) {
     if (isEmpty() || indices.isEmpty()) {
       return false;
     }
-    if (indices instanceof NatBitSet) {
-      NatBitSet natBitSet = (NatBitSet) indices;
-      return contains(natBitSet.firstInt());
+    if (indices instanceof IntCollection) {
+      IntCollection intIndices = ((IntCollection) indices);
+      if (indices instanceof NatBitSet) {
+        NatBitSet natBitSet = (NatBitSet) indices;
+        return contains(natBitSet.firstInt());
+      }
+      if (indices instanceof IntSortedSet) {
+        IntSortedSet sortedInts = (IntSortedSet) indices;
+        return !sortedInts.subSet(0, domainSize()).isEmpty();
+      }
+      if (indices.size() <= domainSize()) {
+        return IntIterators.any(intIndices.iterator(), this::contains);
+      }
+      return IntIterators.any(iterator(), indices::contains);
     }
-    if (indices instanceof IntSortedSet) {
-      IntSortedSet sortedInts = (IntSortedSet) indices;
-      return !sortedInts.subSet(0, domainSize()).isEmpty();
-    }
-    if (indices.size() <= domainSize()) {
-      return IntIterators.any(indices.iterator(), this::contains);
-    }
-    return IntIterators.any(iterator(), indices::contains);
+    return super.intersects(indices);
   }
 
   @Override

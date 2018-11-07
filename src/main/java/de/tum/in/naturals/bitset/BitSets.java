@@ -19,7 +19,7 @@ package de.tum.in.naturals.bitset;
 
 import com.zaxxer.sparsebits.SparseBitSet;
 import de.tum.in.naturals.set.NatBitSet;
-import de.tum.in.naturals.set.NatBitSets;
+import de.tum.in.naturals.set.NatBitSetProvider;
 import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
@@ -33,6 +33,10 @@ import java.util.function.IntConsumer;
  */
 public final class BitSets {
   private BitSets() {}
+
+  public static BitSet of() {
+    return new BitSet(0);
+  }
 
   public static BitSet of(int index) {
     BitSet bitSet = new BitSet(index + 1);
@@ -50,7 +54,7 @@ public final class BitSets {
 
   public static BitSet of(IntIterable iterable) {
     if (iterable instanceof NatBitSet) {
-      return NatBitSets.toBitSet((NatBitSet) iterable);
+      return NatBitSetProvider.toBitSet((NatBitSet) iterable);
     }
 
     BitSet bitSet;
@@ -85,6 +89,16 @@ public final class BitSets {
     return bitSet;
   }
 
+  public static BitSet of(boolean... indices) {
+    BitSet bitSet = new BitSet(indices.length);
+    for (int i = 0; i < indices.length; i++) {
+      if (indices[i]) {
+        bitSet.set(i);
+      }
+    }
+    return bitSet;
+  }
+
   public static BitSet of(SparseBitSet sparseBitSet) {
     BitSet bitSet = new BitSet(sparseBitSet.length());
     SparseBitSets.forEach(sparseBitSet, bitSet::set);
@@ -95,9 +109,11 @@ public final class BitSets {
     return (BitSet) bitset.clone();
   }
 
+
   public static IntIterator complementIterator(BitSet bitSet, int length) {
     return new BitSetComplementIterator(bitSet, length);
   }
+
 
   public static void forEach(BitSet bitSet, IntConsumer consumer) {
     int length = bitSet.length();
@@ -120,19 +136,28 @@ public final class BitSets {
     }
   }
 
-  public static boolean isSubset(BitSet first, BitSet second) {
-    for (int i = first.nextSetBit(0); i >= 0; i = first.nextSetBit(i + 1)) {
-      if (!second.get(i)) {
-        return false;
-      }
-    }
 
-    return true;
+  /**
+   * Checks if {@code first} is a subset of {@code second}.
+   */
+  public static boolean isSubset(BitSet first, BitSet second) {
+    return isSubsetConsuming(copyOf(first), second);
   }
+
+  /**
+   * Checks if {@code first} is a subset of {@code second}, potentially modifying both sets in the
+   * process.
+   */
+  public static boolean isSubsetConsuming(BitSet first, BitSet second) {
+    first.andNot(second);
+    return first.isEmpty();
+  }
+
 
   public static boolean isDisjoint(BitSet first, BitSet second) {
     return !first.intersects(second);
   }
+
 
   public static IntIterator iterator(BitSet bitSet) {
     return new BitSetIterator(bitSet);
@@ -141,6 +166,7 @@ public final class BitSets {
   public static IntIterator iterator(BitSet bitSet, int length) {
     return new BitSetIterator(bitSet, length);
   }
+
 
   /**
    * Returns the set containing all subsets of the given basis.

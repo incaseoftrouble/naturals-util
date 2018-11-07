@@ -132,7 +132,7 @@ public interface NatBitSet extends NatSet, Cloneable {
    *
    * @see BitSet#intersects(BitSet)
    */
-  default boolean intersects(IntCollection indices) {
+  default boolean intersects(Collection<Integer> indices) {
     IntIterator iterator = iterator();
     while (iterator.hasNext()) {
       if (indices.contains(iterator.nextInt())) {

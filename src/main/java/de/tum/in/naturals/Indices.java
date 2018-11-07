@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.PrimitiveIterator;
 import java.util.function.DoubleToIntFunction;
 import java.util.function.IntUnaryOperator;
+import javax.annotation.Nonnegative;
 
 @SuppressWarnings("TypeMayBeWeakened")
 public final class Indices {
@@ -121,11 +122,11 @@ public final class Indices {
 
   @FunctionalInterface
   public interface IndexConsumer<E> {
-    void accept(int index, E element);
+    void accept(@Nonnegative int index, E element);
   }
 
   @FunctionalInterface
   public interface IntIndexConsumer {
-    void accept(int index, int element);
+    void accept(@Nonnegative int index, int element);
   }
 }

@@ -19,7 +19,7 @@ package de.tum.in.naturals.bitset;
 
 import com.zaxxer.sparsebits.SparseBitSet;
 import de.tum.in.naturals.set.NatBitSet;
-import de.tum.in.naturals.set.NatBitSets;
+import de.tum.in.naturals.set.NatBitSetProvider;
 import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
@@ -33,6 +33,10 @@ import java.util.function.IntConsumer;
 public final class SparseBitSets {
   private SparseBitSets() {}
 
+  public static SparseBitSet of() {
+    return new SparseBitSet(0);
+  }
+
   public static SparseBitSet of(int... indices) {
     SparseBitSet bitSet = new SparseBitSet();
     for (int index : indices) {
@@ -43,7 +47,7 @@ public final class SparseBitSets {
 
   public static SparseBitSet of(IntIterable iterable) {
     if (iterable instanceof NatBitSet) {
-      return NatBitSets.toSparseBitSet((NatBitSet) iterable);
+      return NatBitSetProvider.toSparseBitSet((NatBitSet) iterable);
     }
 
     SparseBitSet bitSet;
@@ -84,9 +88,11 @@ public final class SparseBitSets {
     return sparseBitSet;
   }
 
+
   public static IntIterator complementIterator(SparseBitSet bitSet, int length) {
     return new SparseBitSetComplementIterator(bitSet, length);
   }
+
 
   public static void forEach(SparseBitSet bitSet, IntConsumer consumer) {
     int length = bitSet.length();
@@ -109,19 +115,28 @@ public final class SparseBitSets {
     }
   }
 
-  public static boolean isSubset(SparseBitSet first, SparseBitSet second) {
-    for (int i = first.nextSetBit(0); i >= 0; i = first.nextSetBit(i + 1)) {
-      if (!second.get(i)) {
-        return false;
-      }
-    }
 
-    return true;
+  /**
+   * Checks if {@code first} is a subset of {@code second}.
+   */
+  public static boolean isSubset(SparseBitSet first, SparseBitSet second) {
+    return isSubsetConsuming(first.clone(), second);
   }
+
+  /**
+   * Checks if {@code first} is a subset of {@code second}, potentially modifying both sets in the
+   * process.
+   */
+  public static boolean isSubsetConsuming(SparseBitSet first, SparseBitSet second) {
+    first.andNot(second);
+    return first.isEmpty();
+  }
+
 
   public static boolean isDisjoint(SparseBitSet first, SparseBitSet second) {
     return !first.intersects(second);
   }
+
 
   public static IntIterator iterator(SparseBitSet bitSet) {
     return new SparseBitSetIterator(bitSet);

@@ -162,7 +162,7 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return complementView;
   }
 
-  private BitSet complementBits() {
+  BitSet complementBits() {
     BitSet copy = (BitSet) bitSet.clone();
     copy.flip(0, domainSize());
     return copy;
@@ -190,6 +190,18 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
       }
 
       BitSet otherSetBits = other.complement ? other.complementBits() : other.bitSet;
+      BitSet unsetBits = complement ? bitSet : complementBits();
+
+      return !unsetBits.intersects(otherSetBits);
+    }
+    if (indices instanceof SimpleNatBitSet) {
+      SimpleNatBitSet other = (SimpleNatBitSet) indices;
+      int otherLastInt = other.lastInt();
+      if (!inDomain(otherLastInt) || lastInt() < otherLastInt) {
+        return false;
+      }
+
+      BitSet otherSetBits = other.getBitSet();
       BitSet unsetBits = complement ? bitSet : complementBits();
 
       return !unsetBits.intersects(otherSetBits);
@@ -393,9 +405,7 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
     assert checkConsistency();
     NatBitSetsUtil.checkNonNegative(index);
     int clampedIndex = Math.min(index, domainSize() - 1);
-    return complement
-        ? bitSet.previousClearBit(clampedIndex)
-        : bitSet.previousSetBit(clampedIndex);
+    return complement ? bitSet.previousClearBit(clampedIndex) : bitSet.previousSetBit(clampedIndex);
   }
 
   @Override

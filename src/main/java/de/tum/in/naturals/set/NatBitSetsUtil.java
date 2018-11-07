@@ -17,7 +17,9 @@
 
 package de.tum.in.naturals.set;
 
+import com.zaxxer.sparsebits.SparseBitSet;
 import java.util.Spliterator;
+import javax.annotation.Nonnegative;
 
 public final class NatBitSetsUtil {
   public static final int SPLITERATOR_CHARACTERISTICS = Spliterator.ORDERED | Spliterator.SORTED
@@ -53,6 +55,74 @@ public final class NatBitSetsUtil {
     }
     if (from < 0) {
       throw new IndexOutOfBoundsException(String.format("Negative from index %d ", from));
+    }
+  }
+
+  public static int previousAbsentIndex(SparseBitSet set, @Nonnegative int index) {
+    // Binary search for the biggest clear bit with index <= length
+    if (!set.get(index)) {
+      return index;
+    }
+
+    int firstAbsentIndex = set.nextClearBit(0);
+    if (firstAbsentIndex > index) {
+      return -1;
+    }
+
+    int high = index - 1;
+    int low = firstAbsentIndex;
+
+    while (true) {
+      assert low <= high;
+      int mid = (high + low) >>> 1;
+      int next = set.nextClearBit(mid);
+      while (next > index) {
+        assert low <= mid && mid <= high;
+        high = mid;
+        mid = (high + low) >>> 1;
+        next = set.nextClearBit(mid);
+      }
+      assert !set.get(next);
+      low = next;
+      int nextClear = set.nextClearBit(low + 1);
+      if (nextClear > index) {
+        return low;
+      }
+      low = nextClear;
+    }
+  }
+
+  public static int previousPresentIndex(SparseBitSet set, @Nonnegative int index) {
+    // Binary search for the biggest set bit with index <= length
+    if (set.get(index)) {
+      return index;
+    }
+
+    int firstPresentIndex = set.nextSetBit(0);
+    if (firstPresentIndex == -1 || firstPresentIndex > index) {
+      return -1;
+    }
+
+    int high = index - 1;
+    int low = firstPresentIndex;
+
+    while (true) {
+      assert low <= high;
+      int mid = (high + low) >>> 1;
+      int next = set.nextSetBit(mid);
+      while (next == -1 || next > index) {
+        assert low <= mid && mid <= high;
+        high = mid;
+        mid = (high + low) >>> 1;
+        next = set.nextSetBit(mid);
+      }
+      assert set.get(next);
+      low = next;
+      int nextSet = set.nextSetBit(low + 1);
+      if (nextSet == -1 || nextSet > index) {
+        return low;
+      }
+      low = nextSet;
     }
   }
 }

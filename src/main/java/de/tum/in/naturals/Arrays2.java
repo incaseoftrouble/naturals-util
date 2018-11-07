@@ -19,6 +19,7 @@ package de.tum.in.naturals;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public final class Arrays2 {
   private Arrays2() {}
@@ -45,6 +46,22 @@ public final class Arrays2 {
     for (E element : array) {
       action.accept(element);
     }
+  }
+
+  public static <E, S extends E> E[] mapInPlace(E[] array, Function<E, S> function) {
+    for (int i = 0; i < array.length; i++) {
+      array[i] = function.apply(array[i]);
+    }
+    return array;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <E, S> S[] map(E[] array, Function<E, S> function) {
+    S[] result = (S[]) new Object[array.length];
+    for (int i = 0; i < array.length; i++) {
+      result[i] = function.apply(array[i]);
+    }
+    return result;
   }
 
   public static <E> E[] trim(E[] array, int length) {
