@@ -17,11 +17,19 @@
 
 package de.tum.in.naturals.set;
 
+import com.zaxxer.sparsebits.SparseBitSet;
+import de.tum.in.naturals.bitset.BitSets;
+import de.tum.in.naturals.bitset.SparseBitSets;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
+import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.IntConsumer;
 import javax.annotation.Nonnegative;
+import org.roaringbitmap.RoaringBitmap;
 
 public final class NatBitSets {
   public static final int UNKNOWN_LENGTH = -1;
@@ -92,6 +100,285 @@ public final class NatBitSets {
     return IntIterators.unmodifiable(new NatBitSetComplementReverseIterator(set, length));
   }
 
+  // --- Unbounded Sets ---
+
+  public static NatBitSet longSet() {
+    return new LongNatBitSet();
+  }
+
+  public static NatBitSet simpleSet() {
+    return new SimpleNatBitSet(new BitSet());
+  }
+
+  public static NatBitSet simpleSet(@Nonnegative int expectedSize) {
+    return new SimpleNatBitSet(new BitSet(expectedSize));
+  }
+
+  public static NatBitSet sparseSet() {
+    return new SparseNatBitSet(new SparseBitSet());
+  }
+
+  public static NatBitSet sparseSet(@Nonnegative int expectedSize) {
+    return new SparseNatBitSet(new SparseBitSet(expectedSize));
+  }
+
+  public static NatBitSet roaringSet() {
+    return new RoaringNatBitSet(new RoaringBitmap());
+  }
+
+
+  /**
+   * Return a view on the given {@code bitSet}.
+   */
+  public static NatBitSet asSet(BitSet bitSet) {
+    return new SimpleNatBitSet(bitSet);
+  }
+
+  /**
+   * Return a view on the given {@code bitSet}.
+   */
+  public static NatBitSet asSet(SparseBitSet bitSet) {
+    return new SparseNatBitSet(bitSet);
+  }
+
+
+  // --- Bounded Sets ---
+
+  public static BoundedNatBitSet boundedLongSet(int domainSize) {
+    return new LongBoundedNatBitSet(domainSize);
+  }
+
+  public static BoundedNatBitSet boundedSimpleSet(int domainSize) {
+    return new SimpleBoundedNatBitSet(new BitSet(), domainSize);
+  }
+
+  public static BoundedNatBitSet boundedSparseSet(int domainSize) {
+    return new SparseBoundedNatBitSet(new SparseBitSet(), domainSize);
+  }
+
+  public static BoundedNatBitSet boundedRoaringSet(int domainSize) {
+    return new RoaringBoundedNatBitSet(new RoaringBitmap(), domainSize);
+  }
+
+
+  /**
+   * Return a view on the given {@code bitSet}.
+   */
+  public static BoundedNatBitSet asBoundedSet(BitSet bitSet, int domainSize) {
+    return new SimpleBoundedNatBitSet(bitSet, domainSize);
+  }
+
+  /**
+   * Return a view on the given {@code bitSet}.
+   */
+  public static BoundedNatBitSet asBoundedSet(SparseBitSet bitSet, int domainSize) {
+    return new SparseBoundedNatBitSet(bitSet, domainSize);
+  }
+
+  /**
+   * Ensures that the given {@code set} is a {@link BoundedNatBitSet}. When possible, the backing
+   * data structure is shallow copied. For example, when passing a {@link SimpleNatBitSet}, a
+   * {@link SimpleBoundedNatBitSet} with the same backing bit set will be returned. Note that after
+   * this operation, only the returned set should be used to ensure integrity.
+   *
+   * <p><strong>Warning</strong>: If {@code set} already is a {@link BoundedNatBitSet} with
+   * different domain size, an exception will be thrown, to avoid potentially unexpected behavior
+   * </p>
+   *
+   * @throws IndexOutOfBoundsException
+   *     if {@code set} contains an index larger than {@code domainSize}.
+   * @throws IllegalArgumentException
+   *     if {@code set} already is a {@link BoundedNatBitSet} and has a differing domain size.
+   */
+  public static BoundedNatBitSet asBounded(NatBitSet set, @Nonnegative int domainSize) {
+    assert domainSize >= 0;
+    if (!set.isEmpty() && set.lastInt() >= domainSize) {
+      throw new IndexOutOfBoundsException();
+    }
+    if (set instanceof BoundedNatBitSet) {
+      BoundedNatBitSet boundedSet = (BoundedNatBitSet) set;
+      int oldDomainSize = boundedSet.domainSize();
+      if (oldDomainSize != domainSize) {
+        throw new IllegalArgumentException(String.format(
+            "Given set has domain size %d, expected %d", boundedSet.domainSize(), domainSize));
+      }
+      return boundedSet;
+    }
+    if (set instanceof SimpleNatBitSet) {
+      SimpleNatBitSet simpleSet = (SimpleNatBitSet) set;
+      return new SimpleBoundedNatBitSet(simpleSet.getBitSet(), domainSize);
+    }
+    if (set instanceof SparseNatBitSet) {
+      SparseNatBitSet sparseSet = (SparseNatBitSet) set;
+      return new SparseBoundedNatBitSet(sparseSet.getBitSet(), domainSize);
+    }
+    if (set instanceof LongNatBitSet) {
+      LongNatBitSet longSet = (LongNatBitSet) set;
+      return new LongBoundedNatBitSet(longSet.getStore(), domainSize);
+    }
+    if (set instanceof MutableSingletonNatBitSet) {
+      MutableSingletonNatBitSet singletonSet = (MutableSingletonNatBitSet) set;
+      return singletonSet.isEmpty()
+          ? new BoundedMutableSingletonNatBitSet(domainSize)
+          : new BoundedMutableSingletonNatBitSet(singletonSet.firstInt(), domainSize);
+    }
+
+    return new BoundedWrapper(set, domainSize);
+  }
+
+
+  // --- Special Cases ---
+
+  // Empty
+
+  /**
+   * Returns an empty set.
+   */
+  public static NatBitSet emptySet() {
+    return new MutableSingletonNatBitSet();
+  }
+
+  /**
+   * Returns an empty set over the given domain.
+   */
+  public static BoundedNatBitSet boundedEmptySet(@Nonnegative int domainSize) {
+    return new FixedSizeNatBitSet(domainSize).complement();
+  }
+
+  // Singleton
+
+  public static NatBitSet singleton(@Nonnegative int element) {
+    return new MutableSingletonNatBitSet(element);
+  }
+
+  public static BoundedNatBitSet boundedSingleton(int domainSize, int element) {
+    return new BoundedMutableSingletonNatBitSet(element, domainSize);
+  }
+
+  // Full
+
+  /**
+   * Returns the set containing the full domain {@code {0, ..., length - 1}}.
+   */
+  public static BoundedNatBitSet boundedFullSet(@Nonnegative int length) {
+    return new FixedSizeNatBitSet(length);
+  }
+
+  // Power
+
+  /**
+   * Returns the set containing all subsets of the given basis.
+   * <strong>Warning</strong>: For performance reasons, the iterator of this set may modify the
+   * returned elements in place.
+   */
+  public static Set<NatBitSet> powerSet(NatBitSet basis) {
+    if (basis.isEmpty()) {
+      return Collections.singleton(emptySet());
+    }
+    return new PowerNatBitSet(basis);
+  }
+
+  /**
+   * Returns the set containing subsets of {0, ..., i-1}.
+   * <strong>Warning</strong>: For performance reasons, the iterator of this set may modify the
+   * returned elements in place.
+   */
+  public static Set<NatBitSet> powerSet(@Nonnegative int domainSize) {
+    return powerSet(boundedFullSet(domainSize));
+  }
+
+
+  // --- Extraction ---
+
+  public static BitSet toBitSet(NatBitSet indices) {
+    if (indices.isEmpty()) {
+      return new BitSet(0);
+    }
+    if (indices instanceof SimpleNatBitSet) {
+      return (BitSet) ((SimpleNatBitSet) indices).getBitSet().clone();
+    }
+    if (indices instanceof SimpleBoundedNatBitSet) {
+      SimpleBoundedNatBitSet boundedSet = (SimpleBoundedNatBitSet) indices;
+      BitSet bitSet = (BitSet) boundedSet.getBitSet().clone();
+      if (boundedSet.isComplement()) {
+        bitSet.flip(0, boundedSet.domainSize());
+      }
+      return bitSet;
+    }
+    if (indices instanceof SparseNatBitSet) {
+      return BitSets.of(((SparseNatBitSet) indices).getBitSet());
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet boundedSet = (SparseBoundedNatBitSet) indices;
+      if (boundedSet.isComplement()) {
+        BitSet bitSet = new BitSet(boundedSet.domainSize());
+        boundedSet.forEach((IntConsumer) bitSet::set);
+        return bitSet;
+      }
+      return BitSets.of(boundedSet.getBitSet());
+    }
+
+    BitSet bitSet = new BitSet(indices.lastInt() + 1);
+    indices.forEach((IntConsumer) bitSet::set);
+    return bitSet;
+  }
+
+  public static SparseBitSet toSparseBitSet(NatBitSet indices) {
+    if (indices.isEmpty()) {
+      return new SparseBitSet(1); // 0 is buggy here
+    }
+    if (indices instanceof SimpleNatBitSet) {
+      return SparseBitSets.of(((SimpleNatBitSet) indices).getBitSet());
+    }
+    if (indices instanceof SimpleBoundedNatBitSet) {
+      SimpleBoundedNatBitSet boundedSet = (SimpleBoundedNatBitSet) indices;
+      if (boundedSet.isComplement()) {
+        SparseBitSet bitSet = new SparseBitSet(boundedSet.domainSize());
+        boundedSet.forEach((IntConsumer) bitSet::set);
+        return bitSet;
+      }
+      return SparseBitSets.of(boundedSet.getBitSet());
+    }
+    if (indices instanceof SparseNatBitSet) {
+      return ((SparseNatBitSet) indices).getBitSet().clone();
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet boundedSet = (SparseBoundedNatBitSet) indices;
+      SparseBitSet bitSet = boundedSet.getBitSet().clone();
+      if (boundedSet.isComplement()) {
+        bitSet.flip(0, boundedSet.domainSize());
+      }
+      return bitSet;
+    }
+
+    SparseBitSet bitSet = new SparseBitSet(indices.lastInt() + 1);
+    indices.forEach((IntConsumer) bitSet::set);
+    return bitSet;
+  }
+
+  public static RoaringBitmap toRoaringBitmap(NatBitSet indices) {
+    if (indices.isEmpty()) {
+      return new RoaringBitmap();
+    }
+    if (indices instanceof RoaringNatBitSet) {
+      return ((RoaringNatBitSet) indices).getBitmap().clone();
+    }
+    if (indices instanceof RoaringBoundedNatBitSet) {
+      RoaringBoundedNatBitSet boundedSet = (RoaringBoundedNatBitSet) indices;
+      RoaringBitmap bitmap = boundedSet.getBitmap().clone();
+      if (boundedSet.isComplement()) {
+        bitmap.flip(0L, (long) boundedSet.domainSize());
+      }
+      return bitmap;
+    }
+
+    RoaringBitmap bitmap = new RoaringBitmap();
+    indices.forEach((IntConsumer) bitmap::add);
+    return bitmap;
+  }
+
+
+  // --- Factory ---
 
   /**
    * Sets the default factory.
@@ -106,7 +393,7 @@ public final class NatBitSets {
   }
 
 
-  // --- Delegated Methods ---
+  // Delegated Methods
 
   /**
    * Determines whether the given {@code set} can handle arbitrary (positive) modifications.

@@ -19,7 +19,7 @@ package de.tum.in.naturals.bitset;
 
 import com.zaxxer.sparsebits.SparseBitSet;
 import de.tum.in.naturals.set.NatBitSet;
-import de.tum.in.naturals.set.NatBitSetProvider;
+import de.tum.in.naturals.set.NatBitSets;
 import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
@@ -54,7 +54,7 @@ public final class BitSets {
 
   public static BitSet of(IntIterable iterable) {
     if (iterable instanceof NatBitSet) {
-      return NatBitSetProvider.toBitSet((NatBitSet) iterable);
+      return NatBitSets.toBitSet((NatBitSet) iterable);
     }
 
     BitSet bitSet;

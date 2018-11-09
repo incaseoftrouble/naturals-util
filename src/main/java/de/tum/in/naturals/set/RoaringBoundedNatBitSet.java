@@ -114,7 +114,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       if (other.complement) {
         if (other.domainSize() >= domainSize()) {
           return bitmap.getCardinality() + other.bitmap.getCardinality()
-              == other.domainSize() + RoaringBitmap.andCardinality(bitmap, other.bitmap) ;
+              == other.domainSize() + RoaringBitmap.andCardinality(bitmap, other.bitmap);
         }
         return bitmap.rank(other.domainSize() - 1) + other.bitmap.getCardinality()
             == other.domainSize() + RoaringBitmap.andCardinality(bitmap, other.bitmap);

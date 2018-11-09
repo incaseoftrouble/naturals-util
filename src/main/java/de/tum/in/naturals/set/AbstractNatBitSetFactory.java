@@ -48,10 +48,10 @@ public abstract class AbstractNatBitSetFactory implements NatBitSetFactory {
       return set;
     }
     if (set.isEmpty()) {
-      return NatBitSetProvider.emptySet();
+      return NatBitSets.emptySet();
     }
     if (set.size() == 1) {
-      return NatBitSetProvider.singleton(set.firstInt());
+      return NatBitSets.singleton(set.firstInt());
     }
     if (set.firstInt() == 0 && set.lastInt() == set.size() - 1) {
       return new FixedSizeNatBitSet(set.lastInt() + 1);

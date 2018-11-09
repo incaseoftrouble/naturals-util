@@ -18,7 +18,7 @@
 package de.tum.in.naturals.bitset;
 
 import de.tum.in.naturals.set.NatBitSet;
-import de.tum.in.naturals.set.NatBitSetProvider;
+import de.tum.in.naturals.set.NatBitSets;
 import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.BitSet;
@@ -36,7 +36,7 @@ public final class RoaringBitmaps {
 
   public static RoaringBitmap of(IntIterable iterable) {
     if (iterable instanceof NatBitSet) {
-      return NatBitSetProvider.toRoaringBitmap((NatBitSet) iterable);
+      return NatBitSets.toRoaringBitmap((NatBitSet) iterable);
     }
 
     RoaringBitmap bitmap = new RoaringBitmap();
@@ -72,12 +72,12 @@ public final class RoaringBitmaps {
     return new RoaringIterator(bitmap.getIntIterator());
   }
 
-  public static int nextAbsentIndex(RoaringBitmap set, @Nonnegative int index) {
+  public static int nextAbsentIndex(RoaringBitmap bitmap, @Nonnegative int index) {
     // For now a simple linear search ...
-    if (!set.contains(index)) {
+    if (!bitmap.contains(index)) {
       return index;
     }
-    PeekableIntIterator intIterator = set.getIntIterator();
+    PeekableIntIterator intIterator = bitmap.getIntIterator();
     intIterator.advanceIfNeeded(index);
     int current = index;
     while (intIterator.hasNext()) {
@@ -90,36 +90,36 @@ public final class RoaringBitmaps {
     return current + 1;
   }
 
-  public static int previousPresentIndex(RoaringBitmap set, @Nonnegative int index) {
-    if (set.contains(index)) {
+  public static int previousPresentIndex(RoaringBitmap bitmap, @Nonnegative int index) {
+    if (bitmap.contains(index)) {
       return index;
     }
-    int rank = set.rank(index);
+    int rank = bitmap.rank(index);
     if (rank == 0) {
       return -1;
     }
 
-    return set.select(rank - 1);
+    return bitmap.select(rank - 1);
   }
 
-  public static int previousAbsentIndex(RoaringBitmap set, @Nonnegative int index) {
-    if (!set.contains(index)) {
+  public static int previousAbsentIndex(RoaringBitmap bitmap, @Nonnegative int index) {
+    if (!bitmap.contains(index)) {
       return index;
     }
-    int rank = set.rank(index) - 1;
+    int rank = bitmap.rank(index) - 1;
     if (index == rank) { // Rank of index == index -> All elements below are set
       return -1;
     }
-    assert set.select(rank) == index;
+    assert bitmap.select(rank) == index;
 
     int current = index;
     for (int i = rank - 1; i >= 0; i--) {
-      assert set.contains(current);
+      assert bitmap.contains(current);
 
-      int next = set.select(i);
+      int next = bitmap.select(i);
       assert next < current;
       if (next + 1 < current) {
-        assert !set.contains(current - 1);
+        assert !bitmap.contains(current - 1);
         return current - 1;
       }
       current = next;

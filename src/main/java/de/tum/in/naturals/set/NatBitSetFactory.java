@@ -83,7 +83,7 @@ public interface NatBitSetFactory {
   default NatBitSet copyOf(Collection<Integer> indices) {
     NatBitSet copy;
     if (indices.isEmpty()) {
-      copy = NatBitSetProvider.emptySet();
+      copy = NatBitSets.emptySet();
     } else if (indices instanceof NatBitSet) {
       copy = ((NatBitSet) indices).clone();
     } else if (indices instanceof IntSortedSet) {

@@ -17,10 +17,7 @@
 
 package de.tum.in.naturals.set;
 
-import com.zaxxer.sparsebits.SparseBitSet;
 import java.util.Spliterator;
-import javax.annotation.Nonnegative;
-import org.roaringbitmap.RoaringBitmap;
 
 public final class NatBitSetsUtil {
   public static final int SPLITERATOR_CHARACTERISTICS = Spliterator.ORDERED | Spliterator.SORTED
@@ -56,40 +53,6 @@ public final class NatBitSetsUtil {
     }
     if (from < 0) {
       throw new IndexOutOfBoundsException(String.format("Negative from index %d ", from));
-    }
-  }
-
-  public static int previousPresentIndex(RoaringBitmap set, @Nonnegative int index) {
-    // Binary search for the biggest set bit with index <= length
-    if (set.contains(index)) {
-      return index;
-    }
-
-    int firstPresentIndex = (int) set.nextValue(0);
-    if (firstPresentIndex == -1 || firstPresentIndex > index) {
-      return -1;
-    }
-
-    int high = index - 1;
-    int low = firstPresentIndex;
-
-    while (true) {
-      assert low <= high;
-      int mid = (high + low) >>> 1;
-      int next = (int) set.nextValue(mid);
-      while (next == -1 || next > index) {
-        assert low <= mid && mid <= high;
-        high = mid;
-        mid = (high + low) >>> 1;
-        next = (int) set.nextValue(mid);
-      }
-      assert set.contains(next);
-      low = next;
-      int nextSet = (int) set.nextValue(low + 1);
-      if (nextSet == -1 || nextSet > index) {
-        return low;
-      }
-      low = nextSet;
     }
   }
 }
