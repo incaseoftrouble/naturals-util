@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.function.IntConsumer;
 
 class SparseNatBitSet extends AbstractNatBitSet {
@@ -33,44 +34,13 @@ class SparseNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public void and(IntCollection indices) {
-    if (indices instanceof SparseNatBitSet) {
-      SparseNatBitSet other = (SparseNatBitSet) indices;
-      bitSet.and(other.bitSet);
-    } else {
-      super.and(indices);
-    }
+  public boolean isEmpty() {
+    return bitSet.isEmpty();
   }
 
   @Override
-  public void andNot(IntCollection indices) {
-    if (indices instanceof SparseNatBitSet) {
-      SparseNatBitSet other = (SparseNatBitSet) indices;
-      bitSet.andNot(other.bitSet);
-    } else {
-      super.andNot(indices);
-    }
-  }
-
-  @Override
-  public void clear(int index) {
-    bitSet.clear(index);
-  }
-
-  @Override
-  public void clear(int from, int to) {
-    bitSet.clear(from, to);
-  }
-
-  @Override
-  public void clear() {
-    bitSet.clear();
-  }
-
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
-  @Override
-  public SparseNatBitSet clone() {
-    return new SparseNatBitSet(bitSet.clone());
+  public int size() {
+    return bitSet.cardinality();
   }
 
   @Override
@@ -86,6 +56,10 @@ class SparseNatBitSet extends AbstractNatBitSet {
     if (indices.isEmpty()) {
       return true;
     }
+    if (size() < indices.size()) {
+      return false;
+    }
+
     if (indices instanceof SparseNatBitSet) {
       SparseNatBitSet other = (SparseNatBitSet) indices;
       if (lastInt() < other.lastInt()) {
@@ -102,64 +76,19 @@ class SparseNatBitSet extends AbstractNatBitSet {
 
       return other.isComplement()
           ? SparseBitSets.isSubsetConsuming(other.complementBits(), bitSet)
-          : SparseBitSets.isSubset(other.getSparseBitSet(), bitSet);
+          : SparseBitSets.isSubset(other.getBitSet(), bitSet);
     }
     return super.containsAll(indices);
   }
 
+
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+  public int firstInt() {
+    int firstSet = bitSet.nextSetBit(0);
+    if (firstSet == -1) {
+      throw new NoSuchElementException();
     }
-    if (o instanceof SparseNatBitSet) {
-      SparseNatBitSet other = (SparseNatBitSet) o;
-      return bitSet.equals(other.bitSet);
-    }
-    return super.equals(o);
-  }
-
-  @Override
-  public void flip(int from, int to) {
-    bitSet.flip(from, to);
-  }
-
-  @Override
-  public void flip(int index) {
-    bitSet.flip(index);
-  }
-
-  @Override
-  public void forEach(IntConsumer consumer) {
-    SparseBitSets.forEach(bitSet, consumer);
-  }
-
-  SparseBitSet getSparseBitSet() {
-    return bitSet;
-  }
-
-  @Override
-  public int hashCode() {
-    return bitSet.hashCode();
-  }
-
-  @Override
-  public boolean intersects(Collection<Integer> indices) {
-    if (indices instanceof SparseNatBitSet) {
-      SparseNatBitSet other = (SparseNatBitSet) indices;
-      return bitSet.intersects(other.bitSet);
-    }
-    return super.intersects(indices);
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return bitSet.isEmpty();
-  }
-
-  @Override
-  public IntIterator iterator() {
-    return SparseBitSets.iterator(bitSet);
+    return firstSet;
   }
 
   @Override
@@ -171,10 +100,6 @@ class SparseNatBitSet extends AbstractNatBitSet {
     return lastSet;
   }
 
-  @Override
-  public int nextAbsentIndex(int index) {
-    return bitSet.nextClearBit(index);
-  }
 
   @Override
   public int nextPresentIndex(int index) {
@@ -182,28 +107,35 @@ class SparseNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public void or(IntCollection indices) {
-    if (indices instanceof SparseNatBitSet) {
-      SparseNatBitSet other = (SparseNatBitSet) indices;
-      bitSet.or(other.bitSet);
-    } else {
-      super.or(indices);
-    }
-  }
-
-  @Override
-  public int previousAbsentIndex(int index) {
-    return NatBitSetsUtil.previousAbsentIndex(bitSet, index);
+  public int nextAbsentIndex(int index) {
+    return bitSet.nextClearBit(index);
   }
 
   @Override
   public int previousPresentIndex(int index) {
-    return NatBitSetsUtil.previousPresentIndex(bitSet, index);
+    return SparseBitSets.previousPresentIndex(bitSet, index);
   }
 
   @Override
-  public void set(int i) {
-    bitSet.set(i);
+  public int previousAbsentIndex(int index) {
+    return SparseBitSets.previousAbsentIndex(bitSet, index);
+  }
+
+
+  @Override
+  public IntIterator iterator() {
+    return SparseBitSets.iterator(bitSet);
+  }
+
+  @Override
+  public void forEach(IntConsumer consumer) {
+    SparseBitSets.forEach(bitSet, consumer);
+  }
+
+
+  @Override
+  public void set(int index) {
+    bitSet.set(index);
   }
 
   @Override
@@ -217,8 +149,100 @@ class SparseNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public int size() {
-    return bitSet.cardinality();
+  public void clear() {
+    bitSet.clear();
+  }
+
+  @Override
+  public void clear(int index) {
+    bitSet.clear(index);
+  }
+
+  @Override
+  public void clear(int from, int to) {
+    bitSet.clear(from, to);
+  }
+
+  @Override
+  public void clearFrom(int from) {
+    bitSet.clear(from, Integer.MAX_VALUE);
+  }
+
+  @Override
+  public void flip(int from, int to) {
+    bitSet.flip(from, to);
+  }
+
+  @Override
+  public void flip(int index) {
+    bitSet.flip(index);
+  }
+
+
+  @Override
+  public boolean intersects(Collection<Integer> indices) {
+    if (indices instanceof SparseNatBitSet) {
+      SparseNatBitSet other = (SparseNatBitSet) indices;
+      return bitSet.intersects(other.bitSet);
+    }
+    if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+      return bitSet.intersects(other.isComplement() ? other.complementBits() : other.getBitSet());
+    }
+    return super.intersects(indices);
+  }
+
+  @Override
+  public void and(IntCollection indices) {
+    if (indices instanceof SparseNatBitSet) {
+      SparseNatBitSet other = (SparseNatBitSet) indices;
+      bitSet.and(other.bitSet);
+    } else if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+      bitSet.clear(other.domainSize(), Integer.MAX_VALUE);
+      if (other.isComplement()) {
+        bitSet.andNot(other.getBitSet());
+      } else {
+        bitSet.and(other.getBitSet());
+      }
+    } else {
+      super.and(indices);
+    }
+  }
+
+  @Override
+  public void andNot(IntCollection indices) {
+    if (isEmpty() || indices.isEmpty()) {
+      return;
+    }
+    if (indices instanceof SparseNatBitSet) {
+      SparseNatBitSet other = (SparseNatBitSet) indices;
+      bitSet.andNot(other.bitSet);
+    } else if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+
+      int domainSize = other.domainSize();
+      if (other.isComplement()) {
+        bitSet.and(0, domainSize, other.getBitSet());
+      } else {
+        bitSet.andNot(other.getBitSet());
+      }
+    } else {
+      super.andNot(indices);
+    }
+  }
+
+  @Override
+  public void or(IntCollection indices) {
+    if (indices instanceof SparseNatBitSet) {
+      SparseNatBitSet other = (SparseNatBitSet) indices;
+      bitSet.or(other.bitSet);
+    } else if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+      bitSet.or(other.isComplement() ? other.complementBits() : other.getBitSet());
+    } else {
+      super.or(indices);
+    }
   }
 
   @Override
@@ -226,8 +250,60 @@ class SparseNatBitSet extends AbstractNatBitSet {
     if (indices instanceof SparseNatBitSet) {
       SparseNatBitSet other = (SparseNatBitSet) indices;
       bitSet.xor(other.bitSet);
+    } else if (indices instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;
+
+      bitSet.xor(other.getBitSet());
+      if (other.isComplement()) {
+        bitSet.flip(0, other.domainSize());
+      }
     } else {
       super.xor(indices);
     }
+  }
+
+
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @Override
+  public SparseNatBitSet clone() {
+    return new SparseNatBitSet(bitSet.clone());
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof Set)) {
+      return false;
+    }
+    if (isEmpty()) {
+      return ((Collection<?>) o).isEmpty();
+    }
+    if (((Collection<?>) o).isEmpty()) {
+      return false;
+    }
+
+    if (o instanceof SparseNatBitSet) {
+      SparseNatBitSet other = (SparseNatBitSet) o;
+      return bitSet.equals(other.bitSet);
+    }
+    if (o instanceof SparseBoundedNatBitSet) {
+      SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) o;
+
+      if (lastInt() >= other.domainSize()) {
+        return false;
+      }
+      if (other.isComplement()) {
+        return size() == other.size() && !other.getBitSet().intersects(bitSet);
+      }
+      return bitSet.equals(other.getBitSet());
+    }
+    return super.equals(o);
+  }
+
+  SparseBitSet getBitSet() {
+    return bitSet;
   }
 }

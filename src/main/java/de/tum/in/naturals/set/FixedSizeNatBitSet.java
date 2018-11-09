@@ -46,34 +46,20 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
     complementView = other;
   }
 
+
   @Override
-  public void clear(int index) {
-    checkInDomain(index);
-    throw new UnsupportedOperationException();
+  boolean isComplement() {
+    return complement;
   }
 
   @Override
-  public void clear(int from, int to) {
-    checkInDomain(from, to);
-    throw new UnsupportedOperationException();
+  public boolean isEmpty() {
+    return complement;
   }
 
   @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
-
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
-  @Override
-  public FixedSizeNatBitSet clone() {
-    // Immutable object
-    return this;
-  }
-
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  @Override
-  public BoundedNatBitSet complement() {
-    return complementView;
+  public int size() {
+    return isEmpty() ? 0 : domainSize();
   }
 
   @Override
@@ -113,12 +99,105 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
     return true;
   }
 
+
   @Override
   public int firstInt() {
     if (isEmpty()) {
       throw new NoSuchElementException();
     }
     return 0;
+  }
+
+  @Override
+  public int lastInt() {
+    if (isEmpty()) {
+      throw new NoSuchElementException();
+    }
+    return domainSize() - 1;
+  }
+
+
+  @Override
+  public int nextPresentIndex(int index) {
+    NatBitSetsUtil.checkNonNegative(index);
+    if (complement) {
+      return -1;
+    }
+    return index < domainSize() ? index : -1;
+  }
+
+  @Override
+  public int nextAbsentIndex(int index) {
+    NatBitSetsUtil.checkNonNegative(index);
+    if (complement) {
+      return index;
+    }
+    return Math.max(index, domainSize());
+  }
+
+  @Override
+  public int previousPresentIndex(int index) {
+    NatBitSetsUtil.checkNonNegative(index);
+    if (complement) {
+      return -1;
+    }
+    return index >= domainSize() ? domainSize() - 1 : index;
+  }
+
+  @Override
+  public int previousAbsentIndex(int index) {
+    NatBitSetsUtil.checkNonNegative(index);
+    if (complement) {
+      return index;
+    }
+    return index >= domainSize() ? index : -1;
+  }
+
+
+  @Override
+  public IntIterator iterator() {
+    return isEmpty() ? IntIterators.EMPTY_ITERATOR : IntIterators.fromTo(0, domainSize());
+  }
+
+  @Override
+  public IntIterator reverseIterator() {
+    return isEmpty() ? IntIterators.EMPTY_ITERATOR : new ReverseRangeIterator(0, domainSize());
+  }
+
+
+  @Override
+  public void set(int index) {
+    checkInDomain(index);
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void set(int index, boolean value) {
+    checkInDomain(index);
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void set(int from, int to) {
+    checkInDomain(from, to);
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void clear() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void clear(int index) {
+    checkInDomain(index);
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void clear(int from, int to) {
+    checkInDomain(from, to);
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -132,6 +211,7 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
     checkInDomain(from, to);
     throw new UnsupportedOperationException();
   }
+
 
   @Override
   public boolean intersects(Collection<Integer> indices) {
@@ -156,90 +236,18 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
     return super.intersects(indices);
   }
 
+
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
-  boolean isComplement() {
-    return complement;
+  public FixedSizeNatBitSet clone() {
+    // Immutable object
+    return this;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
-  public boolean isEmpty() {
-    return complement;
+  public BoundedNatBitSet complement() {
+    return complementView;
   }
 
-  @Override
-  public IntIterator iterator() {
-    return isEmpty() ? IntIterators.EMPTY_ITERATOR : IntIterators.fromTo(0, domainSize());
-  }
-
-  @Override
-  public int lastInt() {
-    if (isEmpty()) {
-      throw new NoSuchElementException();
-    }
-    return domainSize() - 1;
-  }
-
-  @Override
-  public int nextAbsentIndex(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (complement) {
-      return index;
-    }
-    return Math.max(index, domainSize());
-  }
-
-  @Override
-  public int nextPresentIndex(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (complement) {
-      return -1;
-    }
-    return index < domainSize() ? index : -1;
-  }
-
-  @Override
-  public int previousAbsentIndex(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (complement) {
-      return index;
-    }
-    return index >= domainSize() ? index : -1;
-  }
-
-  @Override
-  public int previousPresentIndex(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (complement) {
-      return -1;
-    }
-    return index >= domainSize() ? domainSize() - 1 : index;
-  }
-
-  @Override
-  public IntIterator reverseIterator() {
-    return isEmpty() ? IntIterators.EMPTY_ITERATOR : new ReverseRangeIterator(0, domainSize());
-  }
-
-  @Override
-  public void set(int index) {
-    checkInDomain(index);
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void set(int index, boolean value) {
-    checkInDomain(index);
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void set(int from, int to) {
-    checkInDomain(from, to);
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public int size() {
-    return isEmpty() ? 0 : domainSize();
-  }
 }

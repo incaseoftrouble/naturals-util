@@ -42,13 +42,6 @@ public interface NatSet extends IntSet {
   boolean add(@Nonnegative int index);
 
   /**
-   * Returns an int stream compatible with the {@link #spliterator() spliterator}.
-   */
-  default IntStream intStream() {
-    return StreamSupport.intStream(this::spliterator, SPLITERATOR_CHARACTERISTICS, false);
-  }
-
-  /**
    * {@inheritDoc}
    *
    * @throws IndexOutOfBoundsException
@@ -56,6 +49,19 @@ public interface NatSet extends IntSet {
    */
   @Override
   boolean remove(@Nonnegative int index);
+
+
+  @Override
+  default Stream<Integer> stream() {
+    return intStream().boxed();
+  }
+
+  /**
+   * Returns an int stream compatible with the {@link #spliterator() spliterator}.
+   */
+  default IntStream intStream() {
+    return StreamSupport.intStream(this::spliterator, SPLITERATOR_CHARACTERISTICS, false);
+  }
 
   /**
    * Returns a spliterator over this set. The spliterator is expected to be
@@ -65,11 +71,6 @@ public interface NatSet extends IntSet {
   @Override
   default Spliterator.OfInt spliterator() {
     return Spliterators.spliterator(iterator(), (long) size(), SPLITERATOR_CHARACTERISTICS);
-  }
-
-  @Override
-  default Stream<Integer> stream() {
-    return intStream().boxed();
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Tobias Meggendorfer
+ * Copyright (C) 2018 Tobias Meggendorfer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,44 +18,22 @@
 package de.tum.in.naturals.bitset;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
-import java.util.BitSet;
-import java.util.NoSuchElementException;
+import org.roaringbitmap.PeekableIntIterator;
 
-final class BitSetIterator implements IntIterator {
-  private final BitSet bitSet;
-  private int current = -1;
-  private int next;
+final class RoaringIterator implements IntIterator {
+  private final PeekableIntIterator iterator;
 
-  BitSetIterator(BitSet bitSet) {
-    this.bitSet = bitSet;
-    next = getNext(0);
-  }
-
-  private int getNext(int index) {
-    return bitSet.nextSetBit(index);
-  }
-
-  @Override
-  public boolean hasNext() {
-    return next != -1;
+  public RoaringIterator(PeekableIntIterator iterator) {
+    this.iterator = iterator;
   }
 
   @Override
   public int nextInt() {
-    if (next == -1) {
-      throw new NoSuchElementException();
-    }
-    current = next;
-    next = getNext(next + 1);
-    return current;
+    return iterator.next();
   }
 
   @Override
-  public void remove() {
-    if (current == -1) {
-      throw new IllegalStateException();
-    }
-    assert bitSet.get(current);
-    bitSet.clear(current);
+  public boolean hasNext() {
+    return iterator.hasNext();
   }
 }

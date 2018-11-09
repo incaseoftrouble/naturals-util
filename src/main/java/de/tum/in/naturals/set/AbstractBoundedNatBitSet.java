@@ -33,41 +33,25 @@ public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet
   }
 
   @Override
-  public boolean add(int index) {
-    checkInDomain(index);
-    return super.add(index);
-  }
-
-  protected void checkInDomain(int from, int to) {
-    NatBitSetsUtil.checkInDomain(domainSize, from, to);
-  }
-
-  protected void checkInDomain(int index) {
-    NatBitSetsUtil.checkInDomain(domainSize, index);
-  }
-
-  @Override
-  public void clearFrom(int from) {
-    checkInDomain(from);
-    clear(from, domainSize());
-  }
-
-  @Override
-  public AbstractBoundedNatBitSet clone() {
-    return (AbstractBoundedNatBitSet) super.clone();
-  }
-
-  @Override
   @Nonnegative
   public int domainSize() {
     return domainSize;
   }
 
-  protected boolean inDomain(int index) {
-    return 0 <= index && index < domainSize;
+
+  @Override
+  public boolean add(int index) {
+    checkInDomain(index);
+    return super.add(index);
   }
 
-  abstract boolean isComplement();
+  @Override
+  public void clearFrom(int from) {
+    if (from >= domainSize) {
+      return;
+    }
+    clear(from, domainSize);
+  }
 
   @Override
   public void orNot(IntCollection indices) {
@@ -82,9 +66,29 @@ public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet
     }
   }
 
+
   @Override
-  public boolean remove(int index) {
-    checkInDomain(index);
-    return super.remove(index);
+  public AbstractBoundedNatBitSet clone() {
+    return (AbstractBoundedNatBitSet) super.clone();
+  }
+
+  @Override
+  public String toString() {
+    return domainSize + (isComplement() ? "(C)" : "") + super.toString();
+  }
+
+  abstract boolean isComplement();
+
+
+  protected boolean inDomain(int index) {
+    return 0 <= index && index < domainSize;
+  }
+
+  protected void checkInDomain(int from, int to) {
+    NatBitSetsUtil.checkInDomain(domainSize, from, to);
+  }
+
+  protected void checkInDomain(int index) {
+    NatBitSetsUtil.checkInDomain(domainSize, index);
   }
 }

@@ -21,7 +21,7 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.BitSet;
 import java.util.NoSuchElementException;
 
-class BitSetComplementIterator implements IntIterator {
+final class BitSetComplementIterator implements IntIterator {
   private final BitSet bitSet;
   private final int length;
   private int current = -1;

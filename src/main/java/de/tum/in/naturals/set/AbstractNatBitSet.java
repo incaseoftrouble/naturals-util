@@ -17,6 +17,8 @@
 
 package de.tum.in.naturals.set;
 
+import static de.tum.in.naturals.set.NatBitSetsUtil.checkNonNegative;
+
 import it.unimi.dsi.fastutil.ints.AbstractIntSet;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -27,6 +29,26 @@ import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
 
 public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBitSet {
+
+  @Override
+  public int firstInt() {
+    int firstPresent = nextPresentIndex(0);
+    if (firstPresent == -1) {
+      throw new NoSuchElementException();
+    }
+    return firstPresent;
+  }
+
+  @Override
+  public int lastInt() {
+    int lastPresent = previousPresentIndex(Integer.MAX_VALUE);
+    if (lastPresent == -1) {
+      throw new NoSuchElementException();
+    }
+    return lastPresent;
+  }
+
+
   @Override
   public boolean add(int index) {
     if (contains(index)) {
@@ -34,6 +56,30 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
     }
     set(index);
     return true;
+  }
+
+  @Override
+  public void clearFrom(int from) {
+    checkNonNegative(from);
+    clear(from, Integer.MAX_VALUE);
+  }
+
+  @Override
+  public boolean remove(int index) {
+    if (!contains(index)) {
+      return false;
+    }
+    clear(index);
+    return true;
+  }
+
+
+  @Override
+  public boolean intersects(Collection<Integer> indices) {
+    if (indices instanceof IntCollection) {
+      return IntIterators.any(((IntCollection) indices).iterator(), this::contains);
+    }
+    return NatBitSet.super.intersects(indices);
   }
 
   @Override
@@ -52,6 +98,20 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
   }
 
   @Override
+  public boolean retainAll(IntCollection indices) {
+    if (isEmpty()) {
+      return false;
+    }
+    if (indices.isEmpty()) {
+      clear();
+      return true;
+    }
+    int size = size();
+    and(indices);
+    return size() < size;
+  }
+
+  @Override
   public void andNot(IntCollection indices) {
     if (indices.isEmpty()) {
       return;
@@ -66,35 +126,13 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
   }
 
   @Override
-  public void clearFrom(int from) {
-    NatBitSetsUtil.checkNonNegative(from);
-    clear(from, Integer.MAX_VALUE);
-  }
-
-  @Override
-  public AbstractNatBitSet clone() {
-    try {
-      return (AbstractNatBitSet) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new InternalError(e);
+  public boolean removeAll(IntCollection indices) {
+    if (isEmpty() || indices.isEmpty()) {
+      return false;
     }
-  }
-
-  @Override
-  public int firstInt() {
-    int firstPresent = nextPresentIndex(0);
-    if (firstPresent == -1) {
-      throw new NoSuchElementException();
-    }
-    return firstPresent;
-  }
-
-  @Override
-  public boolean intersects(Collection<Integer> indices) {
-    if (indices instanceof IntCollection) {
-      return IntIterators.any(((IntCollection) indices).iterator(), this::contains);
-    }
-    return NatBitSet.super.intersects(indices);
+    int size = size();
+    andNot(indices);
+    return size() < size;
   }
 
   @Override
@@ -106,30 +144,13 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
   }
 
   @Override
-  public boolean remove(int index) {
-    if (!contains(index)) {
+  public boolean addAll(IntCollection indices) {
+    if (indices.isEmpty()) {
       return false;
     }
-    clear(index);
-    return true;
-  }
-
-  @Override
-  public boolean removeAll(IntCollection indices) {
-    if (!intersects(indices)) {
-      return false;
-    }
-    andNot(indices);
-    return true;
-  }
-
-  @Override
-  public boolean retainAll(IntCollection indices) {
-    if (IntIterators.all(iterator(), indices::contains)) {
-      return false;
-    }
-    and(indices);
-    return true;
+    int size = size();
+    or(indices);
+    return size < size();
   }
 
   @Override
@@ -139,5 +160,15 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
     }
     IntSet set = indices instanceof IntSet ? (IntSet) indices : NatBitSets.copyOf(indices);
     set.forEach((IntConsumer) this::flip);
+  }
+
+
+  @Override
+  public AbstractNatBitSet clone() {
+    try {
+      return (AbstractNatBitSet) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new InternalError(e);
+    }
   }
 }

@@ -25,6 +25,44 @@ import javax.annotation.Nonnegative;
  * An extension to {@link NatBitSet} specialized for bounded, non-negative integer domains.
  */
 public interface BoundedNatBitSet extends NatBitSet {
+
+  // Accessors
+
+  /**
+   * The size of the domain of this set. The set only contains values between zero (inclusive) and
+   * the returned value (exclusive).
+   */
+  @Nonnegative
+  int domainSize();
+
+
+  // Mutators
+
+  /**
+   * {@inheritDoc}
+   * @throws IndexOutOfBoundsException
+   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  void set(int index);
+
+  /**
+   * {@inheritDoc}
+   * @throws IndexOutOfBoundsException
+   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  void set(int index, boolean value);
+
+  /**
+   * {@inheritDoc}
+   * @throws IndexOutOfBoundsException
+   *     if {@code from} or {@code to} is negative, {@code to} is less than {@code from},
+   *     or {@code to} is greater than {@link #domainSize()}.
+   */
+  @Override
+  void set(int from, int to);
+
   /**
    * {@inheritDoc}
    * @throws IndexOutOfBoundsException
@@ -32,6 +70,35 @@ public interface BoundedNatBitSet extends NatBitSet {
    */
   @Override
   boolean add(@Nonnegative int index);
+
+
+  /**
+   * {@inheritDoc}
+   * @throws IndexOutOfBoundsException
+   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  void flip(int index);
+
+  /**
+   * {@inheritDoc}
+   * @throws IndexOutOfBoundsException
+   *     if {@code from} or {@code to} is negative or greater than the {@link #domainSize()},
+   *     or {@code to} is less than {@code from}.
+   */
+  @Override
+  void flip(int from, int to);
+
+
+  // Bulk operations
+
+  /**
+   * {@inheritDoc}
+   * @throws IndexOutOfBoundsException
+   *     if any index is negative or greater or equal to the {@link #domainSize()}.
+   */
+  @Override
+  void or(IntCollection indices);
 
   /**
    * {@inheritDoc}
@@ -49,72 +116,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   @Override
   boolean addAll(IntCollection indices);
 
-  /**
-   * {@inheritDoc}
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
-   */
-  @Override
-  void clear(@Nonnegative int index);
-
-  /**
-   * {@inheritDoc}
-   * @throws IndexOutOfBoundsException
-   *     if {@code from} or {@code to} is negative or greater or equal to the {@link #domainSize()},
-   *     or {@code to} is less than {@code from}.
-   */
-  @Override
-  void clear(int from, int to);
-
-  /**
-   * Removes all indices larger or equal than {@code from}. Equivalent to calling<pre>
-   * set.clear(from, set.domainSize());
-   * </pre>
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code from} is negative or greater or equal to the {@link #domainSize()}.
-   * @see #clear(int, int)
-   * @see #lastInt()
-   */
-  @Override
-  void clearFrom(@Nonnegative int from);
-
-  @Override
-  BoundedNatBitSet clone();
-
-  /**
-   * Returns a complement view of this set. The returned set contains exactly those values in
-   * {@code {0, ..., domainSize() - 1}} which are not contained in this. The returned set also is
-   * backed by this set, i.e. changes to one are visible in the other.
-   */
-  BoundedNatBitSet complement();
-
-  /**
-   * The size of the domain of this set. The set only contains values between zero (inclusive) and
-   * the returned value (exclusive).
-   */
-  @Nonnegative
-  int domainSize();
-
-  /**
-   * {@inheritDoc}
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
-   */
-  @Override
-  void flip(int index);
-
-  /**
-   * {@inheritDoc}
-   * @throws IndexOutOfBoundsException
-   *     if {@code from} or {@code to} is negative or greater or equal to the {@link #domainSize()},
-   *     or {@code to} is less than {@code from}.
-   */
-  @Override
-  void flip(int from, int to);
-
-  @Override
-  void or(IntCollection indices);
 
   /**
    * Adds all elements of the domain which are not contained in the given indices to this set. This
@@ -129,16 +130,21 @@ public interface BoundedNatBitSet extends NatBitSet {
   /**
    * {@inheritDoc}
    * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
-   */
-  @Override
-  boolean remove(int index);
-
-  /**
-   * {@inheritDoc}
-   * @throws IndexOutOfBoundsException
    *     if any index is negative or greater or equal to the {@link #domainSize()}.
    */
   @Override
-  boolean removeAll(Collection<?> indices);
+  void xor(IntCollection indices);
+
+
+  // Clone
+
+  @Override
+  BoundedNatBitSet clone();
+
+  /**
+   * Returns a complement view of this set. The returned set contains exactly those values in
+   * {@code {0, ..., domainSize() - 1}} which are not contained in this. The returned set also is
+   * backed by this set, i.e. changes to one are visible in the other.
+   */
+  BoundedNatBitSet complement();
 }

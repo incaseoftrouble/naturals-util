@@ -17,7 +17,6 @@
 
 package de.tum.in.naturals.set;
 
-import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.Size64;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import java.util.AbstractSet;
@@ -35,9 +34,16 @@ class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
   }
 
   @Override
+  public boolean isEmpty() {
+    return false;
+  }
+
+
+  @Override
   public boolean contains(@Nullable Object obj) {
     return obj instanceof IntCollection && baseSet.containsAll((IntCollection) obj);
   }
+
 
   @Override
   public boolean equals(Object obj) {
@@ -49,16 +55,6 @@ class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
       return baseSet.equals(other.baseSet);
     }
     return super.equals(obj);
-  }
-
-  @Override
-  public int hashCode() {
-    return HashCommon.mix(baseSet.hashCode());
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return false;
   }
 
   /**

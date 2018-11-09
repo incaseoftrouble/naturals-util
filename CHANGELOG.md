@@ -1,6 +1,12 @@
 # 0.x
 
-### 0.11.0
+### 0.12.0 (2018-11-09)
+
+ * Extend support for bounded/unbounded pairs to all bulk operations
+ * Unify source code ordering of sets
+ * Add roaring bitmaps implementation
+
+### 0.11.0 (2018-11-07)
 
  * Improve `containsAll` for bounded/unbounded pairs
  * Add `NatBitSetFactory` - Useful to transparently change used implementation

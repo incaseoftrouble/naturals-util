@@ -21,25 +21,18 @@ import com.zaxxer.sparsebits.SparseBitSet;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
 
-class SparseBitSetIterator implements IntIterator {
+final class SparseBitSetIterator implements IntIterator {
   private final SparseBitSet bitSet;
-  private final int max;
   private int current = -1;
   private int next;
 
   SparseBitSetIterator(SparseBitSet bitSet) {
-    this(bitSet, Integer.MAX_VALUE);
-  }
-
-  SparseBitSetIterator(SparseBitSet bitSet, int max) {
     this.bitSet = bitSet;
-    this.max = max;
     this.next = bitSet.nextSetBit(0);
   }
 
   private int getNext(int index) {
-    int next = bitSet.nextSetBit(index);
-    return next <= max ? next : -1;
+    return bitSet.nextSetBit(index);
   }
 
   @Override

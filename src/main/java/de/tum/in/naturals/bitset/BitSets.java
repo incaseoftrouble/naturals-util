@@ -163,10 +163,6 @@ public final class BitSets {
     return new BitSetIterator(bitSet);
   }
 
-  public static IntIterator iterator(BitSet bitSet, int length) {
-    return new BitSetIterator(bitSet, length);
-  }
-
 
   /**
    * Returns the set containing all subsets of the given basis.

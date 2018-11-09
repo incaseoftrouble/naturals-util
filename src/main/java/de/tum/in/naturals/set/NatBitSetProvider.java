@@ -25,26 +25,12 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.IntConsumer;
 import javax.annotation.Nonnegative;
+import org.roaringbitmap.RoaringBitmap;
 
 public final class NatBitSetProvider {
   private NatBitSetProvider() {}
 
   // --- Unbounded Sets ---
-
-  /**
-   * Return a view on the given {@code bitSet}.
-   */
-  public static NatBitSet asSet(BitSet bitSet) {
-    return new SimpleNatBitSet(bitSet);
-  }
-
-  /**
-   * Return a view on the given {@code bitSet}.
-   */
-  public static NatBitSet asSet(SparseBitSet bitSet) {
-    return new SparseNatBitSet(bitSet);
-  }
-
 
   public static NatBitSet longSet() {
     return new LongNatBitSet();
@@ -66,8 +52,44 @@ public final class NatBitSetProvider {
     return new SparseNatBitSet(new SparseBitSet(expectedSize));
   }
 
+  public static NatBitSet roaringSet() {
+    return new RoaringNatBitSet(new RoaringBitmap());
+  }
+
+
+  /**
+   * Return a view on the given {@code bitSet}.
+   */
+  public static NatBitSet asSet(BitSet bitSet) {
+    return new SimpleNatBitSet(bitSet);
+  }
+
+  /**
+   * Return a view on the given {@code bitSet}.
+   */
+  public static NatBitSet asSet(SparseBitSet bitSet) {
+    return new SparseNatBitSet(bitSet);
+  }
+
 
   // --- Bounded Sets ---
+
+  public static BoundedNatBitSet boundedLongSet(int domainSize) {
+    return new LongBoundedNatBitSet(domainSize);
+  }
+
+  public static BoundedNatBitSet boundedSimpleSet(int domainSize) {
+    return new SimpleBoundedNatBitSet(new BitSet(), domainSize);
+  }
+
+  public static BoundedNatBitSet boundedSparseSet(int domainSize) {
+    return new SparseBoundedNatBitSet(new SparseBitSet(), domainSize);
+  }
+
+  public static BoundedNatBitSet boundedRoaringSet(int domainSize) {
+    return new RoaringBoundedNatBitSet(new RoaringBitmap(), domainSize);
+  }
+
 
   /**
    * Return a view on the given {@code bitSet}.
@@ -82,20 +104,6 @@ public final class NatBitSetProvider {
   public static BoundedNatBitSet asBoundedSet(SparseBitSet bitSet, int domainSize) {
     return new SparseBoundedNatBitSet(bitSet, domainSize);
   }
-
-
-  public static BoundedNatBitSet boundedLongSet(int domainSize) {
-    return new LongBoundedNatBitSet(domainSize);
-  }
-
-  public static BoundedNatBitSet boundedSimpleSet(int domainSize) {
-    return new SimpleBoundedNatBitSet(new BitSet(), domainSize);
-  }
-
-  public static BoundedNatBitSet boundedSparseSet(int domainSize) {
-    return new SparseBoundedNatBitSet(new SparseBitSet(), domainSize);
-  }
-
 
   /**
    * Ensures that the given {@code set} is a {@link BoundedNatBitSet}. When possible, the backing
@@ -132,7 +140,7 @@ public final class NatBitSetProvider {
     }
     if (set instanceof SparseNatBitSet) {
       SparseNatBitSet sparseSet = (SparseNatBitSet) set;
-      return new SparseBoundedNatBitSet(sparseSet.getSparseBitSet(), domainSize);
+      return new SparseBoundedNatBitSet(sparseSet.getBitSet(), domainSize);
     }
     if (set instanceof LongNatBitSet) {
       LongNatBitSet longSet = (LongNatBitSet) set;
@@ -147,6 +155,7 @@ public final class NatBitSetProvider {
 
     return new BoundedWrapper(set, domainSize);
   }
+
 
   // --- Special Cases ---
 
@@ -227,7 +236,7 @@ public final class NatBitSetProvider {
       return bitSet;
     }
     if (indices instanceof SparseNatBitSet) {
-      return BitSets.of(((SparseNatBitSet) indices).getSparseBitSet());
+      return BitSets.of(((SparseNatBitSet) indices).getBitSet());
     }
     if (indices instanceof SparseBoundedNatBitSet) {
       SparseBoundedNatBitSet boundedSet = (SparseBoundedNatBitSet) indices;
@@ -236,7 +245,7 @@ public final class NatBitSetProvider {
         boundedSet.forEach((IntConsumer) bitSet::set);
         return bitSet;
       }
-      return BitSets.of(boundedSet.getSparseBitSet());
+      return BitSets.of(boundedSet.getBitSet());
     }
 
     BitSet bitSet = new BitSet(indices.lastInt() + 1);
@@ -261,11 +270,11 @@ public final class NatBitSetProvider {
       return SparseBitSets.of(boundedSet.getBitSet());
     }
     if (indices instanceof SparseNatBitSet) {
-      return ((SparseNatBitSet) indices).getSparseBitSet().clone();
+      return ((SparseNatBitSet) indices).getBitSet().clone();
     }
     if (indices instanceof SparseBoundedNatBitSet) {
       SparseBoundedNatBitSet boundedSet = (SparseBoundedNatBitSet) indices;
-      SparseBitSet bitSet = boundedSet.getSparseBitSet().clone();
+      SparseBitSet bitSet = boundedSet.getBitSet().clone();
       if (boundedSet.isComplement()) {
         bitSet.flip(0, boundedSet.domainSize());
       }
@@ -275,5 +284,26 @@ public final class NatBitSetProvider {
     SparseBitSet bitSet = new SparseBitSet(indices.lastInt() + 1);
     indices.forEach((IntConsumer) bitSet::set);
     return bitSet;
+  }
+
+  public static RoaringBitmap toRoaringBitmap(NatBitSet indices) {
+    if (indices.isEmpty()) {
+      return new RoaringBitmap();
+    }
+    if (indices instanceof RoaringNatBitSet) {
+      return ((RoaringNatBitSet) indices).getBitmap().clone();
+    }
+    if (indices instanceof RoaringBoundedNatBitSet) {
+      RoaringBoundedNatBitSet boundedSet = (RoaringBoundedNatBitSet) indices;
+      RoaringBitmap bitmap = boundedSet.getBitmap().clone();
+      if (boundedSet.isComplement()) {
+        bitmap.flip(0L, (long) boundedSet.domainSize());
+      }
+      return bitmap;
+    }
+
+    RoaringBitmap bitmap = new RoaringBitmap();
+    indices.forEach((IntConsumer) bitmap::add);
+    return bitmap;
   }
 }

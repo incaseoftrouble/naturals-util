@@ -20,7 +20,10 @@ package de.tum.in.naturals.set;
 import static de.tum.in.naturals.set.NatBitSets.UNKNOWN_LENGTH;
 import static de.tum.in.naturals.set.NatBitSets.UNKNOWN_SIZE;
 
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.Collection;
+import java.util.Set;
 import javax.annotation.Nonnegative;
 
 public interface NatBitSetFactory {
@@ -77,7 +80,22 @@ public interface NatBitSetFactory {
    *
    * @see #modifiableCopyOf(NatBitSet)
    */
-  NatBitSet copyOf(Collection<Integer> indices);
+  default NatBitSet copyOf(Collection<Integer> indices) {
+    NatBitSet copy;
+    if (indices.isEmpty()) {
+      copy = NatBitSetProvider.emptySet();
+    } else if (indices instanceof NatBitSet) {
+      copy = ((NatBitSet) indices).clone();
+    } else if (indices instanceof IntSortedSet) {
+      copy = set(indices.size(), ((IntSortedSet) indices).lastInt());
+      copy.or((IntSortedSet) indices);
+    } else {
+      copy = set(indices.size(), UNKNOWN_LENGTH);
+      copy.addAll(indices);
+    }
+    assert copy.equals(indices instanceof Set ? indices : new IntAVLTreeSet(indices));
+    return copy;
+  }
 
   /**
    * Returns a copy of the given {@code set} which is guaranteed to be modifiable.
@@ -202,7 +220,6 @@ public interface NatBitSetFactory {
   default NatBitSet ensureModifiable(BoundedNatBitSet set) {
     return NatBitSets.isModifiable(set) ? set : modifiableCopyOf(set);
   }
-
 
 
   // --- Compaction ---

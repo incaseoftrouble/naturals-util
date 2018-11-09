@@ -98,9 +98,27 @@ public class NatBitSetTheories {
     implementations = new ArrayList<>();
     implementations.add(new Pair(NatBitSetProvider.emptySet()));
 
+
+    // Unbounded
+
     for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
       NatBitSet singleton = NatBitSetProvider.singleton(generator.nextInt(MAXIMAL_SUBSET_SIZE));
       implementations.add(new Pair(singleton));
+    }
+
+    for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
+      int size = generator.nextInt(Long.SIZE);
+      NatBitSet longSet = NatBitSetProvider.longSet();
+      longSet.addAll(generateSet(size, size));
+      implementations.add(new Pair(longSet));
+    }
+    for (IntCollection fixedSet : fixedSets) {
+      if (fixedSet.stream().anyMatch(value -> value >= Long.SIZE)) {
+        continue;
+      }
+      NatBitSet longSet = NatBitSetProvider.longSet();
+      longSet.addAll(fixedSet);
+      implementations.add(new Pair(longSet));
     }
 
     for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
@@ -128,19 +146,19 @@ public class NatBitSetTheories {
     }
 
     for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-      int size = generator.nextInt(Long.SIZE);
-      NatBitSet longSet = NatBitSetProvider.longSet();
-      longSet.addAll(generateSet(size, size));
-      implementations.add(new Pair(longSet));
+      int size = generator.nextInt(MAXIMAL_SUBSET_SIZE);
+      NatBitSet sparseSet = NatBitSetProvider.roaringSet();
+      sparseSet.addAll(generateSet(size, size));
+      implementations.add(new Pair(sparseSet));
     }
     for (IntCollection fixedSet : fixedSets) {
-      if (fixedSet.stream().anyMatch(value -> value >= Long.SIZE)) {
-        continue;
-      }
-      NatBitSet longSet = NatBitSetProvider.longSet();
-      longSet.addAll(fixedSet);
-      implementations.add(new Pair(longSet));
+      NatBitSet sparseSet = NatBitSetProvider.roaringSet();
+      sparseSet.addAll(fixedSet);
+      implementations.add(new Pair(sparseSet));
     }
+
+
+    // Bounded
 
     for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
       BoundedNatBitSet boundedEmpty =
@@ -154,6 +172,23 @@ public class NatBitSetTheories {
           NatBitSetProvider.boundedFullSet(generator.nextInt(MAXIMAL_SUBSET_SIZE));
       implementations.add(new Pair(fullSet));
       implementations.add(new Pair(fullSet.complement()));
+    }
+
+    for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
+      int size = generator.nextInt(Long.SIZE);
+      BoundedNatBitSet longSet = NatBitSetProvider.boundedLongSet(size);
+      longSet.addAll(generateSet(size, size));
+      implementations.add(new Pair(longSet));
+      implementations.add(new Pair(longSet.complement()));
+    }
+    for (IntCollection fixedSet : fixedSets) {
+      if (fixedSet.stream().anyMatch(value -> value >= SMALL_SUBSET_SIZE)) {
+        continue;
+      }
+      BoundedNatBitSet longSet = NatBitSetProvider.boundedLongSet(Long.SIZE - generator.nextInt(4));
+      longSet.addAll(fixedSet);
+      implementations.add(new Pair(longSet));
+      implementations.add(new Pair(longSet.complement()));
     }
 
     for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
@@ -185,20 +220,17 @@ public class NatBitSetTheories {
     }
 
     for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-      int size = generator.nextInt(Long.SIZE);
-      BoundedNatBitSet longSet = NatBitSetProvider.boundedLongSet(size);
-      longSet.addAll(generateSet(size, size));
-      implementations.add(new Pair(longSet));
-      implementations.add(new Pair(longSet.complement()));
+      int size = generator.nextInt(MAXIMAL_SUBSET_SIZE);
+      BoundedNatBitSet roaringSet = NatBitSetProvider.boundedRoaringSet(size);
+      roaringSet.addAll(generateSet(size, size));
+      implementations.add(new Pair(roaringSet));
+      implementations.add(new Pair(roaringSet.complement()));
     }
     for (IntCollection fixedSet : fixedSets) {
-      if (fixedSet.stream().anyMatch(value -> value >= SMALL_SUBSET_SIZE)) {
-        continue;
-      }
-      BoundedNatBitSet longSet = NatBitSetProvider.boundedLongSet(Long.SIZE - generator.nextInt(4));
-      longSet.addAll(fixedSet);
-      implementations.add(new Pair(longSet));
-      implementations.add(new Pair(longSet.complement()));
+      BoundedNatBitSet roaringSet = NatBitSetProvider.boundedRoaringSet(MAXIMAL_SUBSET_SIZE);
+      roaringSet.addAll(fixedSet);
+      implementations.add(new Pair(roaringSet));
+      implementations.add(new Pair(roaringSet.complement()));
     }
   }
 
@@ -419,6 +451,9 @@ public class NatBitSetTheories {
     } else {
       domainSize = MAXIMAL_SUBSET_SIZE;
     }
+
+    assumeThat(set.isEmpty() || set.lastInt() < domainSize, is(true));
+
     BoundedNatBitSet copy = NatBitSetProvider.asBounded(set, domainSize);
 
     assertThat(copy.domainSize(), is(domainSize));
@@ -729,7 +764,7 @@ public class NatBitSetTheories {
         new IntAVLTreeSet(implementation.reference));
 
     set.or(other.set);
-    reference.or(other.reference);
+    reference.or(other.set);
     checkEquality(set, reference);
 
     other.check();
@@ -824,7 +859,7 @@ public class NatBitSetTheories {
     ForwardingNatBitSet reference = new ForwardingNatBitSet(
         new IntAVLTreeSet(implementation.reference));
 
-    assertThat(set.removeAll(other.set), is(reference.removeAll(other.reference)));
+    assertThat(set.removeAll(other.set), is(reference.removeAll(other.set)));
     checkEquality(set, reference);
     assertThat(set.removeAll(other.set), is(false));
   }
@@ -838,7 +873,7 @@ public class NatBitSetTheories {
     ForwardingNatBitSet reference = new ForwardingNatBitSet(
         new IntAVLTreeSet(implementation.reference));
 
-    assertThat(set.retainAll(other.set), is(reference.retainAll(other.reference)));
+    assertThat(set.retainAll(other.set), is(reference.retainAll(other.set)));
     checkEquality(set, reference);
     assertThat(set.retainAll(other.set), is(false));
     checkEquality(set, reference);
@@ -916,7 +951,6 @@ public class NatBitSetTheories {
     set.xor(other.set);
     reference.xor(other.set);
     checkEquality(set, reference);
-    assertThat(other.set, is(asSet(other.reference)));
   }
 
   private static class And implements Consumer<NatBitSet> {
@@ -1111,7 +1145,7 @@ public class NatBitSetTheories {
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public ForwardingNatBitSet clone() {
-      throw new AssertionError();
+      return new ForwardingNatBitSet(new IntAVLTreeSet(delegate));
     }
 
     @Override
@@ -1361,7 +1395,7 @@ public class NatBitSetTheories {
 
     @Override
     public String toString() {
-      return set.getClass().getSimpleName() + " " + set.toString();
+      return "\n" + set.getClass().getSimpleName() + "\n" + set;
     }
   }
 

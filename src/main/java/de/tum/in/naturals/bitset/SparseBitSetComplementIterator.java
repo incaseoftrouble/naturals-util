@@ -21,7 +21,7 @@ import com.zaxxer.sparsebits.SparseBitSet;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
 
-class SparseBitSetComplementIterator implements IntIterator {
+final class SparseBitSetComplementIterator implements IntIterator {
   private final SparseBitSet bitSet;
   private final int length;
   private int current = -1;

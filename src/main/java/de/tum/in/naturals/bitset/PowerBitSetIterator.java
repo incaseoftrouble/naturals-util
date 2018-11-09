@@ -22,7 +22,7 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-class PowerBitSetIterator implements Iterator<BitSet> {
+final class PowerBitSetIterator implements Iterator<BitSet> {
   private final BitSet baseSet;
   private final BitSet iteration;
   private final int baseCardinality;

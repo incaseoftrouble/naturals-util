@@ -17,7 +17,6 @@
 
 package de.tum.in.naturals.set;
 
-import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.Collection;
@@ -171,7 +170,7 @@ class BoundedWrapper extends AbstractBoundedNatBitSet {
 
   @Override
   public int hashCode() {
-    return HashCommon.mix(delegate.hashCode());
+    return delegate.hashCode();
   }
 
   @Override

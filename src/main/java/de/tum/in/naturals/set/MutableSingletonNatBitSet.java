@@ -18,7 +18,10 @@
 package de.tum.in.naturals.set;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
 
 class MutableSingletonNatBitSet extends AbstractNatBitSet {
   private static final int EMPTY = Integer.MIN_VALUE;
@@ -36,51 +39,36 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
     throw new UnsupportedOperationException("Singleton can hold at most one value");
   }
 
+
   @Override
-  public boolean add(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (index == element) {
-      return false;
-    }
-    if (!isEmpty()) {
-      throwOperationUnsupported();
-    }
-    setValue(index);
-    return true;
+  public boolean isEmpty() {
+    return element == EMPTY;
   }
 
   @Override
-  public void clear(int i) {
-    if (i == element) {
-      setEmpty();
-    }
-  }
-
-  @Override
-  public void clear(int from, int to) {
-    NatBitSetsUtil.checkRange(from, to);
-    if (isEmpty()) {
-      return;
-    }
-    if (from <= element && element < to) {
-      setEmpty();
-    }
-  }
-
-  @Override
-  public void clear() {
-    setEmpty();
-  }
-
-  @Override
-  public MutableSingletonNatBitSet clone() {
-    return (MutableSingletonNatBitSet) super.clone();
+  public int size() {
+    return isEmpty() ? 0 : 1;
   }
 
   @Override
   public boolean contains(int index) {
     return !isEmpty() && index == element;
   }
+
+  @Override
+  public boolean containsAll(Collection<?> c) {
+    if (c.isEmpty()) {
+      return true;
+    }
+    if (isEmpty()) {
+      return false;
+    }
+    if (c.size() > 1) {
+      return false;
+    }
+    return c.contains(element);
+  }
+
 
   @Override
   public int firstInt() {
@@ -91,40 +79,6 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public void flip(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (isEmpty()) {
-      element = index;
-    } else if (index == element) {
-      element = EMPTY;
-    } else {
-      throwOperationUnsupported();
-    }
-  }
-
-  @Override
-  public void flip(int from, int to) {
-    NatBitSetsUtil.checkRange(from, to);
-    if (from == to) {
-      return;
-    }
-    if (from + 1 != to) {
-      throwOperationUnsupported();
-    }
-    flip(from);
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return element == EMPTY;
-  }
-
-  @Override
-  public IntIterator iterator() {
-    return new SingletonSetIterator(this);
-  }
-
-  @Override
   public int lastInt() {
     if (isEmpty()) {
       throw new NoSuchElementException();
@@ -132,11 +86,6 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
     return element;
   }
 
-  @Override
-  public int nextAbsentIndex(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    return (!isEmpty() && index == element) ? element + 1 : index;
-  }
 
   @Override
   public int nextPresentIndex(int index) {
@@ -148,8 +97,9 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public int previousAbsentIndex(int index) {
-    return (!isEmpty() && index == element) ? element - 1 : index;
+  public int nextAbsentIndex(int index) {
+    NatBitSetsUtil.checkNonNegative(index);
+    return (!isEmpty() && index == element) ? element + 1 : index;
   }
 
   @Override
@@ -158,17 +108,28 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
   }
 
   @Override
-  public boolean remove(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (isEmpty()) {
-      return false;
-    }
-    if (index != element) {
-      return false;
-    }
-    setEmpty();
-    return true;
+  public int previousAbsentIndex(int index) {
+    return (!isEmpty() && index == element) ? element - 1 : index;
   }
+
+
+  @Override
+  public IntStream intStream() {
+    return isEmpty() ? IntStream.empty() : IntStream.of(element);
+  }
+
+  @Override
+  public IntIterator iterator() {
+    return new SingletonSetIterator(this);
+  }
+
+  @Override
+  public void forEach(IntConsumer action) {
+    if (!isEmpty()) {
+      action.accept(element);
+    }
+  }
+
 
   @Override
   public void set(int index) {
@@ -208,6 +169,97 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
     }
   }
 
+  @Override
+  public boolean add(int index) {
+    NatBitSetsUtil.checkNonNegative(index);
+    if (index == element) {
+      return false;
+    }
+    if (!isEmpty()) {
+      throwOperationUnsupported();
+    }
+    setValue(index);
+    return true;
+  }
+
+  @Override
+  public void clear() {
+    setEmpty();
+  }
+
+  @Override
+  public void clear(int index) {
+    if (index == element) {
+      setEmpty();
+    }
+  }
+
+  @Override
+  public void clear(int from, int to) {
+    NatBitSetsUtil.checkRange(from, to);
+    if (isEmpty()) {
+      return;
+    }
+    if (from <= element && element < to) {
+      setEmpty();
+    }
+  }
+
+  @Override
+  public boolean remove(int index) {
+    NatBitSetsUtil.checkNonNegative(index);
+    if (isEmpty()) {
+      return false;
+    }
+    if (index != element) {
+      return false;
+    }
+    setEmpty();
+    return true;
+  }
+
+  @Override
+  public void flip(int index) {
+    NatBitSetsUtil.checkNonNegative(index);
+    if (isEmpty()) {
+      element = index;
+    } else if (index == element) {
+      element = EMPTY;
+    } else {
+      throwOperationUnsupported();
+    }
+  }
+
+  @Override
+  public void flip(int from, int to) {
+    NatBitSetsUtil.checkRange(from, to);
+    if (from == to) {
+      return;
+    }
+    if (from + 1 != to) {
+      throwOperationUnsupported();
+    }
+    flip(from);
+  }
+
+
+  @Override
+  public boolean intersects(Collection<Integer> indices) {
+    return !isEmpty() && indices.contains(element);
+  }
+
+
+  @Override
+  public MutableSingletonNatBitSet clone() {
+    return (MutableSingletonNatBitSet) super.clone();
+  }
+
+  @Override
+  public int[] toIntArray() {
+    return isEmpty() ? new int[0] : new int[] {element};
+  }
+
+
   private void setEmpty() {
     element = EMPTY;
   }
@@ -215,16 +267,6 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
   private void setValue(int value) {
     assert value >= 0 && isEmpty();
     element = value;
-  }
-
-  @Override
-  public int size() {
-    return isEmpty() ? 0 : 1;
-  }
-
-  @Override
-  public int[] toIntArray() {
-    return isEmpty() ? new int[0] : new int[] {element};
   }
 
   private static class SingletonSetIterator implements IntIterator {
