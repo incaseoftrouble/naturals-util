@@ -1,5 +1,11 @@
 # 0.x
 
+### 0.13.0 (2019-07-13)
+
+ * Add CI
+ * Bump versions of roaring bitmaps and fastutil
+ * Improve performance of roaring bitmaps
+
 ### 0.12.0 (2018-11-09)
 
  * Extend support for bounded/unbounded pairs to all bulk operations

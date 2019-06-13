@@ -22,6 +22,7 @@ import de.tum.in.naturals.bitset.BitSets;
 import de.tum.in.naturals.bitset.SparseBitSets;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
@@ -128,19 +129,30 @@ public final class NatBitSets {
 
 
   /**
-   * Return a view on the given {@code bitSet}.
+   * Returns a view on the given {@code bitSet}.
    */
   public static NatBitSet asSet(BitSet bitSet) {
     return new SimpleNatBitSet(bitSet);
   }
 
   /**
-   * Return a view on the given {@code bitSet}.
+   * Returns a view on the given {@code bitSet}.
    */
   public static NatBitSet asSet(SparseBitSet bitSet) {
     return new SparseNatBitSet(bitSet);
   }
 
+  /**
+   * Returns a view on the given {@code set}.
+   *
+   * <p>The set may not contain negative indices.</p>
+   *
+   * <p><strong>Warning:</strong> The returned view is not efficient.</p>
+   */
+  public static NatBitSet asSet(IntSortedSet set) {
+    assert set.isEmpty() || set.firstInt() >= 0;
+    return new ForwardingNatBitSet(set);
+  }
 
   // --- Bounded Sets ---
 

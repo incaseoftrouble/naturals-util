@@ -90,36 +90,22 @@ class RoaringNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int nextPresentIndex(int index) {
-    return (int) bitmap.nextValue(index);
+    return Math.toIntExact(bitmap.nextValue(index));
   }
 
   @Override
   public int nextAbsentIndex(int index) {
-    int i = index;
-    while (bitmap.contains(i)) {
-      i += 1;
-    }
-    return i;
+    return Math.toIntExact(bitmap.nextAbsentValue(index));
   }
 
   @Override
   public int previousPresentIndex(int index) {
-    for (int i = index; i >= 0; i--) {
-      if (bitmap.contains(i)) {
-        return i;
-      }
-    }
-    return -1;
+    return Math.toIntExact(bitmap.previousValue(index));
   }
 
   @Override
   public int previousAbsentIndex(int index) {
-    for (int i = index; i >= 0; i--) {
-      if (!bitmap.contains(i)) {
-        return i;
-      }
-    }
-    return -1;
+    return Math.toIntExact(bitmap.previousAbsentValue(index));
   }
 
 
@@ -215,6 +201,7 @@ class RoaringNatBitSet extends AbstractNatBitSet {
         bitmap.and(other.getBitmap());
       }
     } else {
+      // TODO Inefficient - could at least skip the copy
       // Can't use super.and() since the iterator does not support remove()
       bitmap.and(RoaringBitmaps.of(indices));
     }
@@ -246,6 +233,7 @@ class RoaringNatBitSet extends AbstractNatBitSet {
         bitmap.andNot(other.getBitmap());
       }
     } else {
+      // TODO Inefficient - could at least skip the copy
       bitmap.andNot(RoaringBitmaps.of(indices));
     }
   }

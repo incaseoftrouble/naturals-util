@@ -1,11 +1,10 @@
 plugins {
-    id 'io.codearte.nexus-staging' version '0.11.0'
-    id 'net.ltgt.errorprone' version '0.0.13'
-    id 'net.ltgt.apt-idea' version '0.14'
+    // https://plugins.gradle.org/plugin/io.codearte.nexus-staging
+    id 'io.codearte.nexus-staging' version '0.21.0'
 }
 
 group 'de.tum.in'
-version '0.12.0'
+version '0.13.0'
 
 apply plugin: 'java'
 
@@ -14,12 +13,19 @@ apply plugin: 'checkstyle'
 
 apply plugin: 'idea'
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+project.sourceCompatibility = JavaVersion.VERSION_1_8
+project.targetCompatibility = JavaVersion.VERSION_1_8
 
 def defaultEncoding = 'UTF-8'
 tasks.withType(JavaCompile) { options.encoding = defaultEncoding }
 tasks.withType(Javadoc) { options.encoding = defaultEncoding }
+
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
 
 repositories {
     mavenCentral()
@@ -28,9 +34,10 @@ repositories {
 dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 
-    implementation group: 'it.unimi.dsi', name: 'fastutil', version:'8.1.1'
-    implementation group: 'com.zaxxer', name: 'SparseBitSet', version:'1.2'
-    implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version:'[0.6,)'
+    implementation group: 'it.unimi.dsi', name: 'fastutil', version: '8.2.2'
+    implementation group: 'com.zaxxer', name: 'SparseBitSet', version: '1.2'
+    implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.8.5'
+    // 0.8.6 is broken
 
     testImplementation group: 'junit', name: 'junit', version: '4.12'
     testImplementation group: 'com.googlecode.junit-toolbox', name: 'junit-toolbox', version: '2.3'
@@ -50,5 +57,3 @@ if (project.hasProperty('release')) {
 if (file('../user.gradle').exists()) {
     apply from: '../user.gradle'
 }
-
-apply from: 'gradle/idea.gradle'

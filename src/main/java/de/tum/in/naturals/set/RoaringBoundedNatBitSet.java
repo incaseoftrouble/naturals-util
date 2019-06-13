@@ -138,7 +138,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
   public int lastInt() {
     int lastInt;
     if (complement) {
-      lastInt = RoaringBitmaps.previousAbsentIndex(bitmap, domainSize() - 1);
+      lastInt = Math.toIntExact(bitmap.previousAbsentValue(domainSize() - 1));
     } else {
       lastInt = bitmap.isEmpty() ? -1 : bitmap.last();
     }
@@ -158,10 +158,10 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       return -1;
     }
     if (complement) {
-      int nextClear = RoaringBitmaps.nextAbsentIndex(bitmap, index);
+      int nextClear = Math.toIntExact(bitmap.nextAbsentValue(index));
       return nextClear >= domainSize() ? -1 : nextClear;
     }
-    return (int) bitmap.nextValue(index);
+    return Math.toIntExact(bitmap.nextValue(index));
   }
 
   @Override
@@ -172,10 +172,10 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       return index;
     }
     if (complement) {
-      int nextSet = (int) bitmap.nextValue(index);
+      int nextSet = Math.toIntExact(bitmap.nextValue(index));
       return nextSet == -1 ? domainSize() : nextSet;
     }
-    return RoaringBitmaps.nextAbsentIndex(bitmap, index);
+    return Math.toIntExact(bitmap.nextAbsentValue(index));
   }
 
   @Override
@@ -183,9 +183,9 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     assert checkConsistency();
     checkNonNegative(index);
     int clampedIndex = Math.min(index, domainSize() - 1);
-    return complement
-        ? RoaringBitmaps.previousAbsentIndex(bitmap, clampedIndex)
-        : RoaringBitmaps.previousPresentIndex(bitmap, clampedIndex);
+    return Math.toIntExact(complement
+        ? bitmap.previousAbsentValue(clampedIndex)
+        : bitmap.previousValue(clampedIndex));
   }
 
   @Override
@@ -195,19 +195,16 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (index >= domainSize()) {
       return index;
     }
-    return complement
-        ? RoaringBitmaps.previousPresentIndex(bitmap, index)
-        : RoaringBitmaps.previousAbsentIndex(bitmap, index);
+    return Math.toIntExact(complement
+        ? bitmap.previousValue(index)
+        : bitmap.previousAbsentValue(index));
   }
 
 
   @Override
   public IntIterator iterator() {
     assert checkConsistency();
-    RoaringBitmap bitmap = complement
-        ? complementBits()
-        : this.bitmap;
-    return RoaringBitmaps.iterator(bitmap);
+    return RoaringBitmaps.iterator(complement ? complementBits() : this.bitmap);
   }
 
 
@@ -587,7 +584,6 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
   }
 
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public RoaringBoundedNatBitSet clone() {
     assert checkConsistency();
@@ -644,7 +640,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
             largerSize = domainSize;
           }
 
-          if (RoaringBitmaps.nextAbsentIndex(larger.bitmap, smallerSize) < largerSize) {
+          if (larger.bitmap.nextAbsentValue(smallerSize) < (long) largerSize) {
             return false;
           }
           RoaringBitmap largerBitSet = larger.bitmap.clone();

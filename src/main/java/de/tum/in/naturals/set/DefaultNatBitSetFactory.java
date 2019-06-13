@@ -52,7 +52,7 @@ public class DefaultNatBitSetFactory extends AbstractNatBitSetFactory {
 
   @Override
   protected BoundedNatBitSet makeBoundedSet(int domainSize, int expectedSize) {
-    return (useSparse.test(expectedSize, domainSize))
+    return useSparse.test(expectedSize, domainSize)
         ? new SparseBoundedNatBitSet(new SparseBitSet(domainSize), domainSize)
         : new SimpleBoundedNatBitSet(new BitSet(), domainSize);
   }

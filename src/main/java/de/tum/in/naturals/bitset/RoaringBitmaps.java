@@ -24,8 +24,6 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.BitSet;
 import java.util.PrimitiveIterator;
 import java.util.function.IntConsumer;
-import javax.annotation.Nonnegative;
-import org.roaringbitmap.PeekableIntIterator;
 import org.roaringbitmap.RoaringBitmap;
 
 /**
@@ -70,61 +68,5 @@ public final class RoaringBitmaps {
 
   public static IntIterator iterator(RoaringBitmap bitmap) {
     return new RoaringIterator(bitmap.getIntIterator());
-  }
-
-  public static int nextAbsentIndex(RoaringBitmap bitmap, @Nonnegative int index) {
-    // For now a simple linear search ...
-    if (!bitmap.contains(index)) {
-      return index;
-    }
-    PeekableIntIterator intIterator = bitmap.getIntIterator();
-    intIterator.advanceIfNeeded(index);
-    int current = index;
-    while (intIterator.hasNext()) {
-      int next = intIterator.next();
-      if (next > current + 1) {
-        return current + 1;
-      }
-      current = next;
-    }
-    return current + 1;
-  }
-
-  public static int previousPresentIndex(RoaringBitmap bitmap, @Nonnegative int index) {
-    if (bitmap.contains(index)) {
-      return index;
-    }
-    int rank = bitmap.rank(index);
-    if (rank == 0) {
-      return -1;
-    }
-
-    return bitmap.select(rank - 1);
-  }
-
-  public static int previousAbsentIndex(RoaringBitmap bitmap, @Nonnegative int index) {
-    if (!bitmap.contains(index)) {
-      return index;
-    }
-    int rank = bitmap.rank(index) - 1;
-    if (index == rank) { // Rank of index == index -> All elements below are set
-      return -1;
-    }
-    assert bitmap.select(rank) == index;
-
-    int current = index;
-    for (int i = rank - 1; i >= 0; i--) {
-      assert bitmap.contains(current);
-
-      int next = bitmap.select(i);
-      assert next < current;
-      if (next + 1 < current) {
-        assert !bitmap.contains(current - 1);
-        return current - 1;
-      }
-      current = next;
-    }
-
-    return current - 1;
   }
 }

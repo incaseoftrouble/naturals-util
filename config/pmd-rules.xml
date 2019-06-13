@@ -128,6 +128,4 @@
     <exclude name="ConsecutiveLiteralAppends"/>
     <exclude name="InsufficientStringBufferDeclaration"/>
   </rule>
-
-  <exclude-pattern>.*/owl/grammar/.*</exclude-pattern>
 </ruleset>
