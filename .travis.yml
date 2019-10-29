@@ -3,10 +3,12 @@ sudo: false
 
 jdk:
   - openjdk8
-  - openjdk10
   - openjdk11
-  - openjdk12
+  - openjdk13
   - oraclejdk11
+
+script:
+  - travis_wait 20 ./gradlew check
 
 branches:
   only:
