@@ -1,10 +1,10 @@
 plugins {
     // https://plugins.gradle.org/plugin/io.codearte.nexus-staging
-    id 'io.codearte.nexus-staging' version '0.21.0'
+    id 'io.codearte.nexus-staging' version '0.21.1'
 }
 
 group 'de.tum.in'
-version '0.13.0'
+version '0.14.0'
 
 apply plugin: 'java'
 
@@ -34,10 +34,9 @@ repositories {
 dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 
-    implementation group: 'it.unimi.dsi', name: 'fastutil', version: '8.2.2'
+    implementation group: 'it.unimi.dsi', name: 'fastutil', version: '8.3.0'
     implementation group: 'com.zaxxer', name: 'SparseBitSet', version: '1.2'
-    implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.8.5'
-    // 0.8.6 is broken
+    implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.8.11'
 
     testImplementation group: 'junit', name: 'junit', version: '4.12'
     testImplementation group: 'com.googlecode.junit-toolbox', name: 'junit-toolbox', version: '2.3'
@@ -56,4 +55,12 @@ if (project.hasProperty('release')) {
 // If a user file is present, include it.
 if (file('../user.gradle').exists()) {
     apply from: '../user.gradle'
+}
+
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addBooleanOption('Xdoclint:none', true)
+        }
+    }
 }

@@ -15,6 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ *
+ */
 @EverythingIsNonnullByDefault
 package de.tum.in.naturals.unionfind;
 

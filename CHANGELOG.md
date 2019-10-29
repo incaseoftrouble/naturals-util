@@ -1,5 +1,9 @@
 # 0.x
 
+### 0.14.0 (2019-10-29)
+
+ * Maintenance version bump
+
 ### 0.13.0 (2019-07-13)
 
  * Add CI
