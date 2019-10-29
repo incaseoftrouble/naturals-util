@@ -16,7 +16,7 @@
  */
 
 /**
- *
+ * A union find algorithm for integer keys.
  */
 @EverythingIsNonnullByDefault
 package de.tum.in.naturals.unionfind;

@@ -16,7 +16,7 @@
  */
 
 /**
- *
+ * Contains abstraction of bitsets and low level operations on them.
  */
 @EverythingIsNonnullByDefault
 package de.tum.in.naturals.bitset;

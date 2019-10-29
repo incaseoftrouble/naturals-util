@@ -1,5 +1,9 @@
 # 0.x
 
+### 0.14.1 (2019-10-29)
+
+ * Fixed some problems of static analysis tools
+
 ### 0.14.0 (2019-10-29)
 
  * Maintenance version bump

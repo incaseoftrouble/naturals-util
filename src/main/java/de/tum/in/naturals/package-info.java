@@ -16,7 +16,7 @@
  */
 
 /**
- *
+ * Utility package.
  */
 @EverythingIsNonnullByDefault
 package de.tum.in.naturals;

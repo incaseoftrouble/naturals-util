@@ -16,7 +16,7 @@
  */
 
 /**
- *
+ * Contains some specific map representations.
  */
 @EverythingIsNonnullByDefault
 package de.tum.in.naturals.map;
