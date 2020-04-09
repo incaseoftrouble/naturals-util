@@ -84,6 +84,9 @@ public abstract class AbstractNatBitSetFactory implements NatBitSetFactory {
 
   @Override
   public BoundedNatBitSet ensureBounded(NatBitSet set, @Nonnegative int domainSize) {
+    if (domainSize <= 0) {
+      throw new IllegalArgumentException();
+    }
     if (!set.isEmpty() && set.lastInt() >= domainSize) {
       throw new IndexOutOfBoundsException();
     }
@@ -124,7 +127,7 @@ public abstract class AbstractNatBitSetFactory implements NatBitSetFactory {
             : new BoundedMutableSingletonNatBitSet(singletonSet.firstInt(), domainSize);
       } else if (set instanceof RoaringBoundedNatBitSet) {
         RoaringBoundedNatBitSet sparseBoundedSet = (RoaringBoundedNatBitSet) set;
-        RoaringBitmap bitmapCopy = sparseBoundedSet.getBitmap().clone();
+        RoaringBitmap bitmapCopy = sparseBoundedSet.bitmap().clone();
         if (sparseBoundedSet.isComplement()) {
           if (domainSize < oldDomainSize) {
             bitmapCopy.remove((long) domainSize, (long) oldDomainSize);

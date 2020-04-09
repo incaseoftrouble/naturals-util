@@ -88,9 +88,6 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (indices.isEmpty()) {
       return true;
     }
-    if (size() < indices.size()) {
-      return false;
-    }
 
     if (indices instanceof SparseBoundedNatBitSet) {
       SparseBoundedNatBitSet other = (SparseBoundedNatBitSet) indices;

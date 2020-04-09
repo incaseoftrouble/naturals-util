@@ -88,9 +88,6 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (indices.isEmpty()) {
       return true;
     }
-    if (size() < indices.size()) {
-      return false;
-    }
 
     if (indices instanceof SimpleBoundedNatBitSet) {
       SimpleBoundedNatBitSet other = (SimpleBoundedNatBitSet) indices;

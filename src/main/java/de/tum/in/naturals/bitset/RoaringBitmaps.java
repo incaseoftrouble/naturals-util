@@ -65,8 +65,14 @@ public final class RoaringBitmaps {
     return bitmap;
   }
 
-
   public static IntIterator iterator(RoaringBitmap bitmap) {
     return new RoaringIterator(bitmap.getIntIterator());
+  }
+
+
+  public static RoaringBitmap subset(RoaringBitmap bitmap, long from, long to) {
+    RoaringBitmap selector = new RoaringBitmap();
+    selector.add(from, to);
+    return RoaringBitmap.and(bitmap, selector);
   }
 }

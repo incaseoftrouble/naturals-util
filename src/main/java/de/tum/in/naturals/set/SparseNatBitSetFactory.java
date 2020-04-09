@@ -24,16 +24,16 @@ import com.zaxxer.sparsebits.SparseBitSet;
 import java.util.BitSet;
 import java.util.function.BiPredicate;
 
-public class DefaultNatBitSetFactory extends AbstractNatBitSetFactory {
+public class SparseNatBitSetFactory extends AbstractNatBitSetFactory {
   private static final int SPARSE_THRESHOLD = Long.SIZE * 128;
 
   private final BiPredicate<Integer, Integer> useSparse;
 
-  DefaultNatBitSetFactory() {
-    this(DefaultNatBitSetFactory::useSparse);
+  SparseNatBitSetFactory() {
+    this(SparseNatBitSetFactory::useSparse);
   }
 
-  public DefaultNatBitSetFactory(BiPredicate<Integer, Integer> useSparse) {
+  public SparseNatBitSetFactory(BiPredicate<Integer, Integer> useSparse) {
     this.useSparse = useSparse;
   }
 

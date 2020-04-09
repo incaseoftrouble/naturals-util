@@ -26,7 +26,7 @@ public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet
   private final int domainSize;
 
   protected AbstractBoundedNatBitSet(@Nonnegative int domainSize) {
-    if (domainSize < 0) {
+    if (domainSize <= 0) {
       throw new IllegalArgumentException(String.format("Invalid domain size %d", domainSize));
     }
     this.domainSize = domainSize;

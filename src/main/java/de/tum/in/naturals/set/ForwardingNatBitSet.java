@@ -17,8 +17,7 @@
 
 package de.tum.in.naturals.set;
 
-import com.zaxxer.sparsebits.SparseBitSet;
-import de.tum.in.naturals.bitset.SparseBitSets;
+import de.tum.in.naturals.bitset.RoaringBitmaps;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -26,6 +25,7 @@ import it.unimi.dsi.fastutil.ints.IntIterators;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.Collection;
 import java.util.function.IntConsumer;
+import org.roaringbitmap.RoaringBitmap;
 
 class ForwardingNatBitSet extends AbstractNatBitSet {
   private final IntSortedSet delegate;
@@ -238,13 +238,11 @@ class ForwardingNatBitSet extends AbstractNatBitSet {
   @Override
   public void xor(IntCollection o) {
     // TODO This is expensive!
-    SparseBitSet collection = new SparseBitSet();
-    forEach((IntConsumer) collection::set);
-    SparseBitSet other = new SparseBitSet();
-    o.forEach((IntConsumer) other::set);
+    RoaringBitmap our = RoaringBitmaps.of(this);
+    RoaringBitmap other = RoaringBitmaps.of(o);
 
     clear();
-    collection.xor(other);
-    SparseBitSets.forEach(collection, this::set);
+    our.xor(other);
+    our.forEach((org.roaringbitmap.IntConsumer) this::set);
   }
 }

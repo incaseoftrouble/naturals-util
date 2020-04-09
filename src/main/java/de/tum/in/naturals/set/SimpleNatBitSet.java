@@ -58,9 +58,6 @@ class SimpleNatBitSet extends AbstractNatBitSet {
     if (indices.isEmpty()) {
       return true;
     }
-    if (size() < indices.size()) {
-      return false;
-    }
 
     if (indices instanceof SimpleNatBitSet) {
       SimpleNatBitSet other = (SimpleNatBitSet) indices;

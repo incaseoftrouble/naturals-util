@@ -1,10 +1,10 @@
 plugins {
     // https://plugins.gradle.org/plugin/io.codearte.nexus-staging
-    id 'io.codearte.nexus-staging' version '0.21.1'
+    id 'io.codearte.nexus-staging' version '0.21.2'
 }
 
 group 'de.tum.in'
-version '0.14.1'
+version '0.15.0'
 
 apply plugin: 'java'
 
@@ -28,21 +28,66 @@ idea {
 }
 
 repositories {
+    jcenter()
     mavenCentral()
 }
 
 dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 
-    implementation group: 'it.unimi.dsi', name: 'fastutil', version: '8.3.0'
+    // https://mvnrepository.com/artifact/it.unimi.dsi/fastutil
+    implementation group: 'it.unimi.dsi', name: 'fastutil', version: '8.3.1'
+    // https://mvnrepository.com/artifact/com.zaxxer/SparseBitSet
     implementation group: 'com.zaxxer', name: 'SparseBitSet', version: '1.2'
-    implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.8.11'
+    // https://mvnrepository.com/artifact/org.roaringbitmap/RoaringBitmap
+    implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.8.15'
 
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    // https://mvnrepository.com/artifact/junit/junit
+    testImplementation group: 'junit', name: 'junit', version: '4.13'
     testImplementation group: 'com.googlecode.junit-toolbox', name: 'junit-toolbox', version: '2.3'
 }
 
-apply from: 'gradle/analysis.gradle'
+test {
+    maxHeapSize "8G"
+}
+
+// PMD
+// https://docs.gradle.org/current/dsl/org.gradle.api.plugins.quality.Pmd.html
+
+pmd {
+    toolVersion = "6.22.0" // https://pmd.github.io/
+    reportsDir = file("$project.buildDir/reports/pmd")
+    ruleSetFiles = files("$project.rootDir/config/pmd-rules.xml")
+    ruleSets = [] // We specify all rules in rules.xml
+    consoleOutput = false
+    ignoreFailures = false
+}
+//noinspection GroovyAssignabilityCheck
+tasks.withType(Pmd) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
+// Checkstyle
+// https://docs.gradle.org/current/dsl/org.gradle.api.plugins.quality.Checkstyle.html
+
+checkstyle {
+    toolVersion = "8.31" // http://checkstyle.sourceforge.net/releasenotes.html
+    configFile = file("$project.rootDir/config/checkstyle.xml")
+    ignoreFailures = false
+    maxWarnings = 0
+    showViolations = false // Don't litter console
+    checkstyleMain {
+        configProperties = ['suppression-file':
+                                    "$project.rootDir/config/checkstyle-main-suppression.xml"]
+    }
+    checkstyleTest {
+        configProperties = ['suppression-file':
+                                    "$project.rootDir/config/checkstyle-test-suppression.xml"]
+    }
+}
 
 // Deployment - run with -Prelease clean uploadArchives closeAndReleaseRepository
 if (project.hasProperty('release')) {

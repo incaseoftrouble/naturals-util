@@ -70,7 +70,7 @@ public interface NatSet extends IntSet {
    */
   @Override
   default Spliterator.OfInt spliterator() {
-    return Spliterators.spliterator(iterator(), (long) size(), SPLITERATOR_CHARACTERISTICS);
+    return Spliterators.spliterator(iterator(), size(), SPLITERATOR_CHARACTERISTICS);
   }
 
   /**

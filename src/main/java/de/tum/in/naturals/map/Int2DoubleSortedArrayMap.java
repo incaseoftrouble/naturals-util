@@ -187,10 +187,10 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
         values[insertionPoint] = value;
       } else {
         int[] newKeys = new int[newSize];
-        double[] newValues = new double[newSize];
         System.arraycopy(keys, 0, newKeys, 0, insertionPoint);
-        System.arraycopy(values, 0, newValues, 0, insertionPoint);
         System.arraycopy(keys, insertionPoint, newKeys, insertionPoint + 1, tailLength);
+        double[] newValues = new double[newSize];
+        System.arraycopy(values, 0, newValues, 0, insertionPoint);
         System.arraycopy(values, insertionPoint, newValues, insertionPoint + 1, tailLength);
 
         keys = newKeys;

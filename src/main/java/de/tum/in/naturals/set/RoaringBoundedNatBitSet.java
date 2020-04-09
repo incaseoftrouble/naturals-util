@@ -26,10 +26,13 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.IntPredicate;
 import javax.annotation.Nonnegative;
 import org.roaringbitmap.RoaringBitmap;
 
 class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
+  private static final long INFINITY = Integer.MAX_VALUE + 1L;
+
   private final RoaringBitmap bitmap;
   private final boolean complement;
   private final RoaringBoundedNatBitSet complementView;
@@ -92,9 +95,6 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (indices.isEmpty()) {
       return true;
     }
-    if (size() < indices.size()) {
-      return false;
-    }
 
     if (indices instanceof RoaringBoundedNatBitSet) {
       RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
@@ -102,12 +102,13 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       if (complement) {
         if (other.complement) {
           if (other.domainSize() >= domainSize()) {
-            return other.bitmap.contains(bitmap);
+            return other.bitmap.nextAbsentValue(domainSize()) == other.domainSize()
+                && other.bitmap.contains(bitmap);
           }
           return RoaringBitmap.andCardinality(bitmap, other.bitmap)
               == bitmap.rank(other.domainSize() - 1);
         }
-        return other.lastInt() <= domainSize()
+        return other.lastInt() < domainSize()
             && !RoaringBitmap.intersects(bitmap, other.bitmap);
       }
 
@@ -125,25 +126,40 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       RoaringNatBitSet other = (RoaringNatBitSet) indices;
 
       if (complement) {
-        return other.lastInt() <= domainSize()
-            && !RoaringBitmap.intersects(bitmap, other.getBitmap());
+        return other.lastInt() < domainSize()
+            && !RoaringBitmap.intersects(bitmap, other.bitmap());
       }
-      return bitmap.contains(other.getBitmap());
+      return bitmap.contains(other.bitmap());
     }
+
     return super.containsAll(indices);
   }
 
 
   @Override
+  public int firstInt() {
+    assert checkConsistency();
+    if (complement) {
+      int firstInt = Math.toIntExact(bitmap.nextAbsentValue(0));
+      if (firstInt >= domainSize()) {
+        throw new NoSuchElementException();
+      }
+      return firstInt;
+    }
+    return bitmap.first();
+  }
+
+  @Override
   public int lastInt() {
+    assert checkConsistency();
     int lastInt;
     if (complement) {
       lastInt = Math.toIntExact(bitmap.previousAbsentValue(domainSize() - 1));
+      if (lastInt == -1) {
+        throw new NoSuchElementException();
+      }
     } else {
-      lastInt = bitmap.isEmpty() ? -1 : bitmap.last();
-    }
-    if (lastInt == -1) {
-      throw new NoSuchElementException();
+      lastInt = bitmap.last();
     }
     assert 0 <= lastInt && lastInt < domainSize();
     return lastInt;
@@ -308,18 +324,19 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (indices instanceof RoaringBoundedNatBitSet) {
       RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
 
+      // TODO This is crappy slow
       return RoaringBitmap.intersects(
           complement ? complementBits() : bitmap,
-          other.isComplement() ? other.complementBits() : other.getBitmap());
+          other.isComplement() ? other.complementBits() : other.bitmap());
     }
     if (indices instanceof RoaringNatBitSet) {
       RoaringNatBitSet other = (RoaringNatBitSet) indices;
 
       if (complement) {
-        return other.getBitmap().getCardinality()
-            > RoaringBitmap.andCardinality(other.getBitmap(), bitmap);
+        return other.bitmap().getCardinality()
+            > RoaringBitmap.andCardinality(other.bitmap(), bitmap);
       }
-      return RoaringBitmap.intersects(bitmap, other.getBitmap());
+      return RoaringBitmap.intersects(bitmap, other.bitmap());
     }
     return super.intersects(indices);
   }
@@ -331,59 +348,43 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       clear();
     } else if (indices instanceof RoaringBoundedNatBitSet) {
       RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-      if (complement) {
-        bitmap.or(other.complement ? other.bitmap : other.complementBits());
-
-        int domainSize = domainSize();
-        int otherDomainSize = other.domainSize();
-        if (domainSize < otherDomainSize) {
-          bitmap.remove((long) domainSize, (long) otherDomainSize);
-        } else {
-          bitmap.add((long) otherDomainSize, (long) domainSize);
-        }
+      if (other.complement) {
+        doAndComplement(other.bitmap, other.domainSize());
       } else {
-        if (other.complement) {
-          bitmap.andNot(other.bitmap);
-
-          int domainSize = domainSize();
-          int otherDomainSize = other.domainSize();
-          if (otherDomainSize < domainSize) {
-            bitmap.remove((long) otherDomainSize, (long) domainSize);
-          }
-        } else {
-          bitmap.and(other.bitmap);
-        }
+        doAnd(other.bitmap);
       }
     } else if (indices instanceof RoaringNatBitSet) {
       RoaringNatBitSet other = (RoaringNatBitSet) indices;
-
-      if (complement) {
-        // TODO More efficient?
-        bitmap.flip(0L, (long) domainSize());
-        bitmap.and(other.getBitmap());
-        bitmap.flip(0L, (long) domainSize());
-      } else {
-        bitmap.and(other.getBitmap());
-      }
+      doAnd(other.bitmap());
     } else {
-      if (complement) {
-        bitmap.flip(0L, (long) domainSize());
-      }
-      RoaringBitmap toRemove = new RoaringBitmap();
-
-      bitmap.forEach((int index) -> {
-        if (!indices.contains(index)) {
-          toRemove.add(index);
-        }
-      });
-
-      bitmap.andNot(toRemove);
-      if (complement) {
-        bitmap.flip(0L, (long) domainSize());
-      }
+      doAnd(RoaringBitmaps.of(indices));
     }
     assert checkConsistency();
   }
+
+  private void doAnd(RoaringBitmap other) {
+    int domainSize = domainSize();
+    if (complement) {
+      bitmap.orNot(other, domainSize);
+      bitmap.remove(domainSize, INFINITY);
+    } else {
+      bitmap.and(other);
+    }
+  }
+
+  private void doAndComplement(RoaringBitmap other, int otherDomainSize) {
+    int domainSize = domainSize();
+
+    if (complement) {
+      bitmap.or(other);
+      bitmap.add((long) otherDomainSize, (long) domainSize);
+      bitmap.remove((long) domainSize, (long) otherDomainSize);
+    } else {
+      bitmap.andNot(other);
+      bitmap.remove((long) otherDomainSize, (long) domainSize);
+    }
+  }
+
 
   @Override
   public void andNot(IntCollection indices) {
@@ -393,39 +394,14 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     }
     if (indices instanceof RoaringBoundedNatBitSet) {
       RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-
-      if (complement) {
-        bitmap.or(other.complement ? other.complementBits() : other.bitmap);
-
-        int domainSize = domainSize();
-        int otherDomainSize = other.domainSize();
-        if (domainSize < otherDomainSize) {
-          bitmap.remove((long) domainSize, (long) otherDomainSize);
-        }
+      if (other.complement) {
+        doAndNotComplement(other.bitmap, other.domainSize());
       } else {
-        if (other.complement) {
-          int domainSize = domainSize();
-          int otherDomainSize = other.domainSize();
-          if (otherDomainSize < domainSize) {
-            RoaringBitmap clone = other.bitmap.clone();
-            clone.add((long) otherDomainSize, (long) domainSize);
-            bitmap.and(clone);
-          } else {
-            bitmap.and(other.bitmap);
-          }
-        } else {
-          bitmap.andNot(other.bitmap);
-        }
+        doAndNot(other.bitmap);
       }
     } else if (indices instanceof RoaringNatBitSet) {
       RoaringNatBitSet other = (RoaringNatBitSet) indices;
-
-      if (complement) {
-        bitmap.or(other.getBitmap());
-        bitmap.remove((long) domainSize(), (long) Integer.MAX_VALUE);
-      } else {
-        bitmap.andNot(other.getBitmap());
-      }
+      doAndNot(other.bitmap());
     } else {
       if (complement) {
         indices.forEach((int index) -> {
@@ -448,6 +424,38 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     assert checkConsistency();
   }
 
+  private void doAndNot(RoaringBitmap other) {
+    if (complement) {
+      bitmap.or(other);
+      bitmap.remove((long) domainSize(), INFINITY);
+    } else {
+      bitmap.andNot(other);
+    }
+  }
+
+  private void doAndNotComplement(RoaringBitmap other, int otherDomainSize) {
+    int domainSize = domainSize();
+    if (complement) {
+      if (otherDomainSize < domainSize) { // TODO orNot bug
+        RoaringBitmap tail = RoaringBitmaps.subset(bitmap, otherDomainSize, domainSize);
+        bitmap.orNot(other, otherDomainSize);
+        bitmap.or(tail);
+      } else {
+        bitmap.orNot(other, domainSize);
+        bitmap.remove((long) domainSize, INFINITY); // TODO orNot bug
+      }
+    } else {
+      if (otherDomainSize < domainSize) {
+        RoaringBitmap tail = RoaringBitmaps.subset(bitmap, otherDomainSize, domainSize);
+        bitmap.and(other);
+        bitmap.or(tail);
+      } else {
+        bitmap.and(other);
+      }
+    }
+  }
+
+
   @Override
   public void or(IntCollection indices) {
     assert checkConsistency();
@@ -457,105 +465,94 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (indices instanceof RoaringBoundedNatBitSet) {
       RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
       checkInDomain(other.lastInt());
-
-      if (complement) {
-        if (other.complement) {
-          int otherDomainSize = other.domainSize();
-          int domainSize = domainSize();
-
-          RoaringBitmap otherBitmap;
-          if (otherDomainSize <= domainSize) {
-            otherBitmap = other.bitmap.clone();
-            otherBitmap.add((long) otherDomainSize, (long) domainSize);
-          } else {
-            otherBitmap = other.bitmap;
-          }
-
-          bitmap.and(otherBitmap);
-        } else {
-          bitmap.andNot(other.bitmap);
-        }
+      if (other.complement) {
+        doOrComplement(other.bitmap, other.domainSize());
       } else {
-        if (other.complement) {
-          this.bitmap.or(other.complementBits());
-        } else {
-          this.bitmap.or(other.bitmap);
-        }
+        doOr(other.bitmap);
       }
     } else if (indices instanceof RoaringNatBitSet) {
       RoaringNatBitSet other = (RoaringNatBitSet) indices;
       checkInDomain(other.lastInt());
-
-      if (complement) {
-        bitmap.andNot(other.getBitmap());
-      } else {
-        bitmap.or(other.getBitmap());
-      }
+      doOr(other.bitmap());
     } else {
-      super.or(indices);
+      doOr(RoaringBitmaps.of(indices));
     }
     assert checkConsistency();
   }
+
+  private void doOr(RoaringBitmap other) {
+    if (complement) {
+      bitmap.andNot(other);
+    } else {
+      bitmap.or(other);
+    }
+  }
+
+  private void doOrComplement(RoaringBitmap other, int otherDomainSize) {
+    if (complement) {
+      int domainSize = domainSize();
+
+      if (otherDomainSize < domainSize) {
+        RoaringBitmap tail = RoaringBitmaps.subset(bitmap, otherDomainSize, domainSize);
+        bitmap.and(other);
+        bitmap.or(tail);
+      } else {
+        bitmap.and(other);
+      }
+    } else {
+      // TODO orNot bugs
+      RoaringBitmap tail = RoaringBitmaps.subset(bitmap, otherDomainSize, domainSize());
+      bitmap.orNot(other, otherDomainSize);
+      bitmap.or(tail);
+    }
+  }
+
 
   @Override
   public void orNot(IntCollection indices) {
     assert checkConsistency();
     if (indices.isEmpty()) {
-      if (complement) {
-        bitmap.clear();
-      } else {
-        bitmap.add(0L, (long) domainSize());
-      }
+      set(0, domainSize());
     } else if (indices instanceof RoaringBoundedNatBitSet) {
       RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-      int domainSize = domainSize();
-      int otherDomainSize = other.domainSize();
-
-      if (complement) {
-        if (other.complement) {
-          bitmap.andNot(other.bitmap);
-          if (otherDomainSize < domainSize) {
-            bitmap.remove((long) otherDomainSize, (long) domainSize);
-          }
-        } else {
-          bitmap.and(other.bitmap);
-        }
+      if (other.complement) {
+        doOrNotComplement(other.bitmap, other.domainSize());
       } else {
-        if (other.complement) {
-          bitmap.or(other.bitmap);
-          if (otherDomainSize < domainSize) {
-            bitmap.add((long) otherDomainSize, (long) domainSize);
-          } else {
-            bitmap.remove((long) domainSize, (long) otherDomainSize);
-          }
-        } else {
-          int minDomainSize = Math.min(domainSize, otherDomainSize);
-          other.bitmap.flip(0L, (long) minDomainSize);
-          bitmap.or(other.bitmap);
-          other.bitmap.flip(0L, (long) minDomainSize);
-
-          if (otherDomainSize < domainSize) {
-            bitmap.add((long) otherDomainSize, (long) domainSize);
-          } else {
-            bitmap.remove((long) domainSize, (long) otherDomainSize);
-          }
-        }
+        doOrNot(other.bitmap);
       }
     } else if (indices instanceof RoaringNatBitSet) {
-      RoaringNatBitSet other = (RoaringNatBitSet) indices;
-
-      if (complement) {
-        bitmap.and(other.getBitmap());
-      } else {
-        RoaringBitmap bitmap = other.getBitmap().clone();
-        bitmap.remove((long) domainSize(), Long.MAX_VALUE);
-        bitmap.flip(0L, (long) domainSize());
-        this.bitmap.or(bitmap);
-      }
+      doOrNot(((RoaringNatBitSet) indices).bitmap());
     } else {
-      super.orNot(indices);
+      doOrNot(RoaringBitmaps.of(indices));
     }
     assert checkConsistency();
+  }
+
+  private void doOrNot(RoaringBitmap other) {
+    if (complement) {
+      bitmap.and(other);
+    } else {
+      int domainSize = domainSize();
+      bitmap.orNot(other, domainSize);
+      bitmap.remove(domainSize, INFINITY);
+    }
+  }
+
+  private void doOrNotComplement(RoaringBitmap other, int otherDomainSize) {
+    int domainSize = domainSize();
+    if (complement) {
+      bitmap.andNot(other);
+      if (otherDomainSize < domainSize) {
+        bitmap.remove((long) otherDomainSize, (long) domainSize);
+      }
+    } else {
+      bitmap.or(other);
+      if (otherDomainSize < domainSize) {
+        bitmap.add((long) otherDomainSize, (long) domainSize);
+      } else {
+        bitmap.remove((long) domainSize, (long) otherDomainSize);
+      }
+    }
   }
 
   @Override
@@ -576,11 +573,28 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       RoaringNatBitSet other = (RoaringNatBitSet) indices;
       checkInDomain(other.lastInt());
 
-      bitmap.xor(other.getBitmap());
+      bitmap.xor(other.bitmap());
     } else {
-      super.xor(indices);
+      bitmap.xor(RoaringBitmaps.of(indices));
     }
     assert checkConsistency();
+  }
+
+
+  @Override
+  public boolean removeIf(IntPredicate filter) {
+    RoaringBitmap remove = new RoaringBitmap();
+    (complement ? complementBits() : bitmap).forEach((int i) -> {
+      if (filter.test(i)) {
+        remove.add(i);
+      }
+    });
+    if (complement) {
+      bitmap.or(remove);
+    } else {
+      bitmap.andNot(remove);
+    }
+    return !remove.isEmpty();
   }
 
 
@@ -643,9 +657,8 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
           if (larger.bitmap.nextAbsentValue(smallerSize) < (long) largerSize) {
             return false;
           }
-          RoaringBitmap largerBitSet = larger.bitmap.clone();
-          largerBitSet.remove((long) smallerSize, (long) largerSize);
-          return smaller.bitmap.equals(largerBitSet);
+
+          return smaller.bitmap.equals(RoaringBitmaps.subset(larger.bitmap, 0, smallerSize));
         }
       } else if (!other.complement) {
         return bitmap.equals(other.bitmap);
@@ -667,15 +680,15 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
         return false;
       }
       if (isComplement()) {
-        return size() == other.size() && !RoaringBitmap.intersects(bitmap, other.getBitmap());
+        return size() == other.size() && !RoaringBitmap.intersects(bitmap, other.bitmap());
       }
-      return bitmap.equals(other.getBitmap());
+      return bitmap.equals(other.bitmap());
     }
     return super.equals(o);
   }
 
 
-  RoaringBitmap getBitmap() {
+  RoaringBitmap bitmap() {
     return bitmap;
   }
 
@@ -685,6 +698,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
 
 
   private boolean checkConsistency() {
-    return bitmap.isEmpty() || bitmap.last() < domainSize();
+    assert bitmap.isEmpty() || bitmap.last() < domainSize() : bitmap.last() + " " + domainSize();
+    return true;
   }
 }

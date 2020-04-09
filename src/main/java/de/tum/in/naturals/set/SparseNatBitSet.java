@@ -56,9 +56,6 @@ class SparseNatBitSet extends AbstractNatBitSet {
     if (indices.isEmpty()) {
       return true;
     }
-    if (size() < indices.size()) {
-      return false;
-    }
 
     if (indices instanceof SparseNatBitSet) {
       SparseNatBitSet other = (SparseNatBitSet) indices;
@@ -78,6 +75,7 @@ class SparseNatBitSet extends AbstractNatBitSet {
           ? SparseBitSets.isSubsetConsuming(other.complementBits(), bitSet)
           : SparseBitSets.isSubset(other.getBitSet(), bitSet);
     }
+
     return super.containsAll(indices);
   }
 

@@ -1,5 +1,11 @@
 # 0.x
 
+### 0.15.0 (2020-04-06)
+
+ * Remove `size()` optimizations from `containsAll` checks, since `size()` is a linear time operation, too.
+ * Bump version of `RoaringBitmap`, fixing a similar bug.
+ * Performance improvements for Roaring-backed sets.
+
 ### 0.14.1 (2019-10-29)
 
  * Fixed some problems of static analysis tools

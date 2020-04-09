@@ -35,7 +35,7 @@ import org.roaringbitmap.RoaringBitmap;
 public final class NatBitSets {
   public static final int UNKNOWN_LENGTH = -1;
   public static final int UNKNOWN_SIZE = -1;
-  private static NatBitSetFactory factory = new DefaultNatBitSetFactory();
+  private static NatBitSetFactory factory = new RoaringNatBitSetFactory();
 
   private NatBitSets() {}
 
@@ -373,11 +373,11 @@ public final class NatBitSets {
       return new RoaringBitmap();
     }
     if (indices instanceof RoaringNatBitSet) {
-      return ((RoaringNatBitSet) indices).getBitmap().clone();
+      return ((RoaringNatBitSet) indices).bitmap().clone();
     }
     if (indices instanceof RoaringBoundedNatBitSet) {
       RoaringBoundedNatBitSet boundedSet = (RoaringBoundedNatBitSet) indices;
-      RoaringBitmap bitmap = boundedSet.getBitmap().clone();
+      RoaringBitmap bitmap = boundedSet.bitmap().clone();
       if (boundedSet.isComplement()) {
         bitmap.flip(0L, (long) boundedSet.domainSize());
       }

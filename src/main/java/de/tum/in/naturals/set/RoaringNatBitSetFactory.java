@@ -20,7 +20,6 @@ package de.tum.in.naturals.set;
 import org.roaringbitmap.RoaringBitmap;
 
 public class RoaringNatBitSetFactory extends AbstractNatBitSetFactory {
-
   @Override
   protected BoundedNatBitSet makeBoundedSet(int domainSize, int expectedSize) {
     return new RoaringBoundedNatBitSet(new RoaringBitmap(), domainSize);
