@@ -17,28 +17,28 @@
 
 package de.tum.in.naturals.map;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
 import it.unimi.dsi.fastutil.ints.AbstractInt2DoubleMap.BasicEntry;
 import it.unimi.dsi.fastutil.ints.Int2DoubleAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.FromDataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 @SuppressWarnings("MagicNumber")
-@RunWith(Theories.class)
 public class Nat2DoubleMapTheories {
   private static final int MAXIMAL_KEY = 100;
   private static final int MAXIMAL_MODIFICATIONS = 2000;
@@ -49,36 +49,26 @@ public class Nat2DoubleMapTheories {
   private static final List<Supplier<Int2DoubleMap>> implementations;
 
   static {
-    List<List<Consumer<Int2DoubleMap>>> generatedActions =
-        new ArrayList<>(NUMBER_OF_SMALL_TESTS + NUMBER_OF_LARGE_TESTS);
+    // CSOFF: Indentation
+    actions = Stream.concat(
+        IntStream.range(0, NUMBER_OF_SMALL_TESTS)
+            .map(k -> generator.nextInt(MAXIMAL_MODIFICATIONS))
+            .mapToObj(length -> IntStream.range(0, length)
+                .mapToObj(k -> generateAction(
+                    () -> generator.nextInt(10), () -> (double) generator.nextInt(20)))
+                .collect(Collectors.toList())),
+        IntStream.range(0, NUMBER_OF_LARGE_TESTS)
+            .map(k -> generator.nextInt(MAXIMAL_MODIFICATIONS))
+            .mapToObj(length -> IntStream.range(0, length)
+                .mapToObj(k -> generateAction(
+                    () -> generator.nextInt(MAXIMAL_KEY), generator::nextDouble))
+                .collect(Collectors.toList()))
+    ).collect(Collectors.toList());
+    // CSON
 
-    for (int i = 0; i < NUMBER_OF_SMALL_TESTS; i++) {
-      int sequenceLength = generator.nextInt(MAXIMAL_MODIFICATIONS);
-      List<Consumer<Int2DoubleMap>> actionSequence = new ArrayList<>(sequenceLength);
-      for (int j = 0; j < sequenceLength; j++) {
-        Consumer<Int2DoubleMap> action =
-            generateAction(() -> generator.nextInt(10), () -> (double) generator.nextInt(20));
-        actionSequence.add(action);
-      }
-      generatedActions.add(actionSequence);
-    }
-    for (int i = 0; i < NUMBER_OF_LARGE_TESTS; i++) {
-      int sequenceLength = generator.nextInt(MAXIMAL_MODIFICATIONS);
-      List<Consumer<Int2DoubleMap>> actionSequence = new ArrayList<>(sequenceLength);
-      for (int j = 0; j < sequenceLength; j++) {
-        Consumer<Int2DoubleMap> action =
-            generateAction(() -> generator.nextInt(MAXIMAL_KEY), generator::nextDouble);
-        actionSequence.add(action);
-      }
-      generatedActions.add(actionSequence);
-    }
-
-    actions = generatedActions;
-
-    implementations = new ArrayList<>(3);
-    implementations.add(Int2DoubleSortedArrayMap::new);
-    implementations.add(() -> new Int2DoubleSortedArrayMap(MAXIMAL_KEY));
-    implementations.add(() -> new Nat2DoubleDenseArrayMap(MAXIMAL_KEY));
+    implementations = Arrays.asList(Int2DoubleSortedArrayMap::new,
+        () -> new Int2DoubleSortedArrayMap(MAXIMAL_KEY),
+        () -> new Nat2DoubleDenseArrayMap(MAXIMAL_KEY));
   }
 
   @SuppressWarnings("MagicNumber")
@@ -117,14 +107,9 @@ public class Nat2DoubleMapTheories {
     return new Clear();
   }
 
-  @DataPoints("actions")
-  public static List<List<Consumer<Int2DoubleMap>>> getActions() {
-    return actions;
-  }
-
-  @DataPoints("implementations")
-  public static List<Supplier<Int2DoubleMap>> getImplementations() {
-    return implementations;
+  public static Stream<Arguments> arguments() {
+    return implementations.stream().flatMap(implementation ->
+        actions.stream().map(action -> Arguments.of(implementation, action)));
   }
 
   private void checkEquality(Int2DoubleMap actual, Int2DoubleMap expected) {
@@ -140,10 +125,11 @@ public class Nat2DoubleMapTheories {
     }
   }
 
-  @Theory(nullsAccepted = false)
+  @ParameterizedTest
+  @MethodSource("arguments")
   public void testImplementation(
-      @FromDataPoints("implementations") Supplier<Int2DoubleMap> implementation,
-      @FromDataPoints("actions") Iterable<Consumer<Int2DoubleMap>> sequence) {
+      Supplier<Int2DoubleMap> implementation,
+      Iterable<Consumer<Int2DoubleMap>> sequence) {
     Int2DoubleMap map = implementation.get();
     Int2DoubleMap reference = new Int2DoubleAVLTreeMap();
 

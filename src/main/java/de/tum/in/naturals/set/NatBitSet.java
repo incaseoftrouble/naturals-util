@@ -95,7 +95,7 @@ public interface NatBitSet extends NatSet, Cloneable {
    *
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative.
-   * @see BitSet#nextSetBit(int)
+   * @see BitSet#previousSetBit(int)
    */
   int previousPresentIndex(@Nonnegative int index);
 

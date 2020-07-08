@@ -17,12 +17,13 @@
 
 package de.tum.in.naturals.set;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
 
 @SuppressWarnings("MagicNumber")
 public class NatBitSetTest {

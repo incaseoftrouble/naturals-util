@@ -17,18 +17,18 @@
 
 package de.tum.in.naturals.set;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
-import static org.junit.Assert.assertThat;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import java.util.function.Consumer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class IntArraySortedSetTest {
   @Test

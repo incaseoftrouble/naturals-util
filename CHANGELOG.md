@@ -1,5 +1,9 @@
 # 0.x
 
+### 0.15.1 (2020-07-08)
+
+ * Version bumps, upgrade to JUnit 5
+
 ### 0.15.0 (2020-04-06)
 
  * Remove `size()` optimizations from `containsAll` checks, since `size()` is a linear time operation, too.

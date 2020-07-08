@@ -199,9 +199,10 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     assert checkConsistency();
     checkNonNegative(index);
     int clampedIndex = Math.min(index, domainSize() - 1);
-    return Math.toIntExact(complement
-        ? bitmap.previousAbsentValue(clampedIndex)
-        : bitmap.previousValue(clampedIndex));
+    if (complement) {
+      return Math.toIntExact(bitmap.previousAbsentValue(clampedIndex));
+    }
+    return bitmap.isEmpty() ? -1 : Math.toIntExact(bitmap.previousValue(clampedIndex));
   }
 
   @Override
@@ -211,9 +212,10 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (index >= domainSize()) {
       return index;
     }
-    return Math.toIntExact(complement
-        ? bitmap.previousValue(index)
-        : bitmap.previousAbsentValue(index));
+    if (complement) {
+      return bitmap.isEmpty() ? -1 : Math.toIntExact(bitmap.previousValue(index));
+    }
+    return Math.toIntExact(bitmap.previousAbsentValue(index));
   }
 
 

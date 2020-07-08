@@ -38,13 +38,13 @@ import java.util.Arrays;
  * <li>{@link #generation(IntSet)}: Computes the record obtained by "rebirth" of the given
  * elements, i.e. they are defined as the new first equivalence class.
  * </li>
- * <li>{@link #refines(IntPreOrder)}: Determines whether this record is strict refinement of the
- * other record.
+ * <li>{@link #refines(IntTotalPreOrder)}: Determines whether this order is a strict refinement of
+ * the other record.
  * </li>
  * </ul>
  */
-public class IntPreOrder {
-  private static final IntPreOrder EMPTY = finest(0);
+public class IntTotalPreOrder {
+  private static final IntTotalPreOrder EMPTY = finest(0);
 
   /* The array used to store the equivalence classes of the pre-order. Each class is stored as a
    * sorted array. */
@@ -62,7 +62,7 @@ public class IntPreOrder {
    *     The array specifying the equivalence classes
    */
   // Visible for testing
-  IntPreOrder(int[][] array) {
+  IntTotalPreOrder(int[][] array) {
     assert isWellFormed(array);
     //noinspection AssignmentToCollectionOrArrayFieldFromParameter
     this.array = array;
@@ -82,18 +82,18 @@ public class IntPreOrder {
    *
    * @return The coarsest record over the domain
    */
-  public static IntPreOrder coarsest(int n) {
+  public static IntTotalPreOrder coarsest(int n) {
     int[][] array = new int[1][n];
     for (int i = 0; i < n; i++) {
       array[0][i] = i;
     }
-    return new IntPreOrder(array);
+    return new IntTotalPreOrder(array);
   }
 
   /**
    * Returns the empty pre-order.
    */
-  public static IntPreOrder empty() {
+  public static IntTotalPreOrder empty() {
     return EMPTY;
   }
 
@@ -101,12 +101,12 @@ public class IntPreOrder {
    * Returns a finest pre-order over the {@code {1,..,n}} domain, i.e. a record of the form
    * {@code [{1},{2},..,{n}]}.
    */
-  public static IntPreOrder finest(int n) {
+  public static IntTotalPreOrder finest(int n) {
     int[][] array = new int[n][1];
     for (int i = 0; i < n; i++) {
       array[i][0] = i;
     }
-    return new IntPreOrder(array);
+    return new IntTotalPreOrder(array);
   }
 
   private static boolean isWellFormed(int[][] array) {
@@ -183,11 +183,11 @@ public class IntPreOrder {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof IntPreOrder)) {
+    if (!(o instanceof IntTotalPreOrder)) {
       return false;
     }
 
-    IntPreOrder record = (IntPreOrder) o;
+    IntTotalPreOrder record = (IntTotalPreOrder) o;
     return size == record.size && hashCode == record.hashCode
         && Arrays.deepEquals(array, record.array);
   }
@@ -213,7 +213,7 @@ public class IntPreOrder {
    *
    * @return The pre-order with {@code newborn} as new smallest elements.
    */
-  public IntPreOrder generation(IntSet newborn) {
+  public IntTotalPreOrder generation(IntSet newborn) {
     if (newborn.isEmpty()) {
       return this;
     }
@@ -247,7 +247,7 @@ public class IntPreOrder {
       }
       assert senior != -1;
 
-      return new IntPreOrder(new int[][] {newbornArray, {senior}});
+      return new IntTotalPreOrder(new int[][] {newbornArray, {senior}});
     }
 
     // General case
@@ -299,7 +299,7 @@ public class IntPreOrder {
         ? Arrays.copyOf(newArrayTmp, newClassIndex)
         // No classes were emptied - we can keep the array as is
         : newArrayTmp;
-    return new IntPreOrder(newArray);
+    return new IntTotalPreOrder(newArray);
   }
 
   @Override
@@ -313,7 +313,7 @@ public class IntPreOrder {
    * {@code other}.
    */
   @SuppressWarnings("ReferenceEquality")
-  public boolean refines(IntPreOrder other) {
+  public boolean refines(IntTotalPreOrder other) {
     //noinspection ObjectEquality
     if (this == other) {
       // We only want strict refinement

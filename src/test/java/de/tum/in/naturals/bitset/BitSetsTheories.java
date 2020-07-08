@@ -17,6 +17,7 @@
 
 package de.tum.in.naturals.bitset;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import com.zaxxer.sparsebits.SparseBitSet;
@@ -30,13 +31,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.function.IntConsumer;
-import org.junit.Assert;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Theories.class)
 public class BitSetsTheories {
   private static final int COMPLEMENT_SIZE = 1000;
   private static final int MAXIMUM_ELEMENTS = 1 << 16;
@@ -58,12 +56,12 @@ public class BitSetsTheories {
     indices = Collections.unmodifiableList(generatedIndices);
   }
 
-  @DataPoints
-  public static List<IntCollection> getIndices() {
-    return Collections.unmodifiableList(indices);
+  public static Stream<IntCollection> indices() {
+    return indices.stream();
   }
 
-  @Theory(nullsAccepted = false)
+  @ParameterizedTest
+  @MethodSource("indices")
   public void testComplementIterator(IntCollection ints) {
     BitSet bitSet = new BitSet();
     ints.forEach((IntConsumer) bitSet::set);
@@ -78,10 +76,11 @@ public class BitSetsTheories {
       }
     }
 
-    Assert.assertThat(result, is(expected));
+    assertThat(result, is(expected));
   }
 
-  @Theory(nullsAccepted = false)
+  @ParameterizedTest
+  @MethodSource("indices")
   public void testForEach(IntCollection ints) {
     BitSet bitSet = new BitSet();
     ints.forEach((IntConsumer) bitSet::set);
@@ -91,10 +90,11 @@ public class BitSetsTheories {
 
     IntSet expected = new IntOpenHashSet(ints);
 
-    Assert.assertThat(result, is(expected));
+    assertThat(result, is(expected));
   }
 
-  @Theory(nullsAccepted = false)
+  @ParameterizedTest
+  @MethodSource("indices")
   public void testImmutableBitSet(IntCollection ints) {
     BitSet bitSet = new BitSet();
     ints.forEach((IntConsumer) bitSet::set);
@@ -107,10 +107,11 @@ public class BitSetsTheories {
 
     IntSet expected = new IntOpenHashSet(ints);
 
-    Assert.assertThat(result, is(expected));
+    assertThat(result, is(expected));
   }
 
-  @Theory(nullsAccepted = false)
+  @ParameterizedTest
+  @MethodSource("indices")
   public void testIterator(IntCollection ints) {
     BitSet bitSet = new BitSet();
     ints.forEach((IntConsumer) bitSet::set);
@@ -120,10 +121,11 @@ public class BitSetsTheories {
 
     IntSet expected = new IntOpenHashSet(ints);
 
-    Assert.assertThat(result, is(expected));
+    assertThat(result, is(expected));
   }
 
-  @Theory(nullsAccepted = false)
+  @ParameterizedTest
+  @MethodSource("indices")
   public void testSparseComplementIterator(IntCollection ints) {
     SparseBitSet bitSet = new SparseBitSet();
     ints.forEach((IntConsumer) bitSet::set);
@@ -139,10 +141,11 @@ public class BitSetsTheories {
       }
     }
 
-    Assert.assertThat(result, is(expected));
+    assertThat(result, is(expected));
   }
 
-  @Theory(nullsAccepted = false)
+  @ParameterizedTest
+  @MethodSource("indices")
   public void testSparseForEach(IntCollection ints) {
     SparseBitSet bitSet = new SparseBitSet();
     ints.forEach((IntConsumer) bitSet::set);
@@ -152,10 +155,11 @@ public class BitSetsTheories {
 
     IntSet expected = new IntOpenHashSet(ints);
 
-    Assert.assertThat(result, is(expected));
+    assertThat(result, is(expected));
   }
 
-  @Theory(nullsAccepted = false)
+  @ParameterizedTest
+  @MethodSource("indices")
   public void testSparseIterator(IntCollection ints) {
     SparseBitSet bitSet = new SparseBitSet();
     ints.forEach((IntConsumer) bitSet::set);
@@ -165,6 +169,6 @@ public class BitSetsTheories {
 
     IntSet expected = new IntOpenHashSet(ints);
 
-    Assert.assertThat(result, is(expected));
+    assertThat(result, is(expected));
   }
 }

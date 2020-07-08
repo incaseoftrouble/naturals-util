@@ -101,7 +101,7 @@ class RoaringNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int previousPresentIndex(int index) {
-    return Math.toIntExact(bitmap.previousValue(index));
+    return bitmap.isEmpty() ? -1 : Math.toIntExact(bitmap.previousValue(index));
   }
 
   @Override

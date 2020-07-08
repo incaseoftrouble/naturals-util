@@ -23,13 +23,14 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assume.assumeThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.zaxxer.sparsebits.SparseBitSet;
 import de.tum.in.naturals.bitset.BitSets;
@@ -47,7 +48,6 @@ import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -59,22 +59,24 @@ import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.FromDataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Theories.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class NatBitSetTheories {
   private static final int MAXIMAL_MUTATION_LENGTH = 100;
   private static final int MAXIMAL_SUBSET_SIZE = 128;
-  private static final int NUMBER_OF_FIXED_SETS = 20;
+  private static final int NUMBER_OF_FIXED_SETS = 50;
   private static final int NUMBER_OF_LARGE_MUTATIONS = 100;
   private static final int NUMBER_OF_SMALL_MUTATIONS = 100;
   private static final int NUMBER_OF_SUBSETS_PER_IMPLEMENTATION = 50;
   private static final int POWER_SET_MAXIMUM = 12;
   private static final int SMALL_SUBSET_SIZE = Long.SIZE - 4;
+  private static final int TESTED_PAIRS = 50_000;
   private static final Set<IntCollection> fixedSets;
   private static final Random generator = new Random(10L);
   private static final List<Pair> implementations;
@@ -306,19 +308,15 @@ public class NatBitSetTheories {
     throw new AssertionError();
   }
 
-  private static List<MutationList> generateMutations(int count, int length,
-      int size) {
-    List<MutationList> mutations = new ArrayList<>(count);
-    for (int i = 0; i < count; i++) {
-      int sequenceLength = generator.nextInt(length);
-      List<Consumer<NatBitSet>> mutation = new ArrayList<>(sequenceLength);
-      for (int j = 0; j < sequenceLength; j++) {
-        Consumer<NatBitSet> mutationAction = generateMutation(() -> generator.nextInt(size));
-        mutation.add(mutationAction);
-      }
-      mutations.add(new MutationList(mutation));
-    }
-    return mutations;
+  @SuppressWarnings("SameParameterValue")
+  private static List<MutationList> generateMutations(int count, int length, int size) {
+    return IntStream.range(0, count).map(k -> generator.nextInt(length))
+        .mapToObj(sequenceLength ->
+            IntStream.range(0, sequenceLength)
+                .mapToObj(i -> generateMutation(() -> generator.nextInt(size)))
+                .collect(Collectors.toList()))
+        .map(MutationList::new)
+        .collect(Collectors.toList());
   }
 
   private static IntCollection generateSet(int maximalKey, int maximalEntries) {
@@ -330,31 +328,49 @@ public class NatBitSetTheories {
     return set;
   }
 
-  @DataPoints("base")
-  public static Set<IntCollection> getBases() {
-    return Collections.unmodifiableSet(fixedSets);
+  public static Stream<IntCollection> bases() {
+    return fixedSets.stream();
   }
 
-  @DataPoints("implementation")
-  public static List<Pair> getImplementations() {
-    return Collections.unmodifiableList(implementations);
+  public static Stream<Pair> implementations() {
+    return implementations.stream();
   }
 
-  @DataPoints("small")
-  public static List<MutationList> getSmallMutations() {
-    return Collections.unmodifiableList(smallMutations);
+  public static Stream<Arguments> small() {
+    return implementations.stream().flatMap(implementation ->
+        smallMutations.stream().limit(10).map(mutation -> Arguments.of(implementation, mutation)));
   }
 
-  @DataPoints("large")
-  public static List<MutationList> getLargeMutations() {
-    return Collections.unmodifiableList(largeMutations);
+  public static Stream<Arguments> large() {
+    return implementations.stream().flatMap(implementation ->
+        largeMutations.stream().limit(10).map(mutation -> Arguments.of(implementation, mutation)));
+  }
+
+  public static Stream<Arguments> implementationBasePairs() {
+    Stream<Arguments> argumentsStream = implementations.stream().flatMap(one ->
+        fixedSets.stream().map(other -> Arguments.of(one, other)));
+    long size = implementations.size() * fixedSets.size();
+    double ratio = TESTED_PAIRS / ((double) size);
+    return ratio < 1.0
+        ? argumentsStream.filter(a -> generator.nextDouble() < ratio)
+        : argumentsStream;
+  }
+
+  public static Stream<Arguments> implementationPairs() {
+    Stream<Arguments> argumentsStream = implementations.stream().flatMap(one ->
+        implementations.stream().map(other -> Arguments.of(one, other)));
+    long size = implementations.size() * implementations.size();
+    double ratio = TESTED_PAIRS / ((double) size);
+    return ratio < 1.0
+        ? argumentsStream.filter(a -> generator.nextDouble() < ratio)
+        : argumentsStream;
   }
 
   private static void checkEquality(NatBitSet actual, NatBitSet expected) {
     assertThat(actual, is(expected));
     assertThat(actual.size(), is(expected.size()));
-    assertThat(actual.containsAll(expected), is(true));
-    assertThat(expected.containsAll(actual), is(true));
+    assertTrue(actual.containsAll(expected));
+    assertTrue(expected.containsAll(actual));
     if (!actual.isEmpty()) {
       assertThat(actual.lastInt(), is(expected.lastInt()));
       assertThat(actual.firstInt(), is(expected.firstInt()));
@@ -381,36 +397,36 @@ public class NatBitSetTheories {
   }
 
   @SuppressWarnings("TypeMayBeWeakened")
-  @Theory(nullsAccepted = false)
-  public void testAdd(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("base") IntCollection basis) {
-    assumeThat(implementation.modifiableType(), is(true));
-    assumeThat(implementation.modifiable(basis), is(true));
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationBasePairs")
+  public void testAdd(Pair implementation, IntCollection basis) {
+    assumeTrue(implementation.modifiableType());
+    assumeTrue(implementation.modifiable(basis));
     NatBitSet set = implementation.checkedCopy();
     NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
 
     basis.forEach((int i) -> assertThat(set.add(i), is(reference.add(i))));
-    basis.forEach((int i) -> assertThat(set.add(i), is(false)));
+    basis.forEach((int i) -> assertFalse(set.add(i)));
     assertThat(set, is(reference));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testAddAll(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
-    assumeThat(implementation.modifiable(other.length()), is(true));
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testAddAll(Pair implementation, Pair other) {
+    assumeTrue(implementation.modifiable(other.length()));
     NatBitSet set = implementation.checkedCopy();
     NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
 
     assertThat(set.addAll(other.set), is(reference.addAll(other.reference)));
     checkEquality(set, reference);
-    assertThat(set.addAll(other.set), is(false));
+    assertFalse(set.addAll(other.set));
     checkEquality(set, reference);
   }
 
-  @Theory(nullsAccepted = false)
-  public void testAnd(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
-    assumeThat(implementation.modifiableType(), is(true));
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testAnd(Pair implementation, Pair other) {
+    assumeTrue(implementation.modifiableType());
     NatBitSet set = implementation.checkedCopy();
     NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
 
@@ -419,10 +435,10 @@ public class NatBitSetTheories {
     checkEquality(set, reference);
   }
 
-  @Theory(nullsAccepted = false)
-  public void testAndNot(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
-    assumeThat(implementation.modifiableType(), is(true));
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testAndNot(Pair implementation, Pair other) {
+    assumeTrue(implementation.modifiableType());
     NatBitSet set = implementation.checkedCopy();
     NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
 
@@ -432,8 +448,9 @@ public class NatBitSetTheories {
     checkEquality(set, reference);
   }
 
-  @Theory(nullsAccepted = false)
-  public void testAsBounded(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testAsBounded(Pair implementation) {
     NatBitSet set = implementation.set;
 
     int domainSize;
@@ -445,7 +462,7 @@ public class NatBitSetTheories {
       domainSize = MAXIMAL_SUBSET_SIZE;
     }
 
-    assumeThat(set.isEmpty() || set.lastInt() < domainSize, is(true));
+    assumeTrue(set.isEmpty() || set.lastInt() < domainSize);
 
     BoundedNatBitSet copy = NatBitSets.asBounded(set, domainSize);
 
@@ -455,8 +472,9 @@ public class NatBitSetTheories {
     implementation.check();
   }
 
-  @Theory(nullsAccepted = false)
-  public void testAsSet(@FromDataPoints("base") IntIterable basis) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("bases")
+  public void testAsSet(IntIterable basis) {
     BitSet set = new BitSet();
     IntSet reference = new IntAVLTreeSet();
     basis.forEach((IntConsumer) index -> {
@@ -468,25 +486,28 @@ public class NatBitSetTheories {
     assertThat(ints, is(reference));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testClear(@FromDataPoints("implementation") Pair implementation) {
-    assumeThat(implementation.modifiableType(), is(true));
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testClear(Pair implementation) {
+    assumeTrue(implementation.modifiableType());
     NatBitSet set = implementation.checkedCopy();
 
     set.clear();
     //noinspection ConstantConditions
-    assertThat(set.isEmpty(), is(true));
+    assertTrue(set.isEmpty());
   }
 
-  @Theory(nullsAccepted = false)
-  public void testClone(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testClone(Pair implementation) {
     NatBitSet set = implementation.set;
 
     assertThat(set.clone(), is(set));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testCompact(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testCompact(Pair implementation) {
     NatBitSet set = implementation.set;
 
     NatBitSet compacted = NatBitSets.compact(set);
@@ -495,15 +516,16 @@ public class NatBitSetTheories {
     implementation.check();
   }
 
-  @Theory(nullsAccepted = false)
-  public void testComplement(@FromDataPoints("implementation") Pair implementation) {
-    assumeThat(implementation.set, instanceOf(BoundedNatBitSet.class));
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testComplement(Pair implementation) {
+    assumeTrue(implementation.set instanceof BoundedNatBitSet);
     BoundedNatBitSet boundedSet = (BoundedNatBitSet) implementation.checkedCopy();
 
     BoundedNatBitSet complement = boundedSet.complement();
-    assumeThat(complement, not(is(boundedSet)));
-    assertThat(complement.intersects(boundedSet), is(false));
-    assertThat(boundedSet.intersects(complement), is(false));
+    assumeFalse(complement.equals(boundedSet));
+    assertFalse(complement.intersects(boundedSet));
+    assertFalse(boundedSet.intersects(complement));
     assertThat(complement.domainSize(), is(boundedSet.domainSize()));
 
     for (int i = 0; i < boundedSet.domainSize(); i++) {
@@ -516,15 +538,16 @@ public class NatBitSetTheories {
     union.addAll(complement);
     assertThat(union.toString(), union.size(), is(boundedSet.domainSize()));
 
-    assumeThat(NatBitSets.isModifiable(complement), is(true));
+    assumeTrue(NatBitSets.isModifiable(complement));
     complement.clear();
     assertThat(boundedSet.size(), is(boundedSet.domainSize()));
     complement.addAll(union);
-    assertThat(boundedSet.isEmpty(), is(true));
+    assertTrue(boundedSet.isEmpty());
   }
 
-  @Theory(nullsAccepted = false)
-  public void testComplementIteratorLarger(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testComplementIteratorLarger(Pair implementation) {
     NatBitSet set = implementation.set;
 
     int size = MAXIMAL_SUBSET_SIZE + 100;
@@ -538,8 +561,9 @@ public class NatBitSetTheories {
     assertThat(complementSet.size(), is(size));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testComplementIteratorSmaller(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testComplementIteratorSmaller(Pair implementation) {
     NatBitSet set = implementation.set;
 
     int size = set.isEmpty()
@@ -549,15 +573,16 @@ public class NatBitSetTheories {
     NatBitSet complementSet = NatBitSets.boundedSet(size);
     iterator.forEachRemaining((IntConsumer) complementSet::set);
     assertThat(set, not(contains(complementSet)));
-    assumeThat(set.intersects(complementSet), is(false));
+    assumeFalse(set.intersects(complementSet));
 
     for (int i = 0; i < size; i++) {
       assertThat(complementSet.contains(i), not(is(set.contains(i))));
     }
   }
 
-  @Theory(nullsAccepted = false)
-  public void testContains(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testContains(Pair implementation) {
     NatBitSet set = implementation.set;
 
     for (int i = 0; i < MAXIMAL_SUBSET_SIZE; i++) {
@@ -565,37 +590,41 @@ public class NatBitSetTheories {
     }
   }
 
-  @Theory(nullsAccepted = false)
-  public void testContainsAll(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testContainsAll(Pair implementation, Pair other) {
     assertThat(implementation.set.containsAll(other.set),
         is(implementation.reference.containsAll(other.reference)));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testContainsBounded(@FromDataPoints("implementation") Pair implementation) {
-    assumeThat(implementation.set, instanceOf(BoundedNatBitSet.class));
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testContainsBounded(Pair implementation) {
+    assumeTrue(implementation.set instanceof BoundedNatBitSet);
     BoundedNatBitSet boundedSet = (BoundedNatBitSet) implementation.checkedCopy();
 
-    assertThat(boundedSet.contains(boundedSet.domainSize()), is(false));
+    assertFalse(boundedSet.contains(boundedSet.domainSize()));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testCopyOfDirect(@FromDataPoints("base") IntCollection basis) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("bases")
+  public void testCopyOfDirect(IntCollection basis) {
     NatBitSet copy = NatBitSets.copyOf(basis);
     assertThat(copy, is(asSet(basis)));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testCopyOfSet(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testCopyOfSet(Pair implementation) {
     NatBitSet set = implementation.set;
 
     NatBitSet copy = NatBitSets.copyOf(set);
     assertThat(copy, is(implementation.reference));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testEnsureBounded(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testEnsureBounded(Pair implementation) {
     NatBitSet set = implementation.checkedCopy();
 
     int domainSize = implementation.length() + generator.nextInt(10) + 1;
@@ -604,37 +633,39 @@ public class NatBitSetTheories {
     checkEquality(copy, set);
   }
 
-  @Theory(nullsAccepted = false)
-  public void testEnsureModifiable(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testEnsureModifiable(Pair implementation) {
     NatBitSet set = implementation.checkedCopy();
 
     NatBitSet copy = NatBitSets.ensureModifiable(set);
     checkEquality(copy, set);
-    assertThat(NatBitSets.isModifiable(copy), is(true));
+    assertTrue(NatBitSets.isModifiable(copy));
 
     copy.set(0, MAXIMAL_SUBSET_SIZE + 100);
   }
 
-  @Theory(nullsAccepted = false)
-  public void testEnsureModifiableLength(
-      @FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testEnsureModifiableLength(Pair implementation) {
     NatBitSet set = implementation.checkedCopy();
 
     NatBitSet copy = NatBitSets.ensureModifiable(set, 2 * MAXIMAL_SUBSET_SIZE);
     checkEquality(copy, set);
-    assertThat(NatBitSets.isModifiable(copy, 2 * MAXIMAL_SUBSET_SIZE), is(true));
+    assertTrue(NatBitSets.isModifiable(copy, 2 * MAXIMAL_SUBSET_SIZE));
 
     copy.set(2 * MAXIMAL_SUBSET_SIZE - 1);
   }
 
-  @Theory(nullsAccepted = false)
-  public void testEquals(@FromDataPoints("implementation") Pair oneSet,
-      @FromDataPoints("implementation") Pair otherSet) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testEquals(Pair oneSet, Pair otherSet) {
     assertThat(oneSet.set.equals(otherSet.set), is(oneSet.reference.equals(otherSet.reference)));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testFirstInt(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testFirstInt(Pair implementation) {
     NatBitSet set = implementation.set;
     IntSortedSet reference = new IntAVLTreeSet(implementation.reference);
 
@@ -645,21 +676,23 @@ public class NatBitSetTheories {
     }
   }
 
-  @Theory(nullsAccepted = false)
-  public void testIterator(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testIterator(Pair implementation) {
     NatBitSet set = implementation.set;
 
     IntIterator iterator = set.iterator();
     IntIterator referenceIterator = new IntAVLTreeSet(implementation.reference).iterator();
     while (iterator.hasNext()) {
-      assertThat(referenceIterator.hasNext(), is(true));
+      assertTrue(referenceIterator.hasNext());
       assertThat(iterator.nextInt(), is(referenceIterator.nextInt()));
     }
-    assertThat(referenceIterator.hasNext(), is(false));
+    assertFalse(referenceIterator.hasNext());
   }
 
-  @Theory(nullsAccepted = false)
-  public void testIteratorAscending(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testIteratorAscending(Pair implementation) {
     NatBitSet set = implementation.set;
     int previous = -1;
     IntIterator iterator = set.iterator();
@@ -670,15 +703,9 @@ public class NatBitSetTheories {
     }
   }
 
-  @Theory(nullsAccepted = false)
-  public void testLargeMutations(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("large") MutationList sequence) {
-    assumeThat(NatBitSets.isModifiable(implementation.set, MAXIMAL_SUBSET_SIZE), is(true));
-    testMutations(implementation, sequence);
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testLastInt(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testLastInt(Pair implementation) {
     NatBitSet set = implementation.set;
     IntSortedSet reference = new IntAVLTreeSet(implementation.reference);
 
@@ -689,24 +716,25 @@ public class NatBitSetTheories {
     }
   }
 
-  @Theory(nullsAccepted = false)
-  public void testModifiableCopyOf(@FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testModifiableCopyOf(Pair implementation) {
     NatBitSet set = implementation.set;
 
     NatBitSet copy = NatBitSets.modifiableCopyOf(set, 2 * MAXIMAL_SUBSET_SIZE);
     checkEquality(copy, set);
     assertThat(copy, not(sameInstance(set)));
-    assertThat(NatBitSets.isModifiable(copy, 2 * MAXIMAL_SUBSET_SIZE), is(true));
+    assertTrue(NatBitSets.isModifiable(copy, 2 * MAXIMAL_SUBSET_SIZE));
 
     copy.set(0, 2 * MAXIMAL_SUBSET_SIZE);
     assertThat(copy, not(is(set)));
   }
 
-  @Theory(nullsAccepted = false)
-  public void testModifiableCopyOfBoundedSet(
-      @FromDataPoints("implementation") Pair implementation) {
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testModifiableCopyOfBoundedSet(Pair implementation) {
     NatBitSet set = implementation.set;
-    assumeThat(set, instanceOf(BoundedNatBitSet.class));
+    assumeTrue(set instanceof BoundedNatBitSet);
 
     BoundedNatBitSet boundedSet = (BoundedNatBitSet) set;
 
@@ -716,6 +744,244 @@ public class NatBitSetTheories {
     assertThat(copy.domainSize(), is(boundedSet.domainSize()));
 
     copy.set(0, copy.domainSize());
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testNextAbsentIndex(Pair implementation) {
+    NatBitSet set = implementation.set;
+
+    for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
+      assertThat(set.nextAbsentIndex(i), is(implementation.bitSet.nextClearBit(i)));
+    }
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testNextPresentIndex(Pair implementation) {
+    NatBitSet set = implementation.set;
+
+    for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
+      assertThat(set.nextPresentIndex(i), is(implementation.bitSet.nextSetBit(i)));
+    }
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testOr(Pair implementation, Pair other) {
+    assumeTrue(implementation.modifiable(other.length()));
+    NatBitSet set = implementation.checkedCopy();
+    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
+
+    set.or(other.set);
+    reference.or(other.reference);
+    checkEquality(set, reference);
+
+    other.check();
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testOrNot(Pair implementation, Pair other) {
+    assumeTrue(implementation.modifiableType());
+    assumeTrue(implementation.set instanceof BoundedNatBitSet);
+    assumeTrue(other.set instanceof BoundedNatBitSet);
+
+    BoundedNatBitSet boundedSet = (BoundedNatBitSet) implementation.checkedCopy();
+    NatBitSet otherSet = other.checkedCopy();
+
+    boundedSet.orNot(otherSet);
+
+    IntSortedSet reference = new IntAVLTreeSet(boundedSet);
+    for (int i = 0; i < boundedSet.domainSize(); i++) {
+      if (!other.bitSet.get(i)) {
+        reference.add(i);
+      }
+    }
+
+    checkEquality(boundedSet, new ForwardingNatBitSet(reference));
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testPowerSet(Pair implementation) {
+    NatBitSet set = implementation.set;
+    assumeTrue(set.size() < POWER_SET_MAXIMUM);
+
+    Set<NatBitSet> powerSet = NatBitSets.powerSet(set);
+    assertThat(powerSet, hasSize(1 << set.size()));
+
+    int iteratorSize = 0;
+    Iterator<NatBitSet> iterator = powerSet.iterator();
+    //noinspection WhileLoopReplaceableByForEach
+    while (iterator.hasNext()) {
+      iterator.next();
+      iteratorSize += 1;
+    }
+    assertThat(iteratorSize, is(powerSet.size()));
+
+    Set<BitSet> referencePowerSet = BitSets.powerSet(implementation.bitSet);
+    for (BitSet subset : referencePowerSet) {
+      BitSets.forEach(subset, index -> assertThat(set, hasItem(index)));
+      assertThat(powerSet, hasItem(NatBitSets.asSet(subset)));
+    }
+    assertThat(powerSet, hasSize(referencePowerSet.size()));
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testPreviousAbsentIndex(Pair implementation) {
+    NatBitSet set = implementation.set;
+
+    for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
+      assertThat(set.previousAbsentIndex(i), is(implementation.bitSet.previousClearBit(i)));
+    }
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testPreviousPresentIndex(Pair implementation) {
+    NatBitSet set = implementation.set;
+
+    for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
+      assertThat(set.previousPresentIndex(i), is(implementation.bitSet.previousSetBit(i)));
+    }
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testRemove(Pair implementation) {
+    assumeTrue(implementation.modifiableType());
+    NatBitSet set = implementation.checkedCopy();
+    int limit = implementation.length();
+
+    for (int i = 0; i < limit; i++) {
+      assertThat(set.remove(i), is(implementation.reference.contains(i)));
+    }
+    assertTrue(set.isEmpty());
+    for (int i = 0; i < limit; i++) {
+      assertFalse(set.remove(i));
+    }
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testRemoveAll(Pair implementation, Pair other) {
+    assumeTrue(implementation.modifiable(other.length()));
+    NatBitSet set = implementation.checkedCopy();
+    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
+
+    assertThat(set.removeAll(other.set), is(reference.removeAll(other.reference)));
+    checkEquality(set, reference);
+    assertFalse(set.removeAll(other.set));
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testRemoveIf(Pair implementation, Pair other) {
+    assumeTrue(implementation.modifiable(other.length()));
+    NatBitSet set = implementation.checkedCopy();
+    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
+
+    IntPredicate predicate = other.set::contains;
+    assertThat(set.removeIf(predicate), is(reference.removeIf(predicate)));
+    checkEquality(set, reference);
+    assertFalse(set.removeIf(predicate));
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testRetainAll(Pair implementation, Pair other) {
+    assumeTrue(implementation.modifiableType());
+    NatBitSet set = implementation.checkedCopy();
+    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
+
+    assertThat(set.retainAll(other.set), is(reference.retainAll(other.reference)));
+    checkEquality(set, reference);
+    assertFalse(set.retainAll(other.set));
+    checkEquality(set, reference);
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testReverseIterator(Pair implementation) {
+    NatBitSet set = implementation.set;
+
+    int size = set.size();
+    int[] forwardArray = new int[size];
+    int[] backwardArray = new int[size];
+    int forward = IntIterators.unwrap(set.iterator(), forwardArray);
+    int backward = IntIterators.unwrap(set.reverseIterator(), backwardArray);
+    assertThat(Arrays.toString(backwardArray), backward, is(forward));
+
+    for (int i = 0; i < size; i++) {
+      assertThat(backwardArray[i], is(forwardArray[size - i - 1]));
+    }
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testStream(Pair implementation) {
+    NatBitSet set = implementation.set;
+    IntSet reference = new IntAVLTreeSet(implementation.reference);
+
+    IntSet streamAdd = new IntAVLTreeSet();
+    set.intStream().forEach(streamAdd::add);
+    assertThat(streamAdd, is(reference));
+
+    assertTrue(set.intStream().allMatch(implementation.reference::contains));
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testToBitSet(Pair implementation) {
+    NatBitSet set = implementation.set;
+
+    BitSet bitSet = NatBitSets.toBitSet(set);
+    assertThat(bitSet, is(implementation.bitSet));
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementations")
+  public void testToSparseBitSet(Pair implementation) {
+    NatBitSet set = implementation.set;
+
+    SparseBitSet bitSet = NatBitSets.toSparseBitSet(set);
+    IntSet reference = new IntAVLTreeSet();
+    SparseBitSets.forEach(bitSet, reference::add);
+    assertThat(set, is(reference));
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("implementationPairs")
+  public void testXor(Pair implementation, Pair other) {
+    int maximal = Math.max(implementation.length(), other.length());
+    assumeTrue(implementation.modifiable(maximal));
+    assumeTrue(other.modifiable(maximal));
+    NatBitSet set = implementation.checkedCopy();
+    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
+
+    assumeTrue(!(set instanceof BoundedNatBitSet) || (other.set instanceof BoundedNatBitSet
+        && ((BoundedNatBitSet) other.set).domainSize()
+        <= ((BoundedNatBitSet) set).domainSize()));
+
+    set.xor(other.set);
+    reference.xor(other.reference);
+    checkEquality(set, reference);
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("small")
+  public void testSmallMutations(Pair implementation, MutationList sequence) {
+    assumeTrue(NatBitSets.isModifiable(implementation.set, SMALL_SUBSET_SIZE));
+    testMutations(implementation, sequence);
+  }
+
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("large")
+  public void testLargeMutations(Pair implementation, MutationList sequence) {
+    assumeTrue(NatBitSets.isModifiable(implementation.set, MAXIMAL_SUBSET_SIZE));
+    testMutations(implementation, sequence);
   }
 
   private void testMutations(Pair implementation, MutationList sequence) {
@@ -740,227 +1006,6 @@ public class NatBitSetTheories {
         }
       }
     }
-    checkEquality(set, reference);
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testNextAbsentIndex(@FromDataPoints("implementation") Pair implementation) {
-    NatBitSet set = implementation.set;
-
-    for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
-      assertThat(set.nextAbsentIndex(i), is(implementation.bitSet.nextClearBit(i)));
-    }
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testNextPresentIndex(@FromDataPoints("implementation") Pair implementation) {
-    NatBitSet set = implementation.set;
-
-    for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
-      assertThat(set.nextPresentIndex(i), is(implementation.bitSet.nextSetBit(i)));
-    }
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testOr(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
-    assumeThat(implementation.modifiable(other.length()), is(true));
-    NatBitSet set = implementation.checkedCopy();
-    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
-
-    set.or(other.set);
-    reference.or(other.reference);
-    checkEquality(set, reference);
-
-    other.check();
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testOrNot(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
-    assumeThat(implementation.modifiableType(), is(true));
-    assumeThat(implementation.set, instanceOf(BoundedNatBitSet.class));
-    assumeThat(other.set, instanceOf(BoundedNatBitSet.class));
-
-    BoundedNatBitSet boundedSet = (BoundedNatBitSet) implementation.checkedCopy();
-    NatBitSet otherSet = other.checkedCopy();
-
-    boundedSet.orNot(otherSet);
-
-    IntSortedSet reference = new IntAVLTreeSet(boundedSet);
-    for (int i = 0; i < boundedSet.domainSize(); i++) {
-      if (!other.bitSet.get(i)) {
-        reference.add(i);
-      }
-    }
-
-    checkEquality(boundedSet, new ForwardingNatBitSet(reference));
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testPowerSet(@FromDataPoints("implementation") Pair implementation) {
-    NatBitSet set = implementation.set;
-    assumeThat(set.size(), lessThan(POWER_SET_MAXIMUM));
-
-    Set<NatBitSet> powerSet = NatBitSets.powerSet(set);
-    assertThat(powerSet, hasSize(1 << set.size()));
-
-    int iteratorSize = 0;
-    Iterator<NatBitSet> iterator = powerSet.iterator();
-    //noinspection WhileLoopReplaceableByForEach
-    while (iterator.hasNext()) {
-      iterator.next();
-      iteratorSize += 1;
-    }
-    assertThat(iteratorSize, is(powerSet.size()));
-
-    Set<BitSet> referencePowerSet = BitSets.powerSet(implementation.bitSet);
-    for (BitSet subset : referencePowerSet) {
-      BitSets.forEach(subset, index -> assertThat(set, hasItem(index)));
-      assertThat(powerSet, hasItem(NatBitSets.asSet(subset)));
-    }
-    assertThat(powerSet, hasSize(referencePowerSet.size()));
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testPreviousAbsentIndex(@FromDataPoints("implementation") Pair implementation) {
-    NatBitSet set = implementation.set;
-
-    for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
-      assertThat(set.previousAbsentIndex(i), is(implementation.bitSet.previousClearBit(i)));
-    }
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testPreviousPresentIndex(@FromDataPoints("implementation") Pair implementation) {
-    NatBitSet set = implementation.set;
-
-    for (int i = 0; i < SMALL_SUBSET_SIZE; i++) {
-      assertThat(set.previousPresentIndex(i), is(implementation.bitSet.previousSetBit(i)));
-    }
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testRemove(@FromDataPoints("implementation") Pair implementation) {
-    assumeThat(implementation.modifiableType(), is(true));
-    NatBitSet set = implementation.checkedCopy();
-    int limit = implementation.length();
-
-    for (int i = 0; i < limit; i++) {
-      assertThat(set.remove(i), is(implementation.reference.contains(i)));
-    }
-    assertThat(set.isEmpty(), is(true));
-    for (int i = 0; i < limit; i++) {
-      assertThat(set.remove(i), is(false));
-    }
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testRemoveAll(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
-    assumeThat(implementation.modifiable(other.length()), is(true));
-    NatBitSet set = implementation.checkedCopy();
-    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
-
-    assertThat(set.removeAll(other.set), is(reference.removeAll(other.reference)));
-    checkEquality(set, reference);
-    assertThat(set.removeAll(other.set), is(false));
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testRemoveIf(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
-    assumeThat(implementation.modifiable(other.length()), is(true));
-    NatBitSet set = implementation.checkedCopy();
-    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
-
-    IntPredicate predicate = other.set::contains;
-    assertThat(set.removeIf(predicate), is(reference.removeIf(predicate)));
-    checkEquality(set, reference);
-    assertThat(set.removeIf(predicate), is(false));
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testRetainAll(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
-    assumeThat(implementation.modifiableType(), is(true));
-    NatBitSet set = implementation.checkedCopy();
-    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
-
-    assertThat(set.retainAll(other.set), is(reference.retainAll(other.reference)));
-    checkEquality(set, reference);
-    assertThat(set.retainAll(other.set), is(false));
-    checkEquality(set, reference);
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testReverseIterator(@FromDataPoints("implementation") Pair implementation) {
-    NatBitSet set = implementation.set;
-
-    int size = set.size();
-    int[] forwardArray = new int[size];
-    int[] backwardArray = new int[size];
-    int forward = IntIterators.unwrap(set.iterator(), forwardArray);
-    int backward = IntIterators.unwrap(set.reverseIterator(), backwardArray);
-    assertThat(Arrays.toString(backwardArray), backward, is(forward));
-
-    for (int i = 0; i < size; i++) {
-      assertThat(backwardArray[i], is(forwardArray[size - i - 1]));
-    }
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testSmallMutations(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("small") MutationList sequence) {
-    assumeThat(NatBitSets.isModifiable(implementation.set, SMALL_SUBSET_SIZE), is(true));
-    testMutations(implementation, sequence);
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testStream(@FromDataPoints("implementation") Pair implementation) {
-    NatBitSet set = implementation.set;
-    IntSet reference = new IntAVLTreeSet(implementation.reference);
-
-    IntSet streamAdd = new IntAVLTreeSet();
-    set.intStream().forEach(streamAdd::add);
-    assertThat(streamAdd, is(reference));
-
-    assertThat(set.intStream().allMatch(implementation.reference::contains), is(true));
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testToBitSet(@FromDataPoints("implementation") Pair implementation) {
-    NatBitSet set = implementation.set;
-
-    BitSet bitSet = NatBitSets.toBitSet(set);
-    assertThat(bitSet, is(implementation.bitSet));
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testToSparseBitSet(@FromDataPoints("implementation") Pair implementation) {
-    NatBitSet set = implementation.set;
-
-    SparseBitSet bitSet = NatBitSets.toSparseBitSet(set);
-    IntSet reference = new IntAVLTreeSet();
-    SparseBitSets.forEach(bitSet, reference::add);
-    assertThat(set, is(reference));
-  }
-
-  @Theory(nullsAccepted = false)
-  public void testXor(@FromDataPoints("implementation") Pair implementation,
-      @FromDataPoints("implementation") Pair other) {
-    int maximal = Math.max(implementation.length(), other.length());
-    assumeThat(implementation.modifiable(maximal), is(true));
-    assumeThat(other.modifiable(maximal), is(true));
-    NatBitSet set = implementation.checkedCopy();
-    NatBitSet reference = new ForwardingNatBitSet(new IntAVLTreeSet(implementation.reference));
-
-    assumeThat(!(set instanceof BoundedNatBitSet) || (other.set instanceof BoundedNatBitSet
-        && ((BoundedNatBitSet) other.set).domainSize()
-        <= ((BoundedNatBitSet) set).domainSize()), is(true));
-
-    set.xor(other.set);
-    reference.xor(other.reference);
     checkEquality(set, reference);
   }
 

@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nonnegative;
 
+// CS:OFF OverloadMethodsDeclarationOrderCheck
 public interface NatBitSetFactory {
 
   // --- Unbounded Sets ---
@@ -239,3 +240,4 @@ public interface NatBitSetFactory {
 
   NatBitSet compact(NatBitSet set, boolean forceCopy);
 }
+// CS:ON

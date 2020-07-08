@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'de.tum.in'
-version '0.15.0'
+version '0.15.1'
 
 apply plugin: 'java'
 
@@ -40,22 +40,27 @@ dependencies {
     // https://mvnrepository.com/artifact/com.zaxxer/SparseBitSet
     implementation group: 'com.zaxxer', name: 'SparseBitSet', version: '1.2'
     // https://mvnrepository.com/artifact/org.roaringbitmap/RoaringBitmap
-    implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.8.15'
+    implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.8.20'
 
-    // https://mvnrepository.com/artifact/junit/junit
-    testImplementation group: 'junit', name: 'junit', version: '4.13'
-    testImplementation group: 'com.googlecode.junit-toolbox', name: 'junit-toolbox', version: '2.3'
+    // https://mvnrepository.com/artifact/org.hamcrest/hamcrest
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+    // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.6.2"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.6.2"
 }
 
 test {
-    maxHeapSize "8G"
+    useJUnitPlatform()
+
+    maxHeapSize = "16g"
 }
 
 // PMD
 // https://docs.gradle.org/current/dsl/org.gradle.api.plugins.quality.Pmd.html
 
 pmd {
-    toolVersion = "6.22.0" // https://pmd.github.io/
+    toolVersion = "6.25.0" // https://pmd.github.io/
     reportsDir = file("$project.buildDir/reports/pmd")
     ruleSetFiles = files("$project.rootDir/config/pmd-rules.xml")
     ruleSets = [] // We specify all rules in rules.xml
@@ -74,7 +79,7 @@ tasks.withType(Pmd) {
 // https://docs.gradle.org/current/dsl/org.gradle.api.plugins.quality.Checkstyle.html
 
 checkstyle {
-    toolVersion = "8.31" // http://checkstyle.sourceforge.net/releasenotes.html
+    toolVersion = "8.34" // http://checkstyle.sourceforge.net/releasenotes.html
     configFile = file("$project.rootDir/config/checkstyle.xml")
     ignoreFailures = false
     maxWarnings = 0
@@ -100,12 +105,4 @@ if (project.hasProperty('release')) {
 // If a user file is present, include it.
 if (file('../user.gradle').exists()) {
     apply from: '../user.gradle'
-}
-
-if (JavaVersion.current().isJava8Compatible()) {
-    allprojects {
-        tasks.withType(Javadoc) {
-            options.addBooleanOption('Xdoclint:none', true)
-        }
-    }
 }
