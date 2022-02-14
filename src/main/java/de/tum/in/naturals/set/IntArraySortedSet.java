@@ -37,7 +37,7 @@ public class IntArraySortedSet extends AbstractIntSet {
   /**
    * The number of valid entries in {@link #array}.
    */
-  private int size;
+  private int size = 0;
 
   /**
    * Creates a new empty array set.
@@ -62,6 +62,7 @@ public class IntArraySortedSet extends AbstractIntSet {
    * @param c
    *     a collection.
    */
+  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
   public IntArraySortedSet(IntCollection c) {
     this(c.size());
     addAll(c);
@@ -73,7 +74,8 @@ public class IntArraySortedSet extends AbstractIntSet {
    * @param c
    *     a collection.
    */
-  public IntArraySortedSet(Collection<? extends Integer> c) {
+  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
+  public IntArraySortedSet(Collection<Integer> c) {
     this(c.size());
     addAll(c);
   }
@@ -181,13 +183,8 @@ public class IntArraySortedSet extends AbstractIntSet {
    * Returns a deep copy of this set.
    */
   @Override
-  public IntArraySortedSet clone() {
-    IntArraySortedSet clone;
-    try {
-      clone = (IntArraySortedSet) super.clone();
-    } catch (CloneNotSupportedException ignored) {
-      throw new InternalError(ignored);
-    }
+  public IntArraySortedSet clone() throws CloneNotSupportedException {
+    IntArraySortedSet clone = (IntArraySortedSet) super.clone();
     clone.array = array.clone();
     return clone;
   }

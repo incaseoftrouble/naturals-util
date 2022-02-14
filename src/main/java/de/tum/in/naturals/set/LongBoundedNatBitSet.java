@@ -33,6 +33,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
   private final long domainMask;
   private final long[] store;
 
+  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
   private LongBoundedNatBitSet(long store, int domainSize, boolean complement) {
     super(domainSize);
     if (Long.SIZE < domainSize) {
@@ -408,7 +409,7 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
   }
 
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
   @Override
   public LongBoundedNatBitSet clone() {
     assert checkConsistency();

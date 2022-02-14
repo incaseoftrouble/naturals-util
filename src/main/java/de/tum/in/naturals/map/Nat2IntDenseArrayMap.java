@@ -55,7 +55,6 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
   private transient ValuesView valuesView = null;
 
   public Nat2IntDenseArrayMap(int[] array) {
-    //noinspection AssignmentToCollectionOrArrayFieldFromParameter
     this.array = array;
     for (int value : array) {
       if (!isAbsent(value)) {
@@ -225,6 +224,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     return valuesView;
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class EntryIterator implements ObjectIterator<Int2IntMap.Entry> {
     private final Nat2IntDenseArrayMap map;
     private int next;
@@ -309,6 +309,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class FastMapEntry extends AbstractInt2IntMap.BasicEntry {
     private final Nat2IntDenseArrayMap map;
     int index = -1;
@@ -410,6 +411,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class ValuesIterator implements IntIterator {
     private final Nat2IntDenseArrayMap map;
     private int current;

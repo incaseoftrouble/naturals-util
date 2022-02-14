@@ -5,6 +5,7 @@
 
 <suppressions>
   <!-- Soon we will doc everything ... -->
+  <suppress checks="SummaryJavadoc" files=".*"/>
   <suppress checks="JavadocMethod" files=".*"/>
   <!-- We avoid final modifier -->
   <suppress checks="VariableDeclarationUsageDistanceCheck" files=".*"/>

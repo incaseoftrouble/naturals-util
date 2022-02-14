@@ -25,6 +25,7 @@ class NatBitSetIterator implements IntIterator {
   private int current;
   private int next;
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   public NatBitSetIterator(NatBitSet set) {
     this.set = set;
     current = -1;

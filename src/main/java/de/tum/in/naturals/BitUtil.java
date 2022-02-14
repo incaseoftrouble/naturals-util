@@ -26,18 +26,15 @@ public final class BitUtil {
       return 0L;
     }
     if (to == Long.SIZE) {
-      return ~((1L << from) - 1L);
+      return -(1L << from); // = ~((1L << from) - 1L)
     }
 
-    return (1L << to) - 1L & ~((1L << from) - 1L);
+    return (1L << to) - 1L & -(1L << from);
   }
 
   public static long maskTo(int to) {
     assert 0 <= to && to <= Long.SIZE;
-    if (to == Long.SIZE) {
-      return -1L;
-    }
-    return (1L << to) - 1L;
+    return to == Long.SIZE ? -1L : (1L << to) - 1L;
   }
 
   public static int nextBit(long store, int index) {

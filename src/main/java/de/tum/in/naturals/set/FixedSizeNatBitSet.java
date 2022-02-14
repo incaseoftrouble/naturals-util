@@ -73,7 +73,7 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
       return true;
     }
     if (complement) {
-      // indices is not empty here
+      // "indices" is not empty here
       return false;
     }
     if (indices instanceof NatBitSet) {
@@ -237,7 +237,6 @@ final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
   }
 
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public FixedSizeNatBitSet clone() {
     // Immutable object

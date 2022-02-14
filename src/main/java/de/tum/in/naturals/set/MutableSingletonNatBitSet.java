@@ -24,7 +24,9 @@ import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 class MutableSingletonNatBitSet extends AbstractNatBitSet {
+  private static final int[] EMPTY_INTS = new int[0];
   private static final int EMPTY = Integer.MIN_VALUE;
+
   private int element;
 
   MutableSingletonNatBitSet() {
@@ -256,7 +258,7 @@ class MutableSingletonNatBitSet extends AbstractNatBitSet {
 
   @Override
   public int[] toIntArray() {
-    return isEmpty() ? new int[0] : new int[] {element};
+    return isEmpty() ? EMPTY_INTS : new int[] {element};
   }
 
 

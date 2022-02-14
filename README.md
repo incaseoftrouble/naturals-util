@@ -12,7 +12,7 @@ You can either build the jar using gradle (see below) or fetch it from maven cen
     <dependency>
       <groupId>de.tum.in</groupId>
       <artifactId>naturals-util</artifactId>
-      <version>0.13.0</version>
+      <version>0.16.0</version>
     </dependency>
 
 ## Building
@@ -22,7 +22,7 @@ All dependencies are downloaded automatically.
 
     $ ./gradlew build
 
-Or, if you are on windows,
+Or, if you are on Windows,
 
     # gradlew.bat build
 

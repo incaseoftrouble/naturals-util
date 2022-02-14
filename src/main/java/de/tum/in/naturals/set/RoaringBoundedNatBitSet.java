@@ -255,9 +255,9 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     assert checkConsistency();
     checkInDomain(from, to);
     if (complement) {
-      bitmap.remove((long) from, (long) to);
+      bitmap.remove(from, (long) to);
     } else {
-      bitmap.add((long) from, (long) to);
+      bitmap.add(from, (long) to);
     }
     assert checkConsistency();
   }
@@ -266,7 +266,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
   public void clear() {
     assert checkConsistency();
     if (complement) {
-      bitmap.add(0L, (long) domainSize());
+      bitmap.add(0L, domainSize());
     } else {
       bitmap.clear();
     }
@@ -297,9 +297,9 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     }
 
     if (complement) {
-      bitmap.add((long) from, (long) Math.min(to, domainSize));
+      bitmap.add(from, (long) Math.min(to, domainSize));
     } else {
-      bitmap.remove((long) from, (long) Math.min(to, domainSize));
+      bitmap.remove(from, (long) Math.min(to, domainSize));
     }
     assert checkConsistency();
   }
@@ -316,7 +316,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
   public void flip(int from, int to) {
     assert checkConsistency();
     checkInDomain(from, to);
-    bitmap.flip((long) from, (long) to);
+    bitmap.flip(from, (long) to);
     assert checkConsistency();
   }
 
@@ -379,11 +379,11 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
 
     if (complement) {
       bitmap.or(other);
-      bitmap.add((long) otherDomainSize, (long) domainSize);
-      bitmap.remove((long) domainSize, (long) otherDomainSize);
+      bitmap.add(otherDomainSize, (long) domainSize);
+      bitmap.remove(domainSize, (long) otherDomainSize);
     } else {
       bitmap.andNot(other);
-      bitmap.remove((long) otherDomainSize, (long) domainSize);
+      bitmap.remove(otherDomainSize, (long) domainSize);
     }
   }
 
@@ -429,7 +429,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
   private void doAndNot(RoaringBitmap other) {
     if (complement) {
       bitmap.or(other);
-      bitmap.remove((long) domainSize(), INFINITY);
+      bitmap.remove(domainSize(), INFINITY);
     } else {
       bitmap.andNot(other);
     }
@@ -444,7 +444,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
         bitmap.or(tail);
       } else {
         bitmap.orNot(other, domainSize);
-        bitmap.remove((long) domainSize, INFINITY); // TODO orNot bug
+        bitmap.remove(domainSize, INFINITY); // TODO orNot bug
       }
     } else {
       if (otherDomainSize < domainSize) {
@@ -545,14 +545,14 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     if (complement) {
       bitmap.andNot(other);
       if (otherDomainSize < domainSize) {
-        bitmap.remove((long) otherDomainSize, (long) domainSize);
+        bitmap.remove(otherDomainSize, (long) domainSize);
       }
     } else {
       bitmap.or(other);
       if (otherDomainSize < domainSize) {
-        bitmap.add((long) otherDomainSize, (long) domainSize);
+        bitmap.add(otherDomainSize, (long) domainSize);
       } else {
-        bitmap.remove((long) domainSize, (long) otherDomainSize);
+        bitmap.remove(domainSize, (long) otherDomainSize);
       }
     }
   }
@@ -569,7 +569,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
 
       bitmap.xor(other.bitmap);
       if (other.complement) {
-        bitmap.flip(0L, (long) other.domainSize());
+        bitmap.flip(0L, other.domainSize());
       }
     } else if (indices instanceof RoaringNatBitSet) {
       RoaringNatBitSet other = (RoaringNatBitSet) indices;
@@ -600,6 +600,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
   }
 
 
+  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
   @Override
   public RoaringBoundedNatBitSet clone() {
     assert checkConsistency();
@@ -689,13 +690,18 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return super.equals(o);
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
 
   RoaringBitmap bitmap() {
     return bitmap;
   }
 
   RoaringBitmap complementBits() {
-    return RoaringBitmap.flip(bitmap, 0L, (long) domainSize());
+    return RoaringBitmap.flip(bitmap, 0L, domainSize());
   }
 
 

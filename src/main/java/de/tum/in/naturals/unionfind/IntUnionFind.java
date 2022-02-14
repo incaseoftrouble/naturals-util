@@ -50,7 +50,7 @@ public interface IntUnionFind extends IntUnaryOperator {
   int componentCount();
 
   /**
-   * Returns true if the the two sites are in the same component.
+   * Returns true if the two sites are in the same component.
    */
   default boolean connected(int p, int q) {
     return find(p) == find(q);
@@ -67,8 +67,7 @@ public interface IntUnionFind extends IntUnaryOperator {
   int size();
 
   /**
-   * Merges the component containing site {@code p} with the
-   * the component containing site {@code q}.
+   * Merges the component containing site {@code p} with the component containing site {@code q}.
    */
   void union(int p, int q);
 }

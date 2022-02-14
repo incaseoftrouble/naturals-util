@@ -29,7 +29,6 @@ import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
 
 public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBitSet {
-
   @Override
   public int firstInt() {
     int firstPresent = nextPresentIndex(0);
@@ -106,6 +105,7 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
       clear();
       return true;
     }
+    @SuppressWarnings("TooBroadScope")
     int size = size();
     and(indices);
     return size() < size;
@@ -130,6 +130,7 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
     if (isEmpty() || indices.isEmpty()) {
       return false;
     }
+    @SuppressWarnings("TooBroadScope")
     int size = size();
     andNot(indices);
     return size() < size;
@@ -148,6 +149,7 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
     if (indices.isEmpty()) {
       return false;
     }
+    @SuppressWarnings("TooBroadScope")
     int size = size();
     or(indices);
     return size < size();

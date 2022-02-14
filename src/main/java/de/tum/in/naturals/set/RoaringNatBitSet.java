@@ -137,7 +137,7 @@ class RoaringNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void set(int from, int to) {
-    bitmap.add((long) from, (long) to);
+    bitmap.add(from, (long) to);
   }
 
   @Override
@@ -152,12 +152,12 @@ class RoaringNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void clear(int from, int to) {
-    bitmap.remove((long) from, (long) to);
+    bitmap.remove(from, (long) to);
   }
 
   @Override
   public void clearFrom(int from) {
-    bitmap.remove((long) from, INFINITY);
+    bitmap.remove(from, INFINITY);
   }
 
   @Override
@@ -167,7 +167,7 @@ class RoaringNatBitSet extends AbstractNatBitSet {
 
   @Override
   public void flip(int from, int to) {
-    bitmap.flip((long) from, (long) to);
+    bitmap.flip(from, (long) to);
   }
 
 
@@ -195,7 +195,7 @@ class RoaringNatBitSet extends AbstractNatBitSet {
       bitmap.and(other.bitmap);
     } else if (indices instanceof RoaringBoundedNatBitSet) {
       RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-      bitmap.remove((long) other.domainSize(), INFINITY);
+      bitmap.remove(other.domainSize(), INFINITY);
       if (other.isComplement()) {
         bitmap.andNot(other.bitmap());
       } else {
@@ -272,7 +272,7 @@ class RoaringNatBitSet extends AbstractNatBitSet {
 
       bitmap.xor(other.bitmap());
       if (other.isComplement()) {
-        bitmap.flip(0L, (long) other.domainSize());
+        bitmap.flip(0L, other.domainSize());
       }
     } else {
       bitmap.xor(RoaringBitmaps.of(indices));
@@ -330,6 +330,12 @@ class RoaringNatBitSet extends AbstractNatBitSet {
       return bitmap.equals(other.bitmap());
     }
     return super.equals(o);
+  }
+
+  @SuppressWarnings("RedundantMethodOverride")
+  @Override
+  public int hashCode() {
+    return super.hashCode();
   }
 
   RoaringBitmap bitmap() {

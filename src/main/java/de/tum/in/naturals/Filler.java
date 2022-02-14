@@ -57,7 +57,6 @@ public final class Filler {
     }
   }
 
-  @SuppressWarnings("TypeMayBeWeakened")
   public static void fill(Int2DoubleFunction function, PrimitiveIterator.OfInt keys,
       IntToDoubleFunction values) {
     keys.forEachRemaining((IntConsumer) i -> function.put(i, values.applyAsDouble(i)));

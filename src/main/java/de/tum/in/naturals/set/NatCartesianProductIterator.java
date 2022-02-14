@@ -39,6 +39,7 @@ public class NatCartesianProductIterator implements Iterator<int[]> {
     this.element = new int[domainMaximalElements.length];
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   NatCartesianProductIterator(int[] domainMaximalElements, long size) {
     assert NatCartesianProductSet.numberOfElements(domainMaximalElements) == size;
     this.domainMaximalElements = domainMaximalElements;
@@ -51,6 +52,7 @@ public class NatCartesianProductIterator implements Iterator<int[]> {
     return nextIndex < size;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public int[] next() {
     nextIndex += 1L;

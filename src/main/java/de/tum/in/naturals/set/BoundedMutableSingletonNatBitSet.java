@@ -123,7 +123,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
 
   @Override
   public boolean contains(int index) {
-    return index >= 0 && (complement ? store[0] != index : store[0] == index);
+    return index >= 0 && (complement == (store[0] != index));
   }
 
   @Override
@@ -183,7 +183,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
     if (complement) {
       IntIterator first = IntIterators.fromTo(0, store[0]);
       IntIterator second = IntIterators.fromTo(store[0] + 1, domainSize());
-      return IntIterators.concat(new IntIterator[] {first, second});
+      return IntIterators.concat(first, second);
     }
     return IntIterators.singleton(store[0]);
   }
@@ -257,7 +257,7 @@ class BoundedMutableSingletonNatBitSet extends AbstractBoundedNatBitSet {
     if (complement) {
       IntIterator first = new ReverseRangeIterator(store[0] + 1, domainSize());
       IntIterator second = new ReverseRangeIterator(0, store[0]);
-      return IntIterators.concat(new IntIterator[] {first, second});
+      return IntIterators.concat(first, second);
     }
     return IntIterators.singleton(store[0]);
   }

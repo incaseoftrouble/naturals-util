@@ -82,7 +82,6 @@ public final class BitSets {
     return bitSet;
   }
 
-  @SuppressWarnings("TypeMayBeWeakened")
   public static BitSet of(PrimitiveIterator.OfInt iterator) {
     BitSet bitSet = new BitSet();
     iterator.forEachRemaining((IntConsumer) bitSet::set);

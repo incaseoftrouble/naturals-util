@@ -82,10 +82,10 @@ public class NatCartesianProductSet extends AbstractSet<int[]> implements Size64
     return new NatCartesianProductIterator(domainMaximalElements, size);
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"deprecation", "NumericCastThatLosesPrecision"})
   @Override
   public int size() {
-    return (int) Math.min(size, (long) Integer.MAX_VALUE);
+    return size <= Integer.MAX_VALUE ? (int) size : Integer.MAX_VALUE;
   }
 
   @Override

@@ -25,12 +25,14 @@ class NatBitSetBidiIterator implements IntBidirectionalIterator {
   private int previous;
   private int next;
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   public NatBitSetBidiIterator(NatBitSet set) {
     this.set = set;
     previous = -1;
     next = set.nextPresentIndex(0);
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   public NatBitSetBidiIterator(NatBitSet set, int start) {
     this.set = set;
     if (start == 0) {

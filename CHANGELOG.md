@@ -1,5 +1,9 @@
 # 0.x
 
+### 0.16.0 (2021-02-14)
+
+ * Version bumps, upgrade to Java 11, upgrade to Gradle Kotlin DSL 
+
 ### 0.15.1 (2020-07-08)
 
  * Version bumps, upgrade to JUnit 5

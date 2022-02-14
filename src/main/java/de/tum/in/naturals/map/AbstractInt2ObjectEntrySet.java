@@ -56,7 +56,7 @@ public abstract class AbstractInt2ObjectEntrySet<V, M extends Int2ObjectMap<V>>
 
     int k = (Integer) key;
     V v = map.get(k);
-    return v != null && v.equals(value);
+    return value.equals(v);
   }
 
   @Override

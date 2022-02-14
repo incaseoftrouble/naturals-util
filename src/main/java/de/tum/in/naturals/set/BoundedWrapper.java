@@ -102,7 +102,7 @@ class BoundedWrapper extends AbstractBoundedNatBitSet {
     assert checkConsistency();
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
   @Override
   public BoundedWrapper clone() {
     return new BoundedWrapper(delegate, domainSize());

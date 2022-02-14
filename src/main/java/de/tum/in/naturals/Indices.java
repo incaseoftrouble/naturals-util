@@ -31,7 +31,6 @@ import java.util.function.DoubleToIntFunction;
 import java.util.function.IntUnaryOperator;
 import javax.annotation.Nonnegative;
 
-@SuppressWarnings("TypeMayBeWeakened")
 public final class Indices {
   private Indices() {}
 
@@ -89,7 +88,6 @@ public final class Indices {
     }
 
     if (elementCount == 0) {
-      //noinspection AssignmentOrReturnOfFieldWithMutableType
       return IntArrays.EMPTY_ARRAY;
     }
     int[] indexArray = new int[elementCount];

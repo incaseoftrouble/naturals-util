@@ -21,8 +21,9 @@ import static de.tum.in.naturals.set.NatBitSetsUtil.SPLITERATOR_CHARACTERISTICS;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSpliterator;
+import it.unimi.dsi.fastutil.ints.IntSpliterators;
 import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -33,8 +34,6 @@ import javax.annotation.Nonnegative;
  */
 public interface NatSet extends IntSet {
   /**
-   * {@inheritDoc}
-   *
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative.
    */
@@ -42,8 +41,6 @@ public interface NatSet extends IntSet {
   boolean add(@Nonnegative int index);
 
   /**
-   * {@inheritDoc}
-   *
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative.
    */
@@ -51,6 +48,7 @@ public interface NatSet extends IntSet {
   boolean remove(@Nonnegative int index);
 
 
+  @SuppressWarnings("deprecation")
   @Override
   default Stream<Integer> stream() {
     return intStream().boxed();
@@ -59,6 +57,7 @@ public interface NatSet extends IntSet {
   /**
    * Returns an int stream compatible with the {@link #spliterator() spliterator}.
    */
+  @Override
   default IntStream intStream() {
     return StreamSupport.intStream(this::spliterator, SPLITERATOR_CHARACTERISTICS, false);
   }
@@ -69,8 +68,8 @@ public interface NatSet extends IntSet {
    * {@link Spliterator#ORDERED ordered}, and {@link Spliterator#SORTED sorted}.
    */
   @Override
-  default Spliterator.OfInt spliterator() {
-    return Spliterators.spliterator(iterator(), size(), SPLITERATOR_CHARACTERISTICS);
+  default IntSpliterator spliterator() {
+    return IntSpliterators.asSpliterator(iterator(), size(), SPLITERATOR_CHARACTERISTICS);
   }
 
   /**

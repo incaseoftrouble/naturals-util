@@ -301,6 +301,12 @@ class SparseNatBitSet extends AbstractNatBitSet {
     return super.equals(o);
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
+
   SparseBitSet getBitSet() {
     return bitSet;
   }

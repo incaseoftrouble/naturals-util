@@ -457,22 +457,17 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
       } else {
         if (other.complement) {
           bitSet.or(other.bitSet);
-          if (otherDomainSize < domainSize) {
-            bitSet.set(otherDomainSize, domainSize);
-          } else {
-            bitSet.clear(domainSize, otherDomainSize);
-          }
         } else {
           int minDomainSize = Math.min(domainSize, otherDomainSize);
           other.bitSet.flip(0, minDomainSize);
           bitSet.or(other.bitSet);
           other.bitSet.flip(0, minDomainSize);
+        }
 
-          if (otherDomainSize < domainSize) {
-            bitSet.set(otherDomainSize, domainSize);
-          } else {
-            bitSet.clear(domainSize, otherDomainSize);
-          }
+        if (otherDomainSize < domainSize) {
+          bitSet.set(otherDomainSize, domainSize);
+        } else {
+          bitSet.clear(domainSize, otherDomainSize);
         }
       }
     } else if (indices instanceof SimpleNatBitSet) {
@@ -518,7 +513,7 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
   }
 
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
   @Override
   public SimpleBoundedNatBitSet clone() {
     assert checkConsistency();
@@ -609,6 +604,11 @@ class SimpleBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return super.equals(o);
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
 
   BitSet getBitSet() {
     return bitSet;

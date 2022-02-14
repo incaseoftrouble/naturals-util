@@ -69,8 +69,8 @@ public final class NatBitSets {
       if (length <= element + 1) {
         return IntIterators.fromTo(0, length);
       }
-      return IntIterators.concat(new IntIterator[] {IntIterators.fromTo(0, element),
-          IntIterators.fromTo(element + 1, length)});
+      return IntIterators.concat(IntIterators.fromTo(0, element),
+          IntIterators.fromTo(element + 1, length));
     }
     return IntIterators.unmodifiable(new NatBitSetComplementIterator(set, length));
   }
@@ -96,7 +96,7 @@ public final class NatBitSets {
       }
       IntIterator firstIterator = new ReverseRangeIterator(element + 1, length);
       IntIterator secondIterator = new ReverseRangeIterator(0, element);
-      return IntIterators.concat(new IntIterator[] {firstIterator, secondIterator});
+      return IntIterators.concat(firstIterator, secondIterator);
     }
     return IntIterators.unmodifiable(new NatBitSetComplementReverseIterator(set, length));
   }
@@ -107,6 +107,7 @@ public final class NatBitSets {
     return new LongNatBitSet();
   }
 
+  @SuppressWarnings("CollectionWithoutInitialCapacity")
   public static NatBitSet simpleSet() {
     return new SimpleNatBitSet(new BitSet());
   }
@@ -160,6 +161,7 @@ public final class NatBitSets {
     return new LongBoundedNatBitSet(domainSize);
   }
 
+  @SuppressWarnings("CollectionWithoutInitialCapacity")
   public static BoundedNatBitSet boundedSimpleSet(int domainSize) {
     return new SimpleBoundedNatBitSet(new BitSet(), domainSize);
   }
@@ -379,7 +381,7 @@ public final class NatBitSets {
       RoaringBoundedNatBitSet boundedSet = (RoaringBoundedNatBitSet) indices;
       RoaringBitmap bitmap = boundedSet.bitmap().clone();
       if (boundedSet.isComplement()) {
-        bitmap.flip(0L, (long) boundedSet.domainSize());
+        bitmap.flip(0L, boundedSet.domainSize());
       }
       return bitmap;
     }

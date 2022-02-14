@@ -54,7 +54,7 @@ public class SparseNatBitSetFactory extends AbstractNatBitSetFactory {
   protected BoundedNatBitSet makeBoundedSet(int domainSize, int expectedSize) {
     return useSparse.test(expectedSize, domainSize)
         ? new SparseBoundedNatBitSet(new SparseBitSet(domainSize), domainSize)
-        : new SimpleBoundedNatBitSet(new BitSet(), domainSize);
+        : new SimpleBoundedNatBitSet(new BitSet(domainSize), domainSize);
   }
 
   @Override
@@ -64,6 +64,6 @@ public class SparseNatBitSetFactory extends AbstractNatBitSetFactory {
           ? new SparseBitSet() : new SparseBitSet(expectedLength);
       return new SparseNatBitSet(backingSet);
     }
-    return new SimpleNatBitSet(new BitSet());
+    return new SimpleNatBitSet(new BitSet(expectedSize));
   }
 }

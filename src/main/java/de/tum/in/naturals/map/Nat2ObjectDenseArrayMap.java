@@ -40,7 +40,6 @@ import javax.annotation.Nullable;
  *
  * <p>This implementation does not allow {@code null} keys.</p>
  */
-@SuppressWarnings("AssignmentToNull")
 public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   public static final int DEFAULT_SIZE = 16;
   private static final long serialVersionUID = 630710213786009957L;
@@ -54,8 +53,8 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   @Nullable
   private transient ValuesView<V> valuesView = null;
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   public Nat2ObjectDenseArrayMap(V[] array) {
-    //noinspection AssignmentToCollectionOrArrayFieldFromParameter
     this.array = array;
     for (V value : array) {
       if (!isAbsent(value)) {
@@ -64,13 +63,13 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "SuspiciousArrayCast"})
   public Nat2ObjectDenseArrayMap(int size) {
     this.array = (V[]) new Object[size];
     Arrays.fill(this.array, null);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "SuspiciousArrayCast"})
   public Nat2ObjectDenseArrayMap(int size, V initialValue) {
     checkNotAbsent(initialValue);
     this.array = (V[]) new Object[size];
@@ -78,7 +77,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     this.size = size;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "SuspiciousArrayCast"})
   public Nat2ObjectDenseArrayMap(int size, IntFunction<V> initialValues) {
     this.array = (V[]) new Object[size];
     for (int i = 0; i < array.length; i++) {
@@ -123,13 +122,14 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     return false;
   }
 
+  @SuppressWarnings("NonFinalFieldReferenceInEquals")
   @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
     if (o instanceof Nat2ObjectDenseArrayMap) {
-      Nat2ObjectDenseArrayMap other = (Nat2ObjectDenseArrayMap) o;
+      Nat2ObjectDenseArrayMap<?> other = (Nat2ObjectDenseArrayMap<?>) o;
       return size == other.size && Arrays.deepEquals(array, other.array);
     }
     return super.equals(o);
@@ -153,6 +153,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     return isAbsent(value) ? defaultReturnValue() : value;
   }
 
+  @SuppressWarnings("NonFinalFieldReferencedInHashCode")
   @Override
   public int hashCode() {
     return Arrays.deepHashCode(array) ^ HashCommon.mix(size);
@@ -205,6 +206,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     return previous;
   }
 
+  @SuppressWarnings("AssignmentToNull")
   @Override
   public V remove(int key) {
     V previous = array[key];
@@ -230,6 +232,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     return valuesView;
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class EntryIterator<V> implements ObjectIterator<Int2ObjectMap.Entry<V>> {
     private final Nat2ObjectDenseArrayMap<V> map;
     private int next;
@@ -314,6 +317,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class FastMapEntry<V> extends AbstractInt2ObjectMap.BasicEntry<V> {
     int index = -1;
     private final Nat2ObjectDenseArrayMap<V> map;
@@ -332,6 +336,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
       return map.array[index];
     }
 
+    @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
     @Override
     public V setValue(V v) {
       V oldValue = map.array[index];
@@ -341,11 +346,11 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   }
 
   private static class KeySetIterator implements IntIterator {
-    private final Nat2ObjectDenseArrayMap map;
+    private final Nat2ObjectDenseArrayMap<?> map;
     private int current = -1;
     private int next;
 
-    KeySetIterator(Nat2ObjectDenseArrayMap map) {
+    KeySetIterator(Nat2ObjectDenseArrayMap<?> map) {
       this.map = map;
       next = map.nextKey(0);
     }
@@ -376,9 +381,9 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   }
 
   private static class KeySetView extends AbstractIntSet {
-    private final Nat2ObjectDenseArrayMap map;
+    private final Nat2ObjectDenseArrayMap<?> map;
 
-    KeySetView(Nat2ObjectDenseArrayMap map) {
+    KeySetView(Nat2ObjectDenseArrayMap<?> map) {
       this.map = map;
     }
 
@@ -431,6 +436,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
       return next >= 0;
     }
 
+    @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
     @Override
     public V next() {
       if (!hasNext()) {
@@ -464,9 +470,10 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
       map.clear();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public ValuesView clone() throws CloneNotSupportedException {
-      return (ValuesView) super.clone();
+    public ValuesView<V> clone() throws CloneNotSupportedException {
+      return (ValuesView<V>) super.clone();
     }
 
     @SuppressWarnings("SuspiciousMethodCalls")

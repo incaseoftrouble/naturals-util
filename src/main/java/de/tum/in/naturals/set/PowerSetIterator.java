@@ -86,6 +86,7 @@ public class PowerSetIterator implements Iterator<boolean[]> {
     return false;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public boolean[] next() {
     if (first) {

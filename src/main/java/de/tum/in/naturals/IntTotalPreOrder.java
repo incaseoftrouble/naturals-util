@@ -62,9 +62,9 @@ public class IntTotalPreOrder {
    *     The array specifying the equivalence classes
    */
   // Visible for testing
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   IntTotalPreOrder(int[][] array) {
     assert isWellFormed(array);
-    //noinspection AssignmentToCollectionOrArrayFieldFromParameter
     this.array = array;
     int length = 0;
     for (int[] partition : array) {
@@ -98,7 +98,7 @@ public class IntTotalPreOrder {
   }
 
   /**
-   * Returns a finest pre-order over the {@code {1,..,n}} domain, i.e. a record of the form
+   * Returns the finest pre-order over the {@code {1,..,n}} domain, i.e. a record of the form
    * {@code [{1},{2},..,{n}]}.
    */
   public static IntTotalPreOrder finest(int n) {
@@ -312,10 +312,9 @@ public class IntTotalPreOrder {
    * Determines whether the pre-order defined by this object <strong>strictly</strong> refines the
    * {@code other}.
    */
-  @SuppressWarnings("ReferenceEquality")
   public boolean refines(IntTotalPreOrder other) {
     //noinspection ObjectEquality
-    if (this == other) {
+    if (this == other) { // NOPMD
       // We only want strict refinement
       return false;
     }
@@ -326,7 +325,7 @@ public class IntTotalPreOrder {
     int otherClassCount = other.array.length;
 
     if (classCount <= otherClassCount) {
-      // We have less classes - certainly can't refine
+      // We have fewer classes - certainly can't refine
       return false;
     }
 
@@ -373,7 +372,7 @@ public class IntTotalPreOrder {
         continue;
       }
 
-      // Since we known that the union of the classes we try to fit in the other is of the same
+      // Since we know that the union of the classes we try to fit in the other is of the same
       // length, we can just check if each element of all the classes is contained in the other
       // class. Also, since the classes are stored sorted, we can use binary search for the lookup.
       while (classIndex < classCount && otherClassByLength[classIndex] == otherClassIndex) {

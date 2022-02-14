@@ -27,9 +27,9 @@ import java.util.BitSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-public class TestBitSets {
+class TestBitSets {
   @Test
-  public void testPowerBitSetEmpty() {
+  void testPowerBitSetEmpty() {
     Set<BitSet> powerSet = BitSets.powerSet(new BitSet(0));
     Set<BitSet> powerSetSimple = BitSets.powerSet(0);
 
@@ -41,10 +41,9 @@ public class TestBitSets {
   }
 
   @Test
-  public void testPowerBitSet() {
+  void testPowerBitSet() {
     BitSet base = new BitSet(4);
     base.set(0, 4);
-    int size = 1 << 4;
 
     Set<BitSet> powerSet = BitSets.powerSet(base);
     Set<BitSet> powerSetSimple = BitSets.powerSet(4);
@@ -52,6 +51,7 @@ public class TestBitSets {
     assertThat(powerSetSimple, is(powerSet));
     assertThat(powerSet, is(powerSetSimple));
 
+    int size = 1 << 4;
     assertThat(powerSet, iterableWithSize(size));
 
     BitSet test = new BitSet(4);

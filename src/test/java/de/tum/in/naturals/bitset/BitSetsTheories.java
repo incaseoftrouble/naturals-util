@@ -35,7 +35,8 @@ import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class BitSetsTheories {
+@SuppressWarnings({"NewClassNamingConvention", "StaticCollection"})
+class BitSetsTheories {
   private static final int COMPLEMENT_SIZE = 1000;
   private static final int MAXIMUM_ELEMENTS = 1 << 16;
   private static final int MAXIMUM_SIZE = 1000;
@@ -62,7 +63,7 @@ public class BitSetsTheories {
 
   @ParameterizedTest
   @MethodSource("indices")
-  public void testComplementIterator(IntCollection ints) {
+  void testComplementIterator(IntCollection ints) {
     BitSet bitSet = new BitSet();
     ints.forEach((IntConsumer) bitSet::set);
 
@@ -81,7 +82,7 @@ public class BitSetsTheories {
 
   @ParameterizedTest
   @MethodSource("indices")
-  public void testForEach(IntCollection ints) {
+  void testForEach(IntCollection ints) {
     BitSet bitSet = new BitSet();
     ints.forEach((IntConsumer) bitSet::set);
 
@@ -95,7 +96,7 @@ public class BitSetsTheories {
 
   @ParameterizedTest
   @MethodSource("indices")
-  public void testImmutableBitSet(IntCollection ints) {
+  void testImmutableBitSet(IntCollection ints) {
     BitSet bitSet = new BitSet();
     ints.forEach((IntConsumer) bitSet::set);
 
@@ -112,7 +113,7 @@ public class BitSetsTheories {
 
   @ParameterizedTest
   @MethodSource("indices")
-  public void testIterator(IntCollection ints) {
+  void testIterator(IntCollection ints) {
     BitSet bitSet = new BitSet();
     ints.forEach((IntConsumer) bitSet::set);
 
@@ -126,7 +127,7 @@ public class BitSetsTheories {
 
   @ParameterizedTest
   @MethodSource("indices")
-  public void testSparseComplementIterator(IntCollection ints) {
+  void testSparseComplementIterator(IntCollection ints) {
     SparseBitSet bitSet = new SparseBitSet();
     ints.forEach((IntConsumer) bitSet::set);
 
@@ -146,7 +147,7 @@ public class BitSetsTheories {
 
   @ParameterizedTest
   @MethodSource("indices")
-  public void testSparseForEach(IntCollection ints) {
+  void testSparseForEach(IntCollection ints) {
     SparseBitSet bitSet = new SparseBitSet();
     ints.forEach((IntConsumer) bitSet::set);
 
@@ -160,7 +161,7 @@ public class BitSetsTheories {
 
   @ParameterizedTest
   @MethodSource("indices")
-  public void testSparseIterator(IntCollection ints) {
+  void testSparseIterator(IntCollection ints) {
     SparseBitSet bitSet = new SparseBitSet();
     ints.forEach((IntConsumer) bitSet::set);
 

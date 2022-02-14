@@ -54,8 +54,8 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   @Nullable
   private transient ValuesView valuesView = null;
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   public Nat2DoubleDenseArrayMap(double[] array) {
-    //noinspection AssignmentToCollectionOrArrayFieldFromParameter
     this.array = array;
     for (double value : array) {
       if (!isAbsent(value)) {
@@ -72,7 +72,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   public Nat2DoubleDenseArrayMap(int size, double initialValue) {
     checkNotAbsent(initialValue);
     this.array = new double[size];
-    if (initialValue != 0d) {
+    if (initialValue != 0.0d) {
       Arrays.fill(array, initialValue);
     }
     this.size = size;
@@ -118,6 +118,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     return false;
   }
 
+  @SuppressWarnings("NonFinalFieldReferenceInEquals")
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -147,6 +148,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     return isAbsent(value) ? defaultReturnValue() : value;
   }
 
+  @SuppressWarnings("NonFinalFieldReferencedInHashCode")
   @Override
   public int hashCode() {
     return Arrays.hashCode(array) ^ HashCommon.mix(size);
@@ -160,6 +162,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     return new EntrySetView(this);
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   private boolean isAbsent(double value) {
     return Double.isNaN(value);
   }
@@ -224,6 +227,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     return valuesView;
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class EntryIterator implements ObjectIterator<Entry> {
     private final Nat2DoubleDenseArrayMap map;
     private int next;
@@ -308,6 +312,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class FastMapEntry extends AbstractInt2DoubleMap.BasicEntry {
     private final Nat2DoubleDenseArrayMap map;
     int index = -1;
@@ -409,6 +414,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class ValuesIterator implements DoubleIterator {
     private final Nat2DoubleDenseArrayMap map;
     private int current;

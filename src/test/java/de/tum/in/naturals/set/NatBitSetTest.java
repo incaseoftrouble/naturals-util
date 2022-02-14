@@ -26,10 +26,9 @@ import org.junit.jupiter.api.Test;
 
 
 @SuppressWarnings("MagicNumber")
-public class NatBitSetTest {
-
+class NatBitSetTest {
   @Test
-  public void testCreateBoundedLongSet() {
+  void testCreateBoundedLongSet() {
     BoundedNatBitSet ints = NatBitSets.boundedLongSet(10);
     assertThat(ints.domainSize(), is(10));
     assertThat(NatBitSets.isModifiable(ints, 10), is(true));
@@ -40,7 +39,7 @@ public class NatBitSetTest {
   }
 
   @Test
-  public void testCreateBoundedSet() {
+  void testCreateBoundedSet() {
     BoundedNatBitSet ints = NatBitSets.boundedSet(10);
     assertThat(ints.domainSize(), is(10));
     assertThat(NatBitSets.isModifiable(ints, 10), is(true));
@@ -51,7 +50,7 @@ public class NatBitSetTest {
   }
 
   @Test
-  public void testCreateFullSet() {
+  void testCreateFullSet() {
     BoundedNatBitSet ints = NatBitSets.boundedFullSet(500);
     assertThat(ints, instanceOf(FixedSizeNatBitSet.class));
     assertThat(NatBitSets.isModifiable(ints, 500), is(false));
@@ -65,7 +64,7 @@ public class NatBitSetTest {
   }
 
   @Test
-  public void testCreateSimpleSet() {
+  void testCreateSimpleSet() {
     NatBitSet ints = NatBitSets.simpleSet();
     assertThat(ints, instanceOf(SimpleNatBitSet.class));
     assertThat(NatBitSets.isModifiable(ints), is(true));
@@ -73,7 +72,7 @@ public class NatBitSetTest {
   }
 
   @Test
-  public void testCreateSimpleSetWithExpectedSize() {
+  void testCreateSimpleSetWithExpectedSize() {
     NatBitSet ints = NatBitSets.simpleSet(10);
     assertThat(ints, instanceOf(SimpleNatBitSet.class));
     assertThat(NatBitSets.isModifiable(ints), is(true));
@@ -81,7 +80,7 @@ public class NatBitSetTest {
   }
 
   @Test
-  public void testCreateSingleton() {
+  void testCreateSingleton() {
     NatBitSet singleton = NatBitSets.singleton(1);
     assertThat(singleton, instanceOf(MutableSingletonNatBitSet.class));
     assertThat(NatBitSets.isModifiable(singleton), is(false));
@@ -94,7 +93,7 @@ public class NatBitSetTest {
   }
 
   @Test
-  public void testCreateSparseSet() {
+  void testCreateSparseSet() {
     NatBitSet ints = NatBitSets.sparseSet();
     assertThat(ints, instanceOf(SparseNatBitSet.class));
     assertThat(NatBitSets.isModifiable(ints), is(true));
@@ -102,7 +101,7 @@ public class NatBitSetTest {
   }
 
   @Test
-  public void testCreateSparseSetWithExpectedSize() {
+  void testCreateSparseSetWithExpectedSize() {
     NatBitSet ints = NatBitSets.sparseSet(10);
     assertThat(ints, instanceOf(SparseNatBitSet.class));
     assertThat(NatBitSets.isModifiable(ints), is(true));
@@ -110,7 +109,7 @@ public class NatBitSetTest {
   }
 
   @Test
-  public void testSingleton() {
+  void testSingleton() {
     NatBitSet singleton = NatBitSets.singleton(1);
     assertThat(singleton.size(), is(1));
     assertThat(singleton, contains(1));

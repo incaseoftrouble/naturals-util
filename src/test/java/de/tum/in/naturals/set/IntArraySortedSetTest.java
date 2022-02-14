@@ -30,9 +30,9 @@ import it.unimi.dsi.fastutil.ints.IntSets;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 
-public class IntArraySortedSetTest {
+class IntArraySortedSetTest {
   @Test
-  public void testEmpty() {
+  void testEmpty() {
     Consumer<IntSet> tester = set -> {
       assertThat(set, empty());
       assertThat(set.size(), is(0));
@@ -50,7 +50,7 @@ public class IntArraySortedSetTest {
   }
 
   @Test
-  public void testModify() {
+  void testModify() {
     IntSet set = new IntArraySortedSet();
 
     assertThat(set.add(1), is(true));

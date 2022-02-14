@@ -26,6 +26,7 @@ final class PowerNatBitSetIterator implements Iterator<NatBitSet> {
   private boolean hasNext = true;
   private final NatBitSet current;
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   PowerNatBitSetIterator(NatBitSet baseSet) {
     assert !baseSet.isEmpty();
     this.baseSet = baseSet;
@@ -37,6 +38,7 @@ final class PowerNatBitSetIterator implements Iterator<NatBitSet> {
     return hasNext;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
   public NatBitSet next() {
     if (!hasNext) {

@@ -21,6 +21,8 @@ import it.unimi.dsi.fastutil.Size64;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nullable;
 
 class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
@@ -54,7 +56,16 @@ class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
       PowerNatBitSet other = (PowerNatBitSet) obj;
       return baseSet.equals(other.baseSet);
     }
+    Logger.getLogger(PowerNatBitSet.class.getName()).log(
+        Level.WARNING, "Calling equals on PowerNatBitSet");
     return super.equals(obj);
+  }
+
+  @Override
+  public int hashCode() {
+    Logger.getLogger(PowerNatBitSet.class.getName()).log(
+        Level.WARNING, "Calling hashCode on PowerNatBitSet");
+    return super.hashCode();
   }
 
   /**

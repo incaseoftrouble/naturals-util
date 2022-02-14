@@ -130,9 +130,9 @@ public abstract class AbstractNatBitSetFactory implements NatBitSetFactory {
         RoaringBitmap bitmapCopy = sparseBoundedSet.bitmap().clone();
         if (sparseBoundedSet.isComplement()) {
           if (domainSize < oldDomainSize) {
-            bitmapCopy.remove((long) domainSize, (long) oldDomainSize);
+            bitmapCopy.remove(domainSize, (long) oldDomainSize);
           } else {
-            bitmapCopy.add((long) oldDomainSize, (long) domainSize);
+            bitmapCopy.add(oldDomainSize, (long) domainSize);
           }
         }
         BoundedNatBitSet copy = new RoaringBoundedNatBitSet(bitmapCopy, domainSize);

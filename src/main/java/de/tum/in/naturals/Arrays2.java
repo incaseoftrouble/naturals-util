@@ -57,6 +57,7 @@ public final class Arrays2 {
 
   @SuppressWarnings("unchecked")
   public static <E, S> S[] map(E[] array, Function<E, S> function) {
+    @SuppressWarnings("SuspiciousArrayCast")
     S[] result = (S[]) new Object[array.length];
     for (int i = 0; i < array.length; i++) {
       result[i] = function.apply(array[i]);

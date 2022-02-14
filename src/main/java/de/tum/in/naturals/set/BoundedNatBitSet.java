@@ -39,7 +39,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   // Mutators
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -47,7 +46,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   void set(int index);
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -55,7 +53,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   void set(int index, boolean value);
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code from} or {@code to} is negative, {@code to} is less than {@code from},
    *     or {@code to} is greater than {@link #domainSize()}.
@@ -64,7 +61,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   void set(int from, int to);
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -73,7 +69,6 @@ public interface BoundedNatBitSet extends NatBitSet {
 
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code index} is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -81,7 +76,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   void flip(int index);
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if {@code from} or {@code to} is negative or greater than the {@link #domainSize()},
    *     or {@code to} is less than {@code from}.
@@ -93,7 +87,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   // Bulk operations
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if any index is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -101,7 +94,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   void or(IntCollection indices);
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if any index is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -109,7 +101,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   boolean addAll(Collection<? extends Integer> indices);
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if any index is negative or greater or equal to the {@link #domainSize()}.
    */
@@ -128,7 +119,6 @@ public interface BoundedNatBitSet extends NatBitSet {
   void orNot(IntCollection indices);
 
   /**
-   * {@inheritDoc}
    * @throws IndexOutOfBoundsException
    *     if any index is negative or greater or equal to the {@link #domainSize()}.
    */

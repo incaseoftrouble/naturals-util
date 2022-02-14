@@ -316,6 +316,12 @@ class SimpleNatBitSet extends AbstractNatBitSet {
     return super.equals(o);
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
+
   BitSet getBitSet() {
     return bitSet;
   }

@@ -483,7 +483,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
   }
 
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
   @Override
   public SparseBoundedNatBitSet clone() {
     assert checkConsistency();
@@ -576,6 +576,11 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
     return super.equals(o);
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
 
   SparseBitSet getBitSet() {
     return bitSet;

@@ -38,8 +38,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@SuppressWarnings("MagicNumber")
-public class Nat2DoubleMapTheories {
+@SuppressWarnings({"MagicNumber", "StaticCollection", "NewClassNamingConvention"})
+class Nat2DoubleMapTheories {
   private static final int MAXIMAL_KEY = 100;
   private static final int MAXIMAL_MODIFICATIONS = 2000;
   private static final int NUMBER_OF_LARGE_TESTS = 200;
@@ -112,6 +112,7 @@ public class Nat2DoubleMapTheories {
         actions.stream().map(action -> Arguments.of(implementation, action)));
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   private void checkEquality(Int2DoubleMap actual, Int2DoubleMap expected) {
     assertThat(actual, is(expected));
     assertThat(actual.keySet(), is(expected.keySet()));
@@ -127,7 +128,7 @@ public class Nat2DoubleMapTheories {
 
   @ParameterizedTest
   @MethodSource("arguments")
-  public void testImplementation(
+  void testImplementation(
       Supplier<Int2DoubleMap> implementation,
       Iterable<Consumer<Int2DoubleMap>> sequence) {
     Int2DoubleMap map = implementation.get();

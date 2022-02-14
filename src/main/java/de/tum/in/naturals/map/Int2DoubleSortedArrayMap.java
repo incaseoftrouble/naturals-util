@@ -45,12 +45,13 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
   @Nullable
   private transient KeySetView keySetView = null;
   private int[] keys;
-  private int size;
+  private int size = 0;
   private double[] values;
   @Nullable
   private transient ValuesView valuesView = null;
 
-  public Int2DoubleSortedArrayMap(Map<? extends Integer, ? extends Double> map) {
+  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
+  public Int2DoubleSortedArrayMap(Map<Integer, Double> map) {
     if (map instanceof Int2DoubleSortedArrayMap) {
       Int2DoubleSortedArrayMap arrayMap = (Int2DoubleSortedArrayMap) map;
       size = arrayMap.size;
@@ -105,6 +106,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     return false;
   }
 
+  @SuppressWarnings("NonFinalFieldReferenceInEquals")
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -124,6 +126,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     return 0 <= index ? values[index] : defRetValue;
   }
 
+  @SuppressWarnings("NonFinalFieldReferencedInHashCode")
   @Override
   public int hashCode() {
     return Arrays.hashCode(keys) ^ Arrays.hashCode(values);
@@ -247,7 +250,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
       return "{}";
     }
 
-    StringBuilder builder = new StringBuilder();
+    StringBuilder builder = new StringBuilder(20 + size * 10);
     builder.append('{').append(keys[0]).append('=').append(values[0]);
     for (int keyIndex = 1; keyIndex < size; keyIndex++) {
       builder.append(", ").append(keys[keyIndex]).append("=>").append(values[keyIndex]);
@@ -328,6 +331,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class FastEntryIterator implements ObjectIterator<Entry> {
     private final FastMapEntry entry;
     private final Int2DoubleSortedArrayMap map;
@@ -361,6 +365,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class FastMapEntry extends AbstractInt2DoubleMap.BasicEntry {
     private final Int2DoubleSortedArrayMap map;
     int index = -1;
@@ -387,6 +392,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class KeySetView extends AbstractIntSet {
     private final Int2DoubleSortedArrayMap map;
 
@@ -428,6 +434,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class MapEntry extends AbstractInt2DoubleMap.BasicEntry {
     private final int index;
     private final Int2DoubleSortedArrayMap map;
@@ -455,6 +462,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class ValuesIterator implements DoubleIterator {
     private final Int2DoubleSortedArrayMap map;
     private int nextIndex = 0;
@@ -488,7 +496,8 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  private  static class ValuesView extends AbstractDoubleCollection {
+  @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
+  private static class ValuesView extends AbstractDoubleCollection {
     private final Int2DoubleSortedArrayMap map;
 
     ValuesView(Int2DoubleSortedArrayMap map) {

@@ -24,6 +24,7 @@ class NatBitSetComplementReverseIterator implements IntIterator {
   private final NatBitSet set;
   private int current;
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   public NatBitSetComplementReverseIterator(NatBitSet set, int length) {
     this.set = set;
     current = set.previousAbsentIndex(length);

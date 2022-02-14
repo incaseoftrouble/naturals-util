@@ -91,7 +91,7 @@ class ForwardingNatBitSet extends AbstractNatBitSet {
     return delegate.containsAll(o);
   }
 
-  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+  @SuppressWarnings("com.haulmont.jpb.EqualsDoesntCheckParameterClass")
   @Override
   public boolean equals(Object o) {
     return delegate.equals(o);
