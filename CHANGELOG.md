@@ -1,6 +1,11 @@
 # 0.x
 
-### 0.16.0 (2021-02-14)
+### 0.17.0 (2022-03-29)
+
+ * Nat array maps now resize
+ * Breaking change: `Indices#IndexConsumer` flipped argument order for compatibility with similar `forEachIndexed` methods in e.g. Guava.
+
+### 0.16.0 (2022-02-14)
 
  * Version bumps, upgrade to Java 11, upgrade to Gradle Kotlin DSL 
 

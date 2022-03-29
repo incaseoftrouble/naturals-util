@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
 public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
   private static final long serialVersionUID = 5185461790033343414L;
 
-  private final int[] array;
+  private int[] array;
   @Nullable
   private transient EntrySetView entriesView = null;
   @Nullable
@@ -63,34 +63,42 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     }
   }
 
-  public Nat2IntDenseArrayMap(int size) {
-    this.array = new int[size];
+  public Nat2IntDenseArrayMap(int initialSize) {
+    this.array = new int[initialSize];
     Arrays.fill(this.array, Integer.MIN_VALUE);
   }
 
-  public Nat2IntDenseArrayMap(int size, int initialValue) {
+  public Nat2IntDenseArrayMap(int initialSize, int initialValue) {
     checkNotAbsent(initialValue);
-    this.array = new int[size];
+    this.array = new int[initialSize];
     if (initialValue != 0) {
       Arrays.fill(array, initialValue);
     }
-    this.size = size;
+    this.size = initialSize;
   }
 
-  public Nat2IntDenseArrayMap(int size, IntUnaryOperator initialValues) {
-    this.array = new int[size];
+  public Nat2IntDenseArrayMap(int initialSize, IntUnaryOperator initialValues) {
+    this.array = new int[initialSize];
     for (int i = 0; i < array.length; i++) {
       int value = initialValues.applyAsInt(i);
       checkNotAbsent(value);
       array[i] = value;
     }
-    this.size = size;
+    this.size = initialSize;
   }
 
   private void checkNotAbsent(int value) {
     if (isAbsent(value)) {
       throw new IllegalArgumentException(String.format("Value %d not allowed", value));
     }
+  }
+
+  private boolean ensureSize(int index) {
+    if (this.array.length <= index) {
+      this.array = Arrays.copyOf(this.array, Math.max(this.array.length * 2, index + 1));
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -124,32 +132,60 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     }
     if (o instanceof Nat2IntDenseArrayMap) {
       Nat2IntDenseArrayMap other = (Nat2IntDenseArrayMap) o;
-      return size == other.size && Arrays.equals(array, other.array);
+      if (size != other.size) {
+        return false;
+      }
+      if (array.length == other.array.length) {
+        return Arrays.equals(array, other.array);
+      }
+      for (int i = 0; i < Math.min(array.length, other.array.length); i++) {
+        if (array[i] != other.array[i]) {
+          return false;
+        }
+      }
+      return true;
     }
     return super.equals(o);
   }
 
   public void fill(int from, int to, int value) {
     checkNotAbsent(value);
+    ensureSize(to);
     Arrays.fill(array, from, to, value);
   }
 
   public void fill(PrimitiveIterator.OfInt iterator, int value) {
     checkNotAbsent(value);
     while (iterator.hasNext()) {
-      array[iterator.next()] = value;
+      int index = iterator.nextInt();
+      ensureSize(index);
+      array[index] = value;
     }
   }
 
   @Override
   public int get(int key) {
+    if (array.length <= key) {
+      return defaultReturnValue();
+    }
     int value = array[key];
     return isAbsent(value) ? defaultReturnValue() : value;
   }
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(array) ^ HashCommon.mix(size);
+    int hash = HashCommon.mix(size);
+    int elements = 0;
+    int index = 0;
+    while (elements < size) {
+      int element = array[index];
+      if (!isAbsent(element)) {
+        hash ^= HashCommon.mix(element) ^ HashCommon.mix(index);
+        elements += 1;
+      }
+      index += 1;
+    }
+    return hash;
   }
 
   @Override
@@ -190,6 +226,13 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
   @Override
   public int put(int key, int value) {
     checkNotAbsent(value);
+    if (ensureSize(key)) {
+      assert isAbsent(array[key]);
+      array[key] = value;
+      size++;
+      return defaultReturnValue();
+    }
+
     int previous = array[key];
     array[key] = value;
     if (isAbsent(previous)) {
@@ -201,6 +244,9 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
 
   @Override
   public int remove(int key) {
+    if (array.length <= key) {
+      return defaultReturnValue();
+    }
     int previous = array[key];
     if (isAbsent(previous)) {
       return defaultReturnValue();
@@ -330,9 +376,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
 
     @Override
     public int setValue(int v) {
-      int oldValue = map.array[index];
-      map.array[index] = v;
-      return oldValue;
+      return map.put(index, v);
     }
   }
 

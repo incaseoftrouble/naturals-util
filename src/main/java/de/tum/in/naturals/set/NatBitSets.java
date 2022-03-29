@@ -150,7 +150,7 @@ public final class NatBitSets {
    *
    * <p><strong>Warning:</strong> The returned view is not efficient.</p>
    */
-  public static NatBitSet asSet(IntSortedSet set) {
+  public static NatBitSet view(IntSortedSet set) {
     assert set.isEmpty() || set.firstInt() >= 0;
     return new ForwardingNatBitSet(set);
   }

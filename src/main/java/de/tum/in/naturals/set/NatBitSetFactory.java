@@ -21,6 +21,7 @@ import static de.tum.in.naturals.set.NatBitSets.UNKNOWN_LENGTH;
 import static de.tum.in.naturals.set.NatBitSets.UNKNOWN_SIZE;
 
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.Collection;
 import java.util.Set;
@@ -72,6 +73,19 @@ public interface NatBitSetFactory {
   // Copies
 
   /**
+   * Copies the given indices if necessary. The returned set might not be modifiable.
+   * @param indices
+   *     The indices to be copied.
+   *
+   * @return a copy of the given indices.
+   *
+   * @see #asModifiableSet(Collection)
+   */
+  default NatBitSet asSet(Collection<Integer> indices) {
+    return indices instanceof NatBitSet ? (NatBitSet) indices : copyOf(indices);
+  }
+
+  /**
    * Copies the given indices. The returned set might not be modifiable.
    *
    * @param indices
@@ -91,11 +105,36 @@ public interface NatBitSetFactory {
       copy = set(indices.size(), ((IntSortedSet) indices).lastInt());
       copy.or((IntSortedSet) indices);
     } else {
-      copy = set(indices.size(), UNKNOWN_LENGTH);
+      copy = setWithExpectedSize(indices.size());
       copy.addAll(indices);
     }
     assert copy.equals(indices instanceof Set ? indices : new IntAVLTreeSet(indices));
     return copy;
+  }
+
+  /**
+   * Returns a copy of the given {@code set} which is guaranteed to be modifiable.
+   *
+   * @see NatBitSets#isModifiable(NatBitSet)
+   */
+  default NatBitSet asModifiableSet(Collection<Integer> indices) {
+    if (indices instanceof NatBitSet) {
+      NatBitSet set = (NatBitSet) indices;
+      return NatBitSets.ensureModifiable(set);
+    }
+    NatBitSet set;
+    if (indices instanceof IntSortedSet) {
+      set = set(indices.size(), ((IntSortedSet) indices).lastInt());
+      set.or((IntCollection) indices);
+    } else if (indices instanceof IntCollection) {
+      set = setWithExpectedSize(indices.size());
+      set.or((IntCollection) indices);
+    } else {
+      set = setWithExpectedSize(indices.size());
+      set.addAll(indices);
+    }
+    assert set.equals(indices instanceof Set ? indices : new IntAVLTreeSet(indices));
+    return set;
   }
 
   /**

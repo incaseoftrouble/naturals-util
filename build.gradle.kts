@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "de.tum.in"
-version = "0.16.0"
+version = "0.17.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -56,10 +56,12 @@ dependencies {
     // https://mvnrepository.com/artifact/com.zaxxer/SparseBitSet
     api("com.zaxxer", "SparseBitSet", "1.2")
     // https://mvnrepository.com/artifact/org.roaringbitmap/RoaringBitmap
-    api("org.roaringbitmap", "RoaringBitmap", "0.9.23")
+    api("org.roaringbitmap", "RoaringBitmap", "0.9.24")
 
     // https://mvnrepository.com/artifact/org.hamcrest/hamcrest
     testImplementation("org.hamcrest", "hamcrest", "2.2")
+    // https://mvnrepository.com/artifact/com.google.guava/guava-testlib
+    // testImplementation("com.google.guava", "guava-testlib", "31.1-jre")
     // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
     testImplementation("org.junit.jupiter", "junit-jupiter-api", "5.8.2")
     testImplementation("org.junit.jupiter", "junit-jupiter-params", "5.8.2")
@@ -68,7 +70,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    maxHeapSize = "16g"
+    maxHeapSize = "10g"
 }
 
 // PMD
@@ -122,6 +124,7 @@ if (project.hasProperty("release")) {
                 from(project.components["java"])
 
                 signing {
+                    useGpgCmd()
                     sign(publishing.publications)
                 }
 

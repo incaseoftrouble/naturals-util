@@ -50,15 +50,19 @@ public final class Filler {
     }
   }
 
-  public static void fill(Int2DoubleFunction function, int from, int to,
-      IntToDoubleFunction valueMap) {
+  public static void fill(Int2DoubleFunction function, int from, int to, IntToDoubleFunction valueMap) {
+    if (to < from) {
+      throw new IllegalArgumentException();
+    }
+    if (from == to) {
+      return;
+    }
     for (int i = from; i < to; i++) {
       function.put(i, valueMap.applyAsDouble(i));
     }
   }
 
-  public static void fill(Int2DoubleFunction function, PrimitiveIterator.OfInt keys,
-      IntToDoubleFunction values) {
-    keys.forEachRemaining((IntConsumer) i -> function.put(i, values.applyAsDouble(i)));
+  public static void fill(Int2DoubleFunction function, PrimitiveIterator.OfInt keys, IntToDoubleFunction valueMap) {
+    keys.forEachRemaining((IntConsumer) i -> function.put(i, valueMap.applyAsDouble(i)));
   }
 }

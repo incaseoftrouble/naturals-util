@@ -26,6 +26,9 @@ import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import java.util.Collection;
 import java.util.PrimitiveIterator;
 import java.util.function.DoubleToIntFunction;
 import java.util.function.IntUnaryOperator;
@@ -101,10 +104,16 @@ public final class Indices {
     return indexArray;
   }
 
+  public static <K> Object2IntMap<K> ids(Collection<K> items) {
+    Object2IntMap<K> ids = new Object2IntOpenHashMap<>(items.size());
+    items.forEach(item -> ids.put(item, ids.size()));
+    return ids;
+  }
+
   public static <E> void forEachIndexed(Iterable<E> elements, IndexConsumer<E> action) {
     int index = 0;
     for (E element : elements) {
-      action.accept(index, element);
+      action.accept(element, index);
       index += 1;
     }
   }
@@ -113,18 +122,18 @@ public final class Indices {
     int index = 0;
     IntIterator iterator = elements.iterator();
     while (iterator.hasNext()) {
-      action.accept(index, iterator.nextInt());
+      action.accept(iterator.nextInt(), index);
       index += 1;
     }
   }
 
   @FunctionalInterface
   public interface IndexConsumer<E> {
-    void accept(@Nonnegative int index, E element);
+    void accept(E element, @Nonnegative int index);
   }
 
   @FunctionalInterface
   public interface IntIndexConsumer {
-    void accept(@Nonnegative int index, int element);
+    void accept(int element, @Nonnegative int index);
   }
 }

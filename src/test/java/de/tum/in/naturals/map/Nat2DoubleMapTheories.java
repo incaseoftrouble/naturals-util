@@ -72,8 +72,7 @@ class Nat2DoubleMapTheories {
   }
 
   @SuppressWarnings("MagicNumber")
-  private static Consumer<Int2DoubleMap> generateAction(IntSupplier keySupplier,
-      DoubleSupplier valueSupplier) {
+  private static Consumer<Int2DoubleMap> generateAction(IntSupplier keySupplier, DoubleSupplier valueSupplier) {
     int actionId = generator.nextInt(84);
     if (actionId < 30) {
       return new Put(keySupplier.getAsInt(), valueSupplier.getAsDouble());
@@ -128,9 +127,7 @@ class Nat2DoubleMapTheories {
 
   @ParameterizedTest
   @MethodSource("arguments")
-  void testImplementation(
-      Supplier<Int2DoubleMap> implementation,
-      Iterable<Consumer<Int2DoubleMap>> sequence) {
+  void testImplementation(Supplier<Int2DoubleMap> implementation, Iterable<Consumer<Int2DoubleMap>> sequence) {
     Int2DoubleMap map = implementation.get();
     Int2DoubleMap reference = new Int2DoubleAVLTreeMap();
 

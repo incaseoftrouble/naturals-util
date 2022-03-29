@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
 public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   private static final long serialVersionUID = 943823872741225228L;
 
-  private final double[] array;
+  private double[] array;
   @Nullable
   private transient EntrySetView entriesView = null;
   @Nullable
@@ -64,34 +64,42 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  public Nat2DoubleDenseArrayMap(int size) {
-    this.array = new double[size];
+  public Nat2DoubleDenseArrayMap(int initialSize) {
+    this.array = new double[initialSize];
     Arrays.fill(this.array, Double.NaN);
   }
 
-  public Nat2DoubleDenseArrayMap(int size, double initialValue) {
+  public Nat2DoubleDenseArrayMap(int initialSize, double initialValue) {
     checkNotAbsent(initialValue);
-    this.array = new double[size];
+    this.array = new double[initialSize];
     if (initialValue != 0.0d) {
       Arrays.fill(array, initialValue);
     }
-    this.size = size;
+    this.size = initialSize;
   }
 
-  public Nat2DoubleDenseArrayMap(int size, IntToDoubleFunction initialValues) {
-    this.array = new double[size];
+  public Nat2DoubleDenseArrayMap(int initialSize, IntToDoubleFunction initialValues) {
+    this.array = new double[initialSize];
     for (int i = 0; i < array.length; i++) {
       double value = initialValues.applyAsDouble(i);
       checkNotAbsent(value);
       array[i] = value;
     }
-    this.size = size;
+    this.size = initialSize;
   }
 
   private void checkNotAbsent(double value) {
     if (isAbsent(value)) {
       throw new IllegalArgumentException(String.format("Value %s not allowed", value));
     }
+  }
+
+  private boolean ensureSize(int index) {
+    if (this.array.length <= index) {
+      this.array = Arrays.copyOf(this.array, Math.max(this.array.length * 2, index + 1));
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -111,7 +119,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
       return false;
     }
     for (double value : array) {
-      if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(v)) {
+      if (value == v) {
         return true;
       }
     }
@@ -126,24 +134,42 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     }
     if (o instanceof Nat2DoubleDenseArrayMap) {
       Nat2DoubleDenseArrayMap other = (Nat2DoubleDenseArrayMap) o;
-      return size == other.size && Arrays.equals(array, other.array);
+      if (size != other.size) {
+        return false;
+      }
+      if (array.length == other.array.length) {
+        return Arrays.equals(array, other.array);
+      }
+      for (int i = 0; i < Math.min(array.length, other.array.length); i++) {
+        if (array[i] != other.array[i]) {
+          return false;
+        }
+      }
+      return true;
     }
     return super.equals(o);
   }
 
   public void fill(int from, int to, double value) {
     checkNotAbsent(value);
+    ensureSize(to);
     Arrays.fill(array, from, to, value);
   }
 
   public void fill(PrimitiveIterator.OfInt iterator, double value) {
+    checkNotAbsent(value);
     while (iterator.hasNext()) {
-      array[iterator.next()] = value;
+      int index = iterator.nextInt();
+      ensureSize(index);
+      array[index] = value;
     }
   }
 
   @Override
   public double get(int key) {
+    if (array.length <= key) {
+      return defaultReturnValue();
+    }
     double value = array[key];
     return isAbsent(value) ? defaultReturnValue() : value;
   }
@@ -151,7 +177,18 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   @SuppressWarnings("NonFinalFieldReferencedInHashCode")
   @Override
   public int hashCode() {
-    return Arrays.hashCode(array) ^ HashCommon.mix(size);
+    int hash = HashCommon.mix(size);
+    int elements = 0;
+    int index = 0;
+    while (elements < size) {
+      double element = array[index];
+      if (!isAbsent(element)) {
+        hash ^= Double.hashCode(element) ^ HashCommon.mix(index);
+        elements += 1;
+      }
+      index += 1;
+    }
+    return hash;
   }
 
   @Override
@@ -193,6 +230,13 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   @Override
   public double put(int key, double value) {
     checkNotAbsent(value);
+    if (ensureSize(key)) {
+      assert isAbsent(array[key]);
+      array[key] = value;
+      size++;
+      return defaultReturnValue();
+    }
+
     double previous = array[key];
     array[key] = value;
     if (isAbsent(previous)) {
@@ -204,6 +248,9 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
 
   @Override
   public double remove(int key) {
+    if (array.length <= key) {
+      return defaultReturnValue();
+    }
     double previous = array[key];
     if (isAbsent(previous)) {
       return defaultReturnValue();
@@ -333,9 +380,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
 
     @Override
     public double setValue(double v) {
-      double oldValue = map.array[index];
-      map.array[index] = v;
-      return oldValue;
+      return map.put(index, v);
     }
   }
 

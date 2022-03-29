@@ -30,6 +30,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.PrimitiveIterator;
 import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
@@ -44,7 +45,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   public static final int DEFAULT_SIZE = 16;
   private static final long serialVersionUID = 630710213786009957L;
 
-  private final V[] array;
+  private V[] array;
   @Nullable
   private transient EntrySetView<V> entriesView = null;
   @Nullable
@@ -64,38 +65,42 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   }
 
   @SuppressWarnings({"unchecked", "SuspiciousArrayCast"})
-  public Nat2ObjectDenseArrayMap(int size) {
-    this.array = (V[]) new Object[size];
-    Arrays.fill(this.array, null);
+  public Nat2ObjectDenseArrayMap(int initialSize) {
+    this.array = (V[]) new Object[initialSize];
   }
 
   @SuppressWarnings({"unchecked", "SuspiciousArrayCast"})
-  public Nat2ObjectDenseArrayMap(int size, V initialValue) {
+  public Nat2ObjectDenseArrayMap(int initialSize, V initialValue) {
     checkNotAbsent(initialValue);
-    this.array = (V[]) new Object[size];
+    this.array = (V[]) new Object[initialSize];
     Arrays.fill(array, initialValue);
-    this.size = size;
+    this.size = initialSize;
   }
 
   @SuppressWarnings({"unchecked", "SuspiciousArrayCast"})
-  public Nat2ObjectDenseArrayMap(int size, IntFunction<V> initialValues) {
-    this.array = (V[]) new Object[size];
+  public Nat2ObjectDenseArrayMap(int initialSize, IntFunction<V> initialValues) {
+    this.array = (V[]) new Object[initialSize];
     for (int i = 0; i < array.length; i++) {
       V value = initialValues.apply(i);
       checkNotAbsent(value);
       array[i] = value;
     }
-    this.size = size;
+    this.size = initialSize;
   }
 
   private void checkNotAbsent(@Nullable V value) {
     if (isAbsent(value)) {
-      // The Map contract prescribes throwing a null pointer exception when null entries are not
-      // supported.
-
-      //noinspection ProhibitedExceptionThrown
+      // noinspection ProhibitedExceptionThrown
       throw new NullPointerException("Null value not allowed"); // NOPMD
     }
+  }
+
+  private boolean ensureSize(int index) {
+    if (this.array.length <= index) {
+      this.array = Arrays.copyOf(this.array, Math.max(this.array.length * 2, index + 1));
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -130,25 +135,42 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     }
     if (o instanceof Nat2ObjectDenseArrayMap) {
       Nat2ObjectDenseArrayMap<?> other = (Nat2ObjectDenseArrayMap<?>) o;
-      return size == other.size && Arrays.deepEquals(array, other.array);
+      if (size != other.size) {
+        return false;
+      }
+      if (array.length == other.array.length) {
+        return Arrays.equals(array, other.array);
+      }
+      for (int i = 0; i < Math.min(array.length, other.array.length); i++) {
+        if (!Objects.equals(array[i], other.array[i])) {
+          return false;
+        }
+      }
+      return true;
     }
     return super.equals(o);
   }
 
   public void fill(int from, int to, V value) {
     checkNotAbsent(value);
+    ensureSize(to);
     Arrays.fill(array, from, to, value);
   }
 
   public void fill(PrimitiveIterator.OfInt iterator, V value) {
     checkNotAbsent(value);
     while (iterator.hasNext()) {
-      array[iterator.next()] = value;
+      int index = iterator.nextInt();
+      ensureSize(index);
+      array[index] = value;
     }
   }
 
   @Override
   public V get(int key) {
+    if (array.length <= key) {
+      return defaultReturnValue();
+    }
     V value = array[key];
     return isAbsent(value) ? defaultReturnValue() : value;
   }
@@ -156,7 +178,18 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   @SuppressWarnings("NonFinalFieldReferencedInHashCode")
   @Override
   public int hashCode() {
-    return Arrays.deepHashCode(array) ^ HashCommon.mix(size);
+    int hash = HashCommon.mix(size);
+    int elements = 0;
+    int index = 0;
+    while (elements < size) {
+      V element = array[index];
+      if (!isAbsent(element)) {
+        hash ^= element.hashCode() ^ HashCommon.mix(index);
+        elements += 1;
+      }
+      index += 1;
+    }
+    return hash;
   }
 
   @Override
@@ -197,6 +230,13 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   @Override
   public V put(int key, V value) {
     checkNotAbsent(value);
+    if (ensureSize(key)) {
+      assert isAbsent(array[key]);
+      array[key] = value;
+      size++;
+      return defaultReturnValue();
+    }
+
     V previous = array[key];
     array[key] = value;
     if (isAbsent(previous)) {
@@ -209,6 +249,9 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
   @SuppressWarnings("AssignmentToNull")
   @Override
   public V remove(int key) {
+    if (array.length <= key) {
+      return defaultReturnValue();
+    }
     V previous = array[key];
     if (isAbsent(previous)) {
       return defaultReturnValue();
@@ -336,12 +379,9 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
       return map.array[index];
     }
 
-    @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
     @Override
     public V setValue(V v) {
-      V oldValue = map.array[index];
-      map.array[index] = v;
-      return oldValue;
+      return map.put(index, v);
     }
   }
 
