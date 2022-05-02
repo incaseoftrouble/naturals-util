@@ -1,5 +1,9 @@
 # 0.x
 
+### 0.17.1 (2022-05-02)
+
+ * Fix issue of Nat2XDenseMap
+
 ### 0.17.0 (2022-03-29)
 
  * Nat array maps now resize

@@ -95,8 +95,11 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   }
 
   private boolean ensureSize(int index) {
-    if (this.array.length <= index) {
-      this.array = Arrays.copyOf(this.array, Math.max(this.array.length * 2, index + 1));
+    int length = this.array.length;
+    if (length <= index) {
+      int newLength = Math.max(length * 2, index + 1);
+      this.array = Arrays.copyOf(this.array, newLength);
+      Arrays.fill(this.array, length, newLength, Double.NaN);
       return true;
     }
     return false;

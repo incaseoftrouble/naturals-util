@@ -30,6 +30,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.Collection;
 import java.util.PrimitiveIterator;
+import java.util.Set;
 import java.util.function.DoubleToIntFunction;
 import java.util.function.IntUnaryOperator;
 import javax.annotation.Nonnegative;
@@ -106,7 +107,14 @@ public final class Indices {
 
   public static <K> Object2IntMap<K> ids(Collection<K> items) {
     Object2IntMap<K> ids = new Object2IntOpenHashMap<>(items.size());
-    items.forEach(item -> ids.put(item, ids.size()));
+    if (items instanceof Set<?>) {
+      items.forEach(item -> {
+        assert !ids.containsKey(item);
+        ids.put(item, ids.size());
+      });
+    } else {
+      items.forEach(item -> ids.putIfAbsent(item, ids.size()));
+    }
     return ids;
   }
 
