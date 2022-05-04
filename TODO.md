@@ -7,3 +7,4 @@
  * Avoid cloning the bit sets by employing multiple "bitwise" operations (if reasonable)
  * Extend the set theories by splitting the data points into pre-filled sets and implementations, allowing to, e.g., test `simpleSet.addAll(singletonComplementSet)`.
  * Power-set for `BoundedNatBitSet`
+ * Nat2XMap currently fills eagerly (especially costly for the `fill` methods) -- only fill what is needed.
