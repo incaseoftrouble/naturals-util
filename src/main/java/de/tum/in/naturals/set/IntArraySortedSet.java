@@ -219,9 +219,11 @@ public class IntArraySortedSet extends AbstractIntSet {
   }
 
   private void removeIndex(int index) {
+    assert index >= 0;
     int nextIndex = index + 1;
     if (nextIndex < size) {
       int tail = size - nextIndex;
+      assert tail > 0;
       System.arraycopy(array, nextIndex, array, index, tail);
     }
     size--;
@@ -242,6 +244,7 @@ public class IntArraySortedSet extends AbstractIntSet {
   private static class Iterator implements IntIterator {
     private final IntArraySortedSet set;
     private int next = 0;
+    private boolean removed = false;
 
     Iterator(IntArraySortedSet set) {
       this.set = set;
@@ -258,13 +261,18 @@ public class IntArraySortedSet extends AbstractIntSet {
         throw new NoSuchElementException();
       }
       int result = set.array[next];
+      removed = false;
       next += 1;
       return result;
     }
 
     @Override
     public void remove() {
+      if (removed || next == 0) {
+        throw new IllegalStateException();
+      }
       next -= 1;
+      removed = true;
       set.removeIndex(next);
     }
   }

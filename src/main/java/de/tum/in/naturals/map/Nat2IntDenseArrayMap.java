@@ -29,8 +29,11 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
+import java.util.function.BiFunction;
+import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.function.IntUnaryOperator;
 import javax.annotation.Nullable;
@@ -42,18 +45,28 @@ import javax.annotation.Nullable;
  * <p><strong>Warning:</strong> For performance, missing keys are stored as
  * {@link Integer#MIN_VALUE}. Thus, this value cannot be inserted into this map.</p>
  */
+@SuppressWarnings("PMD.AssignmentInOperand")
 public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
   private static final long serialVersionUID = 5185461790033343414L;
+  private static final int DEFAULT_INITIAL_SIZE = 1024;
+
 
   private int[] array;
+  private int size = 0;
+
   @Nullable
   private transient EntrySetView entriesView = null;
   @Nullable
   private transient KeySetView keySetView = null;
-  private int size = 0;
   @Nullable
   private transient ValuesView valuesView = null;
 
+
+  public Nat2IntDenseArrayMap() {
+    this(DEFAULT_INITIAL_SIZE);
+  }
+
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   public Nat2IntDenseArrayMap(int[] array) {
     this.array = array;
     for (int value : array) {
@@ -87,10 +100,25 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     this.size = initialSize;
   }
 
+
+  private boolean isAbsent(int value) {
+    return value == Integer.MIN_VALUE;
+  }
+
   private void checkNotAbsent(int value) {
     if (isAbsent(value)) {
       throw new IllegalArgumentException(String.format("Value %d not allowed", value));
     }
+  }
+
+  private int nextKey(int index) {
+    int[] array = this.array;
+    for (int i = index; i < array.length; i++) {
+      if (!isAbsent(array[i])) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private boolean ensureSize(int index) {
@@ -104,11 +132,17 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     return false;
   }
 
+
   @Override
-  public void clear() {
-    Arrays.fill(array, Integer.MIN_VALUE);
-    size = 0;
+  public boolean isEmpty() {
+    return size == 0;
   }
+
+  @Override
+  public int size() {
+    return size;
+  }
+
 
   @Override
   public boolean containsKey(int key) {
@@ -120,50 +154,13 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     if (isAbsent(v)) {
       return false;
     }
+    int[] array = this.array;
     for (int value : array) {
       if (value == v) {
         return true;
       }
     }
     return false;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o instanceof Nat2IntDenseArrayMap) {
-      Nat2IntDenseArrayMap other = (Nat2IntDenseArrayMap) o;
-      if (size != other.size) {
-        return false;
-      }
-      if (array.length == other.array.length) {
-        return Arrays.equals(array, other.array);
-      }
-      for (int i = 0; i < Math.min(array.length, other.array.length); i++) {
-        if (array[i] != other.array[i]) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return super.equals(o);
-  }
-
-  public void fill(int from, int to, int value) {
-    checkNotAbsent(value);
-    ensureSize(to);
-    Arrays.fill(array, from, to, value);
-  }
-
-  public void fill(PrimitiveIterator.OfInt iterator, int value) {
-    checkNotAbsent(value);
-    while (iterator.hasNext()) {
-      int index = iterator.nextInt();
-      ensureSize(index);
-      array[index] = value;
-    }
   }
 
   @Override
@@ -176,10 +173,178 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
   }
 
   @Override
+  public int getOrDefault(int key, int defaultValue) {
+    if (array.length <= key) {
+      return defaultValue;
+    }
+    int value = array[key];
+    return isAbsent(value) ? defaultValue : value;
+  }
+
+
+  @Override
+  public int put(int key, int value) {
+    checkNotAbsent(value);
+    int previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      assert isAbsent(array[key]);
+      array[key] = value;
+      size++;
+      return defaultReturnValue();
+    }
+    array[key] = value;
+    return previous;
+  }
+
+  @Override
+  public int putIfAbsent(int key, int value) {
+    checkNotAbsent(value);
+    int previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      array[key] = value;
+      size++;
+      return defaultReturnValue();
+    }
+    return previous;
+  }
+
+  @Override
+  public int computeIfAbsent(int key, IntUnaryOperator mappingFunction) {
+    int previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      int value = mappingFunction.applyAsInt(key);
+      checkNotAbsent(value);
+      array[key] = value;
+      size++;
+      return value;
+    }
+    return previous;
+  }
+
+  @Override
+  public int merge(int key, int value, BiFunction<? super Integer, ? super Integer, ? extends Integer> remappingFunction) {
+    checkNotAbsent(value);
+    int previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      assert isAbsent(array[key]);
+      array[key] = value;
+      size++;
+      return value;
+    }
+    Integer merge = remappingFunction.apply(previous, value);
+    if (merge == null) {
+      array[key] = Integer.MIN_VALUE;
+      size--;
+      return defaultReturnValue();
+    }
+    int mergeInt = merge;
+    checkNotAbsent(mergeInt);
+    array[key] = mergeInt;
+    return mergeInt;
+  }
+
+  @Override
+  public int mergeInt(int key, int value, IntBinaryOperator remappingFunction) {
+    checkNotAbsent(value);
+    int previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      assert isAbsent(array[key]);
+      array[key] = value;
+      size++;
+      return value;
+    }
+    int merge = remappingFunction.applyAsInt(previous, value);
+    checkNotAbsent(merge);
+    array[key] = merge;
+    return merge;
+  }
+
+  @Override
+  public int remove(int key) {
+    int previous;
+    //noinspection NestedAssignment
+    if (array.length <= key || isAbsent(previous = array[key])) {
+      return defaultReturnValue();
+    }
+    array[key] = Integer.MIN_VALUE;
+    size--;
+    return previous;
+  }
+
+
+  public void fill(int from, int to, int value) {
+    checkNotAbsent(value);
+    ensureSize(to);
+    Arrays.fill(array, from, to, value);
+  }
+
+  public void fill(PrimitiveIterator.OfInt iterator, int value) {
+    checkNotAbsent(value);
+    int[] array = this.array;
+    while (iterator.hasNext()) {
+      int index = iterator.nextInt();
+      ensureSize(index);
+      array[index] = value;
+    }
+  }
+
+  public void setAll(int from, int to, IntUnaryOperator generator) {
+    int length = array.length;
+    if (length <= to) {
+      int newLength = Math.max(length * 2, to + 1);
+      this.array = Arrays.copyOf(this.array, newLength);
+      Arrays.fill(this.array, to, newLength, Integer.MIN_VALUE);
+    }
+    int[] array = this.array;
+    for (int i = from; i < to; i++) {
+      int value = generator.applyAsInt(i);
+      assert !isAbsent(value);
+      if (isAbsent(array[i])) {
+        size += 1;
+      }
+      array[i] = value;
+    }
+  }
+
+  @Override
+  public void clear() {
+    if (isEmpty()) {
+      return;
+    }
+    Arrays.fill(array, Integer.MIN_VALUE);
+    size = 0;
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o instanceof Nat2IntDenseArrayMap) {
+      Nat2IntDenseArrayMap other = (Nat2IntDenseArrayMap) o;
+      if (size != other.size) {
+        return false;
+      }
+      // Note: Number of elements in the two arrays is the same here
+      int mismatch = Arrays.mismatch(this.array, other.array);
+      return mismatch == -1 || mismatch == this.array.length || mismatch == other.array.length;
+    }
+    return super.equals(o);
+  }
+
+  @Override
   public int hashCode() {
     int hash = HashCommon.mix(size);
     int elements = 0;
     int index = 0;
+    int[] array = this.array;
+    // Note: Cannot use Arrays.hashCode here, since the actual length of the array should not change the hash
     while (elements < size) {
       int element = array[index];
       if (!isAbsent(element)) {
@@ -191,22 +356,6 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     return hash;
   }
 
-  @Override
-  public ObjectSet<Int2IntMap.Entry> int2IntEntrySet() {
-    if (entriesView == null) {
-      entriesView = new EntrySetView(this);
-    }
-    return new EntrySetView(this);
-  }
-
-  private boolean isAbsent(int value) {
-    return value == Integer.MIN_VALUE;
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return size == 0;
-  }
 
   @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
@@ -215,53 +364,6 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
       keySetView = new KeySetView(this);
     }
     return keySetView;
-  }
-
-  private int nextKey(int index) {
-    for (int i = index; i < array.length; i++) {
-      if (!isAbsent(array[i])) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  @Override
-  public int put(int key, int value) {
-    checkNotAbsent(value);
-    if (ensureSize(key)) {
-      assert isAbsent(array[key]);
-      array[key] = value;
-      size++;
-      return defaultReturnValue();
-    }
-
-    int previous = array[key];
-    array[key] = value;
-    if (isAbsent(previous)) {
-      size++;
-      return defaultReturnValue();
-    }
-    return previous;
-  }
-
-  @Override
-  public int remove(int key) {
-    if (array.length <= key) {
-      return defaultReturnValue();
-    }
-    int previous = array[key];
-    if (isAbsent(previous)) {
-      return defaultReturnValue();
-    }
-    array[key] = Integer.MIN_VALUE;
-    size--;
-    return previous;
-  }
-
-  @Override
-  public int size() {
-    return size;
   }
 
   @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
@@ -273,9 +375,19 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     return valuesView;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+  @Override
+  public ObjectSet<Int2IntMap.Entry> int2IntEntrySet() {
+    if (entriesView == null) {
+      entriesView = new EntrySetView(this);
+    }
+    return entriesView;
+  }
+
   @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
   private static class EntryIterator implements ObjectIterator<Int2IntMap.Entry> {
     private final Nat2IntDenseArrayMap map;
+    private int current = -1;
     private int next;
 
     EntryIterator(Nat2IntDenseArrayMap map) {
@@ -293,16 +405,81 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
-      int index = next;
+      current = next;
       next = map.nextKey(next + 1);
-      assert map.containsKey(index);
-      return new AbstractInt2IntMap.BasicEntry(index, map.array[index]);
+      assert map.containsKey(current);
+      return new Entry(map, current);
+    }
+
+    @Override
+    public void remove() {
+      if (current == -1) {
+        throw new IllegalStateException();
+      }
+      map.remove(current);
+      current = -1;
+    }
+  }
+
+  private static final class Entry implements Int2IntMap.Entry {
+    private final Nat2IntDenseArrayMap map;
+    private final int index;
+
+    Entry(Nat2IntDenseArrayMap map, int index) {
+      this.map = map;
+      this.index = index;
+    }
+
+    @Override
+    public int getIntKey() {
+      return index;
+    }
+
+    @Override
+    public int getIntValue() {
+      return map.array[index];
+    }
+
+    @Override
+    public int setValue(int value) {
+      return map.put(index, value);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (!(o instanceof Map.Entry)) {
+        return false;
+      }
+      if (o instanceof Int2IntMap.Entry) {
+        Int2IntMap.Entry e = (Int2IntMap.Entry) o;
+        return getIntKey() == e.getIntKey() && getIntValue() == e.getIntValue();
+      }
+      Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
+      Object key = e.getKey();
+      if (!(key instanceof Integer)) {
+        return false;
+      }
+      Object value = e.getValue();
+      if (!(value instanceof Integer)) {
+        return false;
+      }
+      return getIntKey() == (Integer) key && getIntValue() == (Integer) value;
+    }
+
+    @Override
+    public int hashCode() {
+      return HashCommon.mix(index) ^ HashCommon.mix(getIntValue());
     }
   }
 
   private static class EntrySetView extends AbstractInt2IntEntrySet<Nat2IntDenseArrayMap> {
     EntrySetView(Nat2IntDenseArrayMap map) {
       super(map);
+    }
+
+    @Override
+    public void clear() {
+      map.clear();
     }
 
     @Override
@@ -338,7 +515,6 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     }
 
     @Override
-
     public Int2IntMap.Entry next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
@@ -369,6 +545,7 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
 
     @Override
     public int getIntKey() {
+      assert index >= 0;
       return index;
     }
 
@@ -429,6 +606,11 @@ public class Nat2IntDenseArrayMap extends AbstractInt2IntMap {
     @Override
     public KeySetView clone() {
       return this;
+    }
+
+    @Override
+    public void clear() {
+      map.clear();
     }
 
     @Override

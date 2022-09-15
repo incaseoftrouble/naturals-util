@@ -48,7 +48,9 @@ public final class RoaringBitmaps {
     }
 
     RoaringBitmap bitmap = new RoaringBitmap();
-    iterable.forEach(bitmap::add);
+    for (Integer integer : iterable) {
+      bitmap.add(integer);
+    }
     return bitmap;
   }
 

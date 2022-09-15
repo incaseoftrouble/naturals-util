@@ -1,5 +1,13 @@
 # 0.x
 
+### 0.18.0 (2022-09-15)
+
+ * Bump versions
+ * Add `guava-testlib` testing for most collections
+ * Fix some iterator removals
+ * Add `setValue` and `remove` support for some entries / iterators
+ * Minor performance improvements
+ 
 ### 0.17.1 (2022-05-02)
 
  * Fix issue of Nat2XDenseMap

@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "de.tum.in"
-version = "0.17.1"
+version = "0.18.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -56,16 +56,20 @@ dependencies {
     // https://mvnrepository.com/artifact/com.zaxxer/SparseBitSet
     api("com.zaxxer", "SparseBitSet", "1.2")
     // https://mvnrepository.com/artifact/org.roaringbitmap/RoaringBitmap
-    api("org.roaringbitmap", "RoaringBitmap", "0.9.24")
+    api("org.roaringbitmap", "RoaringBitmap", "0.9.32")
 
     // https://mvnrepository.com/artifact/org.hamcrest/hamcrest
     testImplementation("org.hamcrest", "hamcrest", "2.2")
-    // https://mvnrepository.com/artifact/com.google.guava/guava-testlib
-    // testImplementation("com.google.guava", "guava-testlib", "31.1-jre")
     // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
     testImplementation("org.junit.jupiter", "junit-jupiter-api", "5.8.2")
     testImplementation("org.junit.jupiter", "junit-jupiter-params", "5.8.2")
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", "5.8.2")
+
+    // https://mvnrepository.com/artifact/com.google.guava/guava-testlib
+    testImplementation("com.google.guava", "guava-testlib", "31.1-jre")
+    // https://mvnrepository.com/artifact/org.junit.vintage/junit-vintage-engine
+    testImplementation("org.junit.vintage:junit-vintage-engine:5.9.0")
+
 }
 
 tasks.test {
@@ -77,7 +81,7 @@ tasks.test {
 // https://docs.gradle.org/current/dsl/org.gradle.api.plugins.quality.Pmd.html
 
 pmd {
-    toolVersion = "6.42.0" // https://pmd.github.io/
+    toolVersion = "6.49.0" // https://pmd.github.io/
     reportsDir = file("${project.buildDir}/reports/pmd")
     ruleSetFiles = files("${project.rootDir}/config/pmd-rules.xml")
     ruleSets = listOf() // We specify all rules in rules.xml
@@ -95,7 +99,7 @@ tasks.withType<Pmd> {
 // Checkstyle
 // https://docs.gradle.org/current/dsl/org.gradle.api.plugins.quality.Checkstyle.html
 checkstyle {
-    toolVersion = "9.3" // http://checkstyle.sourceforge.net/releasenotes.html
+    toolVersion = "10.3.3" // http://checkstyle.sourceforge.net/releasenotes.html
     configFile = file("${project.rootDir}/config/checkstyle.xml")
     isIgnoreFailures = false
     maxWarnings = 0
@@ -116,6 +120,7 @@ tasks.withType<Checkstyle>().configureEach {
 }
 
 // Deployment - run with -Prelease clean publishToSonatype closeAndReleaseSonatypeStagingRepository
+// Key: signing.gnupg.keyName in ~/.gradle/gradle.properties
 // Authentication: sonatypeUsername+sonatypePassword in ~/.gradle/gradle.properties
 if (project.hasProperty("release")) {
     publishing {

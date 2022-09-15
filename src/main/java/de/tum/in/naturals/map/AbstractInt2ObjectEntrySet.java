@@ -65,12 +65,11 @@ public abstract class AbstractInt2ObjectEntrySet<V, M extends Int2ObjectMap<V>>
       return false;
     }
     if (o instanceof Entry) {
-      Entry e = (Entry) o;
+      Entry<?> e = (Entry<?>) o;
       return map.remove(e.getIntKey(), e.getValue());
     }
 
     Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
-
     Object key = e.getKey();
     if (!(key instanceof Integer)) {
       return false;

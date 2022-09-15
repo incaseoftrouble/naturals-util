@@ -72,7 +72,6 @@ public abstract class AbstractInt2IntEntrySet<M extends Int2IntMap>
     }
 
     Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
-
     Object key = e.getKey();
     if (!(key instanceof Integer)) {
       return false;

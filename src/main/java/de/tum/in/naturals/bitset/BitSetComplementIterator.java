@@ -60,5 +60,6 @@ final class BitSetComplementIterator implements IntIterator {
     }
     assert !bitSet.get(current);
     bitSet.set(current);
+    current = -1;
   }
 }

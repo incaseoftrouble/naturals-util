@@ -18,6 +18,7 @@
 package de.tum.in.naturals.bitset;
 
 import com.zaxxer.sparsebits.SparseBitSet;
+import de.tum.in.naturals.Indices;
 import de.tum.in.naturals.set.NatBitSet;
 import de.tum.in.naturals.set.NatBitSets;
 import it.unimi.dsi.fastutil.ints.IntIterable;
@@ -78,7 +79,9 @@ public final class BitSets {
     }
 
     BitSet bitSet = new BitSet();
-    iterable.forEach(bitSet::set);
+    for (Integer integer : iterable) {
+      bitSet.set(integer);
+    }
     return bitSet;
   }
 
@@ -90,11 +93,7 @@ public final class BitSets {
 
   public static BitSet of(boolean... indices) {
     BitSet bitSet = new BitSet(indices.length);
-    for (int i = 0; i < indices.length; i++) {
-      if (indices[i]) {
-        bitSet.set(i);
-      }
-    }
+    Indices.forEach(indices, bitSet::set);
     return bitSet;
   }
 

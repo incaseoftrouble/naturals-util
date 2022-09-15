@@ -24,8 +24,6 @@ import static org.hamcrest.Matchers.is;
 
 import org.junit.jupiter.api.Test;
 
-
-@SuppressWarnings("MagicNumber")
 class NatBitSetTest {
   @Test
   void testCreateBoundedLongSet() {

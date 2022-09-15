@@ -72,7 +72,9 @@ public final class SparseBitSets {
     }
 
     SparseBitSet bitSet = new SparseBitSet();
-    iterable.forEach(bitSet::set);
+    for (Integer integer : iterable) {
+      bitSet.set(integer);
+    }
     return bitSet;
   }
 

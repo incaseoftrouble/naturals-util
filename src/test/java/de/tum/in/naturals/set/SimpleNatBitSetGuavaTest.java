@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Tobias Meggendorfer
+ * Copyright (C) 2022 Tobias Meggendorfer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,29 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.tum.in.naturals.bitset;
+package de.tum.in.naturals.set;
 
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import java.util.NoSuchElementException;
-import org.roaringbitmap.PeekableIntIterator;
+import java.util.BitSet;
+import java.util.Set;
+import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.AllTests;
 
-final class RoaringIterator implements IntIterator {
-  private final PeekableIntIterator iterator;
-
-  public RoaringIterator(PeekableIntIterator iterator) {
-    this.iterator = iterator;
-  }
-
-  @Override
-  public int nextInt() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
-    }
-    return iterator.next();
-  }
-
-  @Override
-  public boolean hasNext() {
-    return iterator.hasNext();
+@SuppressWarnings({"PMD.JUnit4SuitesShouldUseSuiteAnnotation", "PMD.UseUtilityClass"})
+@RunWith(AllTests.class)
+public class SimpleNatBitSetGuavaTest {
+  public static TestSuite suite() {
+    return GuavaSetTest.createNatSet(() -> new SimpleNatBitSet(new BitSet()),
+        "SimpleNatBitSetGuavaTest", Set.of());
   }
 }

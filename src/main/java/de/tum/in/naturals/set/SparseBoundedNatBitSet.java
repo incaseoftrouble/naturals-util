@@ -492,7 +492,7 @@ class SparseBoundedNatBitSet extends AbstractBoundedNatBitSet {
 
   @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
-  public BoundedNatBitSet complement() {
+  public SparseBoundedNatBitSet complement() {
     return complementView;
   }
 

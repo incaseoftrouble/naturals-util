@@ -57,5 +57,6 @@ final class SparseBitSetIterator implements IntIterator {
     }
     assert bitSet.get(current);
     bitSet.clear(current);
+    current = -1;
   }
 }

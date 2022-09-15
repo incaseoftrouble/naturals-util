@@ -120,6 +120,10 @@ class RoaringNatBitSet extends AbstractNatBitSet {
     bitmap.forEach((org.roaringbitmap.IntConsumer) consumer::accept);
   }
 
+  @Override
+  public boolean add(int index) {
+    return bitmap.checkedAdd(index);
+  }
 
   @Override
   public void set(int index) {
@@ -138,6 +142,11 @@ class RoaringNatBitSet extends AbstractNatBitSet {
   @Override
   public void set(int from, int to) {
     bitmap.add(from, (long) to);
+  }
+
+  @Override
+  public boolean remove(int index) {
+    return bitmap.checkedRemove(index);
   }
 
   @Override
@@ -215,6 +224,24 @@ class RoaringNatBitSet extends AbstractNatBitSet {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean retainAll(Collection<?> indices) {
+    if (indices instanceof IntCollection) {
+      return retainAll((IntCollection) indices);
+    }
+    if (isEmpty()) {
+      return false;
+    }
+    if (indices.isEmpty()) {
+      clear();
+      return true;
+    }
+    int size = size();
+    bitmap.and(RoaringBitmaps.of((Iterable<Integer>) indices));
+    return size() < size;
+  }
+
   @Override
   public void andNot(IntCollection indices) {
     if (isEmpty() || indices.isEmpty()) {
@@ -237,6 +264,20 @@ class RoaringNatBitSet extends AbstractNatBitSet {
     } else {
       bitmap.andNot(RoaringBitmaps.of(indices));
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean removeAll(Collection<?> indices) {
+    if (indices instanceof IntCollection) {
+      return removeAll((IntCollection) indices);
+    }
+    if (isEmpty() || indices.isEmpty()) {
+      return false;
+    }
+    int size = size();
+    bitmap.andNot(RoaringBitmaps.of((Iterable<Integer>) indices));
+    return size() < size;
   }
 
   @Override

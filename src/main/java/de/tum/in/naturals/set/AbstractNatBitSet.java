@@ -105,7 +105,6 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
       clear();
       return true;
     }
-    @SuppressWarnings("TooBroadScope")
     int size = size();
     and(indices);
     return size() < size;
@@ -130,7 +129,6 @@ public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBit
     if (isEmpty() || indices.isEmpty()) {
       return false;
     }
-    @SuppressWarnings("TooBroadScope")
     int size = size();
     andNot(indices);
     return size() < size;

@@ -42,6 +42,14 @@ public final class Arrays2 {
     return sum;
   }
 
+  public static long sumLong(int[] array) {
+    long sum = 0L;
+    for (int value : array) {
+      sum += value;
+    }
+    return sum;
+  }
+
   public static <E> void forEach(E[] array, Consumer<? super E> action) {
     for (E element : array) {
       action.accept(element);

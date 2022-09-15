@@ -89,10 +89,8 @@ class NatBitSetTheories {
   private static final List<MutationList> smallMutations;
 
   static {
-    smallMutations =
-        generateMutations(NUMBER_OF_SMALL_MUTATIONS, MAXIMAL_MUTATION_LENGTH, SMALL_SUBSET_SIZE);
-    largeMutations =
-        generateMutations(NUMBER_OF_LARGE_MUTATIONS, MAXIMAL_MUTATION_LENGTH, MAXIMAL_SUBSET_SIZE);
+    smallMutations = generateMutations(NUMBER_OF_SMALL_MUTATIONS, MAXIMAL_MUTATION_LENGTH, SMALL_SUBSET_SIZE);
+    largeMutations = generateMutations(NUMBER_OF_LARGE_MUTATIONS, MAXIMAL_MUTATION_LENGTH, MAXIMAL_SUBSET_SIZE);
 
     fixedSets = new LinkedHashSet<>(NUMBER_OF_FIXED_SETS * 3);
 

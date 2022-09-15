@@ -30,8 +30,11 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
+import java.util.function.BiFunction;
+import java.util.function.DoubleBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.function.IntToDoubleFunction;
 import javax.annotation.Nullable;
@@ -42,17 +45,20 @@ import javax.annotation.Nullable;
  * <p><strong>Warning</strong>: This class uses {@link Double#NaN} to represent missing keys. Thus,
  * this value cannot be mapped.</p>
  */
+@SuppressWarnings("PMD.AssignmentInOperand")
 public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
   private static final long serialVersionUID = 943823872741225228L;
 
   private double[] array;
+  private int size = 0;
+
   @Nullable
   private transient EntrySetView entriesView = null;
   @Nullable
   private transient KeySetView keySetView = null;
-  private int size = 0;
   @Nullable
   private transient ValuesView valuesView = null;
+
 
   @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   public Nat2DoubleDenseArrayMap(double[] array) {
@@ -88,10 +94,26 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     this.size = initialSize;
   }
 
+
+  @SuppressWarnings("MethodMayBeStatic")
+  private boolean isAbsent(double value) {
+    return Double.isNaN(value);
+  }
+
   private void checkNotAbsent(double value) {
     if (isAbsent(value)) {
       throw new IllegalArgumentException(String.format("Value %s not allowed", value));
     }
+  }
+
+  private int nextKey(int index) {
+    double[] array = this.array;
+    for (int i = index; i < array.length; i++) {
+      if (!isAbsent(array[i])) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private boolean ensureSize(int index) {
@@ -105,11 +127,17 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     return false;
   }
 
+
   @Override
-  public void clear() {
-    Arrays.fill(array, Double.NaN);
-    size = 0;
+  public boolean isEmpty() {
+    return size == 0;
   }
+
+  @Override
+  public int size() {
+    return size;
+  }
+
 
   @Override
   public boolean containsKey(int key) {
@@ -121,6 +149,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     if (isAbsent(v)) {
       return false;
     }
+    double[] array = this.array;
     for (double value : array) {
       if (value == v) {
         return true;
@@ -129,29 +158,119 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     return false;
   }
 
-  @SuppressWarnings("NonFinalFieldReferenceInEquals")
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+  public double get(int key) {
+    if (array.length <= key) {
+      return defaultReturnValue();
     }
-    if (o instanceof Nat2DoubleDenseArrayMap) {
-      Nat2DoubleDenseArrayMap other = (Nat2DoubleDenseArrayMap) o;
-      if (size != other.size) {
-        return false;
-      }
-      if (array.length == other.array.length) {
-        return Arrays.equals(array, other.array);
-      }
-      for (int i = 0; i < Math.min(array.length, other.array.length); i++) {
-        if (array[i] != other.array[i]) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return super.equals(o);
+    double value = array[key];
+    return isAbsent(value) ? defaultReturnValue() : value;
   }
+
+  @Override
+  public double getOrDefault(int key, double defaultValue) {
+    if (array.length <= key) {
+      return defaultValue;
+    }
+    double value = array[key];
+    return isAbsent(value) ? defaultValue : value;
+  }
+
+
+  @Override
+  public double put(int key, double value) {
+    checkNotAbsent(value);
+    double previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      assert isAbsent(array[key]);
+      array[key] = value;
+      size++;
+      return defaultReturnValue();
+    }
+    array[key] = value;
+    return previous;
+  }
+
+  @Override
+  public double putIfAbsent(int key, double value) {
+    checkNotAbsent(value);
+    double previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      array[key] = value;
+      size++;
+      return defaultReturnValue();
+    }
+    return previous;
+  }
+
+  @Override
+  public double computeIfAbsent(int key, IntToDoubleFunction mappingFunction) {
+    double previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      double value = mappingFunction.applyAsDouble(key);
+      checkNotAbsent(value);
+      array[key] = value;
+      size++;
+      return value;
+    }
+    return previous;
+  }
+
+  @Override
+  public double merge(int key, double value, BiFunction<? super Double, ? super Double, ? extends Double> remappingFunction) {
+    checkNotAbsent(value);
+    double previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      assert isAbsent(array[key]);
+      array[key] = value;
+      size++;
+      return value;
+    }
+    Double merge = remappingFunction.apply(previous, value);
+    if (merge == null) {
+      array[key] = Double.NaN;
+      size--;
+      return defaultReturnValue();
+    }
+    double mergeDouble = merge;
+    checkNotAbsent(mergeDouble);
+    array[key] = mergeDouble;
+    return mergeDouble;
+  }
+
+  @Override
+  public double mergeDouble(int key, double value, DoubleBinaryOperator remappingFunction) {
+    checkNotAbsent(value);
+    double previous;
+    //noinspection NestedAssignment
+    if (ensureSize(key) || isAbsent(previous = array[key])) {
+      assert isAbsent(array[key]);
+      array[key] = value;
+      size++;
+      return value;
+    }
+    double merge = remappingFunction.applyAsDouble(previous, value);
+    checkNotAbsent(merge);
+    array[key] = merge;
+    return merge;
+  }
+
+  @Override
+  public double remove(int key) {
+    double previous;
+    //noinspection NestedAssignment
+    if (array.length <= key || isAbsent(previous = array[key])) {
+      return defaultReturnValue();
+    }
+    array[key] = Double.NaN;
+    size--;
+    return previous;
+  }
+
 
   public void fill(int from, int to, double value) {
     checkNotAbsent(value);
@@ -168,13 +287,50 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  @Override
-  public double get(int key) {
-    if (array.length <= key) {
-      return defaultReturnValue();
+  public void setAll(int from, int to, IntToDoubleFunction generator) {
+    int length = array.length;
+    if (length <= to) {
+      int newLength = Math.max(length * 2, to + 1);
+      this.array = Arrays.copyOf(this.array, newLength);
+      Arrays.fill(this.array, to, newLength, Double.NaN);
     }
-    double value = array[key];
-    return isAbsent(value) ? defaultReturnValue() : value;
+    double[] array = this.array;
+    for (int i = from; i < to; i++) {
+      double value = generator.applyAsDouble(i);
+      assert !isAbsent(value);
+      if (isAbsent(array[i])) {
+        size += 1;
+      }
+      array[i] = value;
+    }
+  }
+
+  @Override
+  public void clear() {
+    if (isEmpty()) {
+      return;
+    }
+    Arrays.fill(array, Double.NaN);
+    size = 0;
+  }
+
+
+  @SuppressWarnings("NonFinalFieldReferenceInEquals")
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o instanceof Nat2DoubleDenseArrayMap) {
+      Nat2DoubleDenseArrayMap other = (Nat2DoubleDenseArrayMap) o;
+      if (size != other.size) {
+        return false;
+      }
+      // Note: Number of elements in the two arrays is the same here
+      int mismatch = Arrays.mismatch(this.array, other.array);
+      return mismatch == -1 || mismatch == this.array.length || mismatch == other.array.length;
+    }
+    return super.equals(o);
   }
 
   @SuppressWarnings("NonFinalFieldReferencedInHashCode")
@@ -194,23 +350,6 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     return hash;
   }
 
-  @Override
-  public ObjectSet<Int2DoubleMap.Entry> int2DoubleEntrySet() {
-    if (entriesView == null) {
-      entriesView = new EntrySetView(this);
-    }
-    return new EntrySetView(this);
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  private boolean isAbsent(double value) {
-    return Double.isNaN(value);
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return size == 0;
-  }
 
   @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
   @Override
@@ -219,53 +358,6 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
       keySetView = new KeySetView(this);
     }
     return keySetView;
-  }
-
-  private int nextKey(int index) {
-    for (int i = index; i < array.length; i++) {
-      if (!isAbsent(array[i])) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  @Override
-  public double put(int key, double value) {
-    checkNotAbsent(value);
-    if (ensureSize(key)) {
-      assert isAbsent(array[key]);
-      array[key] = value;
-      size++;
-      return defaultReturnValue();
-    }
-
-    double previous = array[key];
-    array[key] = value;
-    if (isAbsent(previous)) {
-      size++;
-      return defaultReturnValue();
-    }
-    return previous;
-  }
-
-  @Override
-  public double remove(int key) {
-    if (array.length <= key) {
-      return defaultReturnValue();
-    }
-    double previous = array[key];
-    if (isAbsent(previous)) {
-      return defaultReturnValue();
-    }
-    array[key] = Double.NaN;
-    size--;
-    return previous;
-  }
-
-  @Override
-  public int size() {
-    return size;
   }
 
   @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
@@ -277,9 +369,19 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     return valuesView;
   }
 
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+  @Override
+  public ObjectSet<Int2DoubleMap.Entry> int2DoubleEntrySet() {
+    if (entriesView == null) {
+      entriesView = new EntrySetView(this);
+    }
+    return entriesView;
+  }
+
   @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
-  private static class EntryIterator implements ObjectIterator<Entry> {
+  private static class EntryIterator implements ObjectIterator<Int2DoubleMap.Entry> {
     private final Nat2DoubleDenseArrayMap map;
+    private int current = -1;
     private int next;
 
     EntryIterator(Nat2DoubleDenseArrayMap map) {
@@ -293,14 +395,74 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     }
 
     @Override
-    public Entry next() {
+    public Int2DoubleMap.Entry next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
-      int index = next;
+      current = next;
       next = map.nextKey(next + 1);
-      assert map.containsKey(index);
-      return new BasicEntry(index, map.array[index]);
+      assert map.containsKey(current);
+      return new Entry(map, current);
+    }
+
+    @Override
+    public void remove() {
+      if (current == -1) {
+        throw new IllegalStateException();
+      }
+      map.remove(current);
+      current = -1;
+    }
+  }
+
+  private static final class Entry implements Int2DoubleMap.Entry {
+    private final Nat2DoubleDenseArrayMap map;
+    private final int index;
+
+    Entry(Nat2DoubleDenseArrayMap map, int index) {
+      this.map = map;
+      this.index = index;
+    }
+
+    @Override
+    public int getIntKey() {
+      return index;
+    }
+
+    @Override
+    public double getDoubleValue() {
+      return map.array[index];
+    }
+
+    @Override
+    public double setValue(double value) {
+      return map.put(index, value);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (!(o instanceof Map.Entry)) {
+        return false;
+      }
+      if (o instanceof Int2DoubleMap.Entry) {
+        Int2DoubleMap.Entry e = (Int2DoubleMap.Entry) o;
+        return getIntKey() == e.getIntKey() && getDoubleValue() == e.getDoubleValue();
+      }
+      Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
+      Object key = e.getKey();
+      if (!(key instanceof Integer)) {
+        return false;
+      }
+      Object value = e.getValue();
+      if (!(value instanceof Double)) {
+        return false;
+      }
+      return getIntKey() == (Integer) key && getDoubleValue() == (Double) value;
+    }
+
+    @Override
+    public int hashCode() {
+      return HashCommon.mix(index) ^ Double.hashCode(getDoubleValue());
     }
   }
 
@@ -325,7 +487,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     }
   }
 
-  private static class FastEntryIterator implements ObjectIterator<Entry> {
+  private static class FastEntryIterator implements ObjectIterator<Int2DoubleMap.Entry> {
     private final FastMapEntry entry;
     private final Nat2DoubleDenseArrayMap map;
     private int next;
@@ -342,8 +504,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     }
 
     @Override
-
-    public Entry next() {
+    public Int2DoubleMap.Entry next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
@@ -378,6 +539,7 @@ public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
 
     @Override
     public int getIntKey() {
+      assert index >= 0;
       return index;
     }
 

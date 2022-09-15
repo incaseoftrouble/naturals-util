@@ -17,6 +17,7 @@
 
 package de.tum.in.naturals.map;
 
+import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.doubles.AbstractDoubleCollection;
 import it.unimi.dsi.fastutil.doubles.DoubleArrays;
 import it.unimi.dsi.fastutil.doubles.DoubleCollection;
@@ -85,9 +86,37 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     values = new double[] {value};
   }
 
+  private int keyIndex(int key) {
+    return Arrays.binarySearch(keys, 0, size, key);
+  }
+
+  protected void removeIndex(int index) {
+    assert index < size;
+    int nextIndex = index + 1;
+    if (nextIndex < size) {
+      int tail = size - nextIndex;
+      System.arraycopy(keys, nextIndex, keys, index, tail);
+      System.arraycopy(values, nextIndex, values, index, tail);
+    }
+    size--;
+  }
+
+  public void trim() {
+    if (keys.length == size) {
+      return;
+    }
+    keys = Arrays.copyOf(keys, size);
+    values = Arrays.copyOf(values, size);
+  }
+
   @Override
-  public void clear() {
-    size = 0;
+  public boolean isEmpty() {
+    return size == 0;
+  }
+
+  @Override
+  public int size() {
+    return size;
   }
 
   @Override
@@ -98,26 +127,13 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
   @Override
   public boolean containsValue(double v) {
     long valueBits = Double.doubleToRawLongBits(v);
-    for (int index = 0; index < keys.length; index++) {
+    double[] values = this.values;
+    for (int index = 0; index < size; index++) {
       if (Double.doubleToRawLongBits(values[index]) == valueBits) {
         return true;
       }
     }
     return false;
-  }
-
-  @SuppressWarnings("NonFinalFieldReferenceInEquals")
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o instanceof Int2DoubleSortedArrayMap) {
-      Int2DoubleSortedArrayMap other = (Int2DoubleSortedArrayMap) o;
-      return size == other.size && Arrays.equals(keys, other.keys)
-          && Arrays.equals(values, other.values);
-    }
-    return super.equals(o);
   }
 
   @Override
@@ -126,37 +142,10 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     return 0 <= index ? values[index] : defRetValue;
   }
 
-  @SuppressWarnings("NonFinalFieldReferencedInHashCode")
   @Override
-  public int hashCode() {
-    return Arrays.hashCode(keys) ^ Arrays.hashCode(values);
-  }
-
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  @Override
-  public ObjectSet<Entry> int2DoubleEntrySet() {
-    if (entrySetView == null) {
-      entrySetView = new EntrySetView(this);
-    }
-    return entrySetView;
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return size == 0;
-  }
-
-  private int keyIndex(int key) {
-    return Arrays.binarySearch(keys, 0, size, key);
-  }
-
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  @Override
-  public IntSet keySet() {
-    if (keySetView == null) {
-      keySetView = new KeySetView(this);
-    }
-    return keySetView;
+  public double getOrDefault(int key, double defaultValue) {
+    int index = keyIndex(key);
+    return 0 <= index ? values[index] : defaultValue;
   }
 
   @Override
@@ -169,7 +158,7 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     }
 
     int index = keyIndex(key);
-    assert -(size + 1) <= index && index < size : size + " " + index;
+    assert -(size + 1) <= index && index < size;
 
     if (index >= 0) {
       double oldValue = values[index];
@@ -218,6 +207,11 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
   }
 
   @Override
+  public void clear() {
+    size = 0;
+  }
+
+  @Override
   public double remove(int key) {
     int index = keyIndex(key);
     if (index < 0) {
@@ -228,20 +222,29 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     return value;
   }
 
-  protected void removeIndex(int index) {
-    assert index < size;
-    int nextIndex = index + 1;
-    if (nextIndex < size) {
-      int tail = size - nextIndex;
-      System.arraycopy(keys, nextIndex, keys, index, tail);
-      System.arraycopy(values, nextIndex, values, index, tail);
+  @SuppressWarnings("NonFinalFieldReferenceInEquals")
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-    size--;
+    if (o instanceof Int2DoubleSortedArrayMap) {
+      Int2DoubleSortedArrayMap other = (Int2DoubleSortedArrayMap) o;
+      return Arrays.equals(keys, 0, size, other.keys, 0, other.size)
+          && Arrays.equals(values, 0, size, other.values, 0, other.size);
+    }
+    return super.equals(o);
   }
 
+  @SuppressWarnings("NonFinalFieldReferencedInHashCode")
   @Override
-  public int size() {
-    return size;
+  public int hashCode() {
+    int hash = HashCommon.mix(size);
+    for (int i = 0; i < size; i++) {
+      hash += HashCommon.mix(keys[i]);
+      hash += Double.hashCode(values[i]);
+    }
+    return hash;
   }
 
   @Override
@@ -259,12 +262,13 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     return builder.toString();
   }
 
-  public void trim() {
-    if (keys.length == size) {
-      return;
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+  @Override
+  public IntSet keySet() {
+    if (keySetView == null) {
+      keySetView = new KeySetView(this);
     }
-    keys = Arrays.copyOf(keys, size);
-    values = Arrays.copyOf(values, size);
+    return keySetView;
   }
 
   @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
@@ -274,6 +278,15 @@ public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
       valuesView = new ValuesView(this);
     }
     return valuesView;
+  }
+
+  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+  @Override
+  public ObjectSet<Entry> int2DoubleEntrySet() {
+    if (entrySetView == null) {
+      entrySetView = new EntrySetView(this);
+    }
+    return entrySetView;
   }
 
   private static class EntryIterator implements ObjectIterator<Entry> {

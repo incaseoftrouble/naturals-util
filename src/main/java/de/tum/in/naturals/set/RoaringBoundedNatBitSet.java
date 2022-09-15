@@ -227,6 +227,13 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
 
 
   @Override
+  public boolean add(int index) {
+    assert checkConsistency();
+    checkInDomain(index);
+    return complement ? bitmap.checkedRemove(index) : bitmap.checkedAdd(index);
+  }
+
+  @Override
   public void set(int index) {
     assert checkConsistency();
     checkInDomain(index);
@@ -271,6 +278,13 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       bitmap.clear();
     }
     assert checkConsistency();
+  }
+
+  @Override
+  public boolean remove(int index) {
+    assert checkConsistency();
+    checkInDomain(index);
+    return complement ? bitmap.checkedAdd(index) : bitmap.checkedRemove(index);
   }
 
   @Override
@@ -335,8 +349,7 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       RoaringNatBitSet other = (RoaringNatBitSet) indices;
 
       if (complement) {
-        return other.bitmap().getCardinality()
-            > RoaringBitmap.andCardinality(other.bitmap(), bitmap);
+        return other.bitmap().getCardinality() > RoaringBitmap.andCardinality(other.bitmap(), bitmap);
       }
       return RoaringBitmap.intersects(bitmap, other.bitmap());
     }
@@ -385,6 +398,35 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
       bitmap.andNot(other);
       bitmap.remove(otherDomainSize, (long) domainSize);
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean retainAll(Collection<?> indices) {
+    if (indices instanceof IntCollection) {
+      return retainAll((IntCollection) indices);
+    }
+    if (isEmpty()) {
+      return false;
+    }
+    if (indices.isEmpty()) {
+      clear();
+      return true;
+    }
+    int size = size();
+    RoaringBitmap bitmap = new RoaringBitmap();
+    for (Object o : indices) {
+      int v = (Integer) o;
+      if (v <= domainSize()) {
+        bitmap.add(v);
+      }
+    }
+    if (complement) {
+      this.bitmap.orNot(bitmap, domainSize());
+    } else {
+      this.bitmap.and(bitmap);
+    }
+    return size() < size;
   }
 
 
@@ -455,6 +497,31 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
         bitmap.and(other);
       }
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean removeAll(Collection<?> indices) {
+    if (indices instanceof IntCollection) {
+      return removeAll((IntCollection) indices);
+    }
+    if (isEmpty() || indices.isEmpty()) {
+      return false;
+    }
+    int size = size();
+    RoaringBitmap bitmap = new RoaringBitmap();
+    for (Object o : indices) {
+      int v = (Integer) o;
+      if (v <= domainSize()) {
+        bitmap.add(v);
+      }
+    }
+    if (complement) {
+      this.bitmap.or(bitmap);
+    } else {
+      this.bitmap.andNot(bitmap);
+    }
+    return size() < size;
   }
 
 
@@ -586,12 +653,17 @@ class RoaringBoundedNatBitSet extends AbstractBoundedNatBitSet {
   @Override
   public boolean removeIf(IntPredicate filter) {
     RoaringBitmap remove = new RoaringBitmap();
-    (complement ? complementBits() : bitmap).forEach((int i) -> {
+    if (complement) {
+      // TODO is it faster to flip or use a complement iterator?
+      bitmap.flip(0L, domainSize());
+    }
+    bitmap.forEach((int i) -> {
       if (filter.test(i)) {
         remove.add(i);
       }
     });
     if (complement) {
+      bitmap.flip(0L, domainSize());
       bitmap.or(remove);
     } else {
       bitmap.andNot(remove);
