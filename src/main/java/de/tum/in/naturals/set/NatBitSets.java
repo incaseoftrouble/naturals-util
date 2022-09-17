@@ -385,6 +385,11 @@ public final class NatBitSets {
       }
       return bitmap;
     }
+    if (indices.lastInt() - indices.firstInt() == indices.size() - 1) {
+      RoaringBitmap bitmap = new RoaringBitmap();
+      bitmap.add((long) indices.firstInt(), indices.lastInt() + 1);
+      return bitmap;
+    }
 
     RoaringBitmap bitmap = new RoaringBitmap();
     indices.forEach((IntConsumer) bitmap::add);
@@ -396,7 +401,7 @@ public final class NatBitSets {
 
   /**
    * Sets the default factory.
-   *
+   * <p>
    * <strong>Warning:</strong> This method is only intended for local performance testing, e.g.,
    * whether using only sparse or simple bit sets is faster. This should not remain in production
    * code, since it could lead to conflicts.
