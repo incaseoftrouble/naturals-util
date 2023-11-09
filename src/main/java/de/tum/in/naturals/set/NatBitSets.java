@@ -22,15 +22,14 @@ import de.tum.in.naturals.bitset.BitSets;
 import de.tum.in.naturals.bitset.SparseBitSets;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.IntConsumer;
-import javax.annotation.Nonnegative;
 import org.roaringbitmap.RoaringBitmap;
+
+import javax.annotation.Nonnegative;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.IntConsumer;
 
 public final class NatBitSets {
     public static final int UNKNOWN_LENGTH = -1;
@@ -390,7 +389,7 @@ public final class NatBitSets {
 
     /**
      * Sets the default factory.
-     *
+     * <p>
      * <strong>Warning:</strong> This method is only intended for local performance testing, e.g.,
      * whether using only sparse or simple bit sets is faster. This should not remain in production
      * code, since it could lead to conflicts.
@@ -575,5 +574,48 @@ public final class NatBitSets {
      */
     public static NatBitSet setWithMaximalLength(int maximalLength) {
         return factory.setWithExpectedSize(maximalLength);
+    }
+
+    // --- Utilities ---
+
+    public static boolean intersects(Set<Integer> one, Set<Integer> other) {
+        if (one == other) { // NOPMD
+            return !one.isEmpty();
+        }
+        if (one instanceof NatBitSet) {
+            return ((NatBitSet) one).intersects(other);
+        }
+        if (other instanceof NatBitSet) {
+            return ((NatBitSet) other).intersects(one);
+        }
+        if (one instanceof IntSet && other instanceof IntSet) {
+            boolean oneSmaller = one.size() < other.size();
+            IntSet iterate = (IntSet) (oneSmaller ? one : other);
+            IntSet contains = (IntSet) (oneSmaller ? other : one);
+            IntIterator iterator = iterate.intIterator();
+            while (iterator.hasNext()) {
+                if (contains.contains(iterator.nextInt())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return !Collections.disjoint(one, other);
+    }
+
+    public static <S> NatBitSet lazyUnion(Collection<S> sets, Function<S, NatBitSet> map) {
+        if (sets.size() == 1) {
+            return map.apply(sets.iterator().next());
+        }
+        return union(sets, map);
+    }
+
+    public static <S> NatBitSet union(Collection<S> sets, Function<S, NatBitSet> map) {
+        var iterator = sets.iterator();
+        var union = NatBitSets.copyOf(map.apply(iterator.next()));
+        while (iterator.hasNext()) {
+            union.or(map.apply(iterator.next()));
+        }
+        return union;
     }
 }
