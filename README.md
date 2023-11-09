@@ -21,11 +21,3 @@ Build the project using gradle.
 All dependencies are downloaded automatically.
 
     $ ./gradlew build
-
-Or, if you are on Windows,
-
-    # gradlew.bat build
-
-## Versions
-
-Version numbering follows [SemVer](http://semver.org/).
