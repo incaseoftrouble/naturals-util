@@ -26,227 +26,219 @@ import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
 final class FixedSizeNatBitSet extends AbstractBoundedNatBitSet {
-  private final boolean complement;
-  private final FixedSizeNatBitSet complementView;
+    private final boolean complement;
+    private final FixedSizeNatBitSet complementView;
 
-  FixedSizeNatBitSet(int domainSize) {
-    super(domainSize);
-    if (domainSize == 0) {
-      complement = true;
-      complementView = this;
-    } else {
-      this.complement = false;
-      this.complementView = new FixedSizeNatBitSet(this);
-    }
-  }
-
-  private FixedSizeNatBitSet(FixedSizeNatBitSet other) {
-    super(other.domainSize());
-    complement = !other.complement;
-    complementView = other;
-  }
-
-
-  @Override
-  boolean isComplement() {
-    return complement;
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return complement;
-  }
-
-  @Override
-  public int size() {
-    return isEmpty() ? 0 : domainSize();
-  }
-
-  @Override
-  public boolean contains(int index) {
-    return !complement && inDomain(index);
-  }
-
-  @Override
-  public boolean containsAll(IntCollection indices) {
-    if (indices.isEmpty()) {
-      return true;
-    }
-    if (complement) {
-      // "indices" is not empty here
-      return false;
-    }
-    if (indices instanceof NatBitSet) {
-      NatBitSet natBitSet = (NatBitSet) indices;
-      return natBitSet.lastInt() < domainSize();
-    }
-    if (indices instanceof IntSortedSet) {
-      IntSortedSet sortedSet = (IntSortedSet) indices;
-      return 0 <= sortedSet.firstInt() && sortedSet.lastInt() < domainSize();
-    }
-    if (indices instanceof SortedSet<?>) {
-      //noinspection unchecked
-      SortedSet<Integer> sortedSet = (SortedSet<Integer>) indices;
-      return 0 <= sortedSet.first() && sortedSet.last() < domainSize();
+    FixedSizeNatBitSet(int domainSize) {
+        super(domainSize);
+        if (domainSize == 0) {
+            complement = true;
+            complementView = this;
+        } else {
+            this.complement = false;
+            this.complementView = new FixedSizeNatBitSet(this);
+        }
     }
 
-    IntIterator iterator = indices.iterator();
-    while (iterator.hasNext()) {
-      if (!contains(iterator.nextInt())) {
-        return false;
-      }
+    private FixedSizeNatBitSet(FixedSizeNatBitSet other) {
+        super(other.domainSize());
+        complement = !other.complement;
+        complementView = other;
     }
-    return true;
-  }
 
-
-  @Override
-  public int firstInt() {
-    if (isEmpty()) {
-      throw new NoSuchElementException();
+    @Override
+    boolean isComplement() {
+        return complement;
     }
-    return 0;
-  }
 
-  @Override
-  public int lastInt() {
-    if (isEmpty()) {
-      throw new NoSuchElementException();
+    @Override
+    public boolean isEmpty() {
+        return complement;
     }
-    return domainSize() - 1;
-  }
 
-
-  @Override
-  public int nextPresentIndex(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (complement) {
-      return -1;
+    @Override
+    public int size() {
+        return isEmpty() ? 0 : domainSize();
     }
-    return index < domainSize() ? index : -1;
-  }
 
-  @Override
-  public int nextAbsentIndex(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (complement) {
-      return index;
+    @Override
+    public boolean contains(int index) {
+        return !complement && inDomain(index);
     }
-    return Math.max(index, domainSize());
-  }
 
-  @Override
-  public int previousPresentIndex(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (complement) {
-      return -1;
+    @Override
+    public boolean containsAll(IntCollection indices) {
+        if (indices.isEmpty()) {
+            return true;
+        }
+        if (complement) {
+            // "indices" is not empty here
+            return false;
+        }
+        if (indices instanceof NatBitSet) {
+            NatBitSet natBitSet = (NatBitSet) indices;
+            return natBitSet.lastInt() < domainSize();
+        }
+        if (indices instanceof IntSortedSet) {
+            IntSortedSet sortedSet = (IntSortedSet) indices;
+            return 0 <= sortedSet.firstInt() && sortedSet.lastInt() < domainSize();
+        }
+        if (indices instanceof SortedSet<?>) {
+            //noinspection unchecked
+            SortedSet<Integer> sortedSet = (SortedSet<Integer>) indices;
+            return 0 <= sortedSet.first() && sortedSet.last() < domainSize();
+        }
+
+        IntIterator iterator = indices.iterator();
+        while (iterator.hasNext()) {
+            if (!contains(iterator.nextInt())) {
+                return false;
+            }
+        }
+        return true;
     }
-    return index >= domainSize() ? domainSize() - 1 : index;
-  }
 
-  @Override
-  public int previousAbsentIndex(int index) {
-    NatBitSetsUtil.checkNonNegative(index);
-    if (complement) {
-      return index;
+    @Override
+    public int firstInt() {
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        return 0;
     }
-    return index >= domainSize() ? index : -1;
-  }
 
-
-  @Override
-  public IntIterator iterator() {
-    return isEmpty() ? IntIterators.EMPTY_ITERATOR : IntIterators.fromTo(0, domainSize());
-  }
-
-  @Override
-  public IntIterator reverseIterator() {
-    return isEmpty() ? IntIterators.EMPTY_ITERATOR : new ReverseRangeIterator(0, domainSize());
-  }
-
-
-  @Override
-  public void set(int index) {
-    checkInDomain(index);
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void set(int index, boolean value) {
-    checkInDomain(index);
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void set(int from, int to) {
-    checkInDomain(from, to);
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clear(int index) {
-    checkInDomain(index);
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clear(int from, int to) {
-    checkInDomain(from, to);
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void flip(int index) {
-    checkInDomain(index);
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void flip(int from, int to) {
-    checkInDomain(from, to);
-    throw new UnsupportedOperationException();
-  }
-
-
-  @Override
-  public boolean intersects(Collection<Integer> indices) {
-    if (isEmpty() || indices.isEmpty()) {
-      return false;
+    @Override
+    public int lastInt() {
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        return domainSize() - 1;
     }
-    if (indices instanceof IntCollection) {
-      IntCollection intIndices = ((IntCollection) indices);
-      if (indices instanceof NatBitSet) {
-        NatBitSet natBitSet = (NatBitSet) indices;
-        return contains(natBitSet.firstInt());
-      }
-      if (indices instanceof IntSortedSet) {
-        IntSortedSet sortedInts = (IntSortedSet) indices;
-        return !sortedInts.subSet(0, domainSize()).isEmpty();
-      }
-      if (indices.size() <= domainSize()) {
-        return IntIterators.any(intIndices.iterator(), this::contains);
-      }
-      return IntIterators.any(iterator(), indices::contains);
+
+    @Override
+    public int nextPresentIndex(int index) {
+        NatBitSetsUtil.checkNonNegative(index);
+        if (complement) {
+            return -1;
+        }
+        return index < domainSize() ? index : -1;
     }
-    return super.intersects(indices);
-  }
 
+    @Override
+    public int nextAbsentIndex(int index) {
+        NatBitSetsUtil.checkNonNegative(index);
+        if (complement) {
+            return index;
+        }
+        return Math.max(index, domainSize());
+    }
 
-  @Override
-  public FixedSizeNatBitSet clone() {
-    // Immutable object
-    return this;
-  }
+    @Override
+    public int previousPresentIndex(int index) {
+        NatBitSetsUtil.checkNonNegative(index);
+        if (complement) {
+            return -1;
+        }
+        return index >= domainSize() ? domainSize() - 1 : index;
+    }
 
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  @Override
-  public BoundedNatBitSet complement() {
-    return complementView;
-  }
+    @Override
+    public int previousAbsentIndex(int index) {
+        NatBitSetsUtil.checkNonNegative(index);
+        if (complement) {
+            return index;
+        }
+        return index >= domainSize() ? index : -1;
+    }
 
+    @Override
+    public IntIterator iterator() {
+        return isEmpty() ? IntIterators.EMPTY_ITERATOR : IntIterators.fromTo(0, domainSize());
+    }
+
+    @Override
+    public IntIterator reverseIterator() {
+        return isEmpty() ? IntIterators.EMPTY_ITERATOR : new ReverseRangeIterator(0, domainSize());
+    }
+
+    @Override
+    public void set(int index) {
+        checkInDomain(index);
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void set(int index, boolean value) {
+        checkInDomain(index);
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void set(int from, int to) {
+        checkInDomain(from, to);
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear(int index) {
+        checkInDomain(index);
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear(int from, int to) {
+        checkInDomain(from, to);
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void flip(int index) {
+        checkInDomain(index);
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void flip(int from, int to) {
+        checkInDomain(from, to);
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean intersects(Collection<Integer> indices) {
+        if (isEmpty() || indices.isEmpty()) {
+            return false;
+        }
+        if (indices instanceof IntCollection) {
+            IntCollection intIndices = ((IntCollection) indices);
+            if (indices instanceof NatBitSet) {
+                NatBitSet natBitSet = (NatBitSet) indices;
+                return contains(natBitSet.firstInt());
+            }
+            if (indices instanceof IntSortedSet) {
+                IntSortedSet sortedInts = (IntSortedSet) indices;
+                return !sortedInts.subSet(0, domainSize()).isEmpty();
+            }
+            if (indices.size() <= domainSize()) {
+                return IntIterators.any(intIndices.iterator(), this::contains);
+            }
+            return IntIterators.any(iterator(), indices::contains);
+        }
+        return super.intersects(indices);
+    }
+
+    @Override
+    public FixedSizeNatBitSet clone() {
+        // Immutable object
+        return this;
+    }
+
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    @Override
+    public BoundedNatBitSet complement() {
+        return complementView;
+    }
 }

@@ -33,49 +33,48 @@ import javax.annotation.Nonnegative;
  * A set of non-negative integers.
  */
 public interface NatSet extends IntSet {
-  /**
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   */
-  @Override
-  boolean add(@Nonnegative int index);
+    /**
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     */
+    @Override
+    boolean add(@Nonnegative int index);
 
-  /**
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   */
-  @Override
-  boolean remove(@Nonnegative int index);
+    /**
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     */
+    @Override
+    boolean remove(@Nonnegative int index);
 
+    @SuppressWarnings("deprecation")
+    @Override
+    default Stream<Integer> stream() {
+        return intStream().boxed();
+    }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  default Stream<Integer> stream() {
-    return intStream().boxed();
-  }
+    /**
+     * Returns an int stream compatible with the {@link #spliterator() spliterator}.
+     */
+    @Override
+    default IntStream intStream() {
+        return StreamSupport.intStream(this::spliterator, SPLITERATOR_CHARACTERISTICS, false);
+    }
 
-  /**
-   * Returns an int stream compatible with the {@link #spliterator() spliterator}.
-   */
-  @Override
-  default IntStream intStream() {
-    return StreamSupport.intStream(this::spliterator, SPLITERATOR_CHARACTERISTICS, false);
-  }
+    /**
+     * Returns a spliterator over this set. The spliterator is expected to be
+     * {@link Spliterator#SIZED sized}, {@link Spliterator#DISTINCT distinct},
+     * {@link Spliterator#ORDERED ordered}, and {@link Spliterator#SORTED sorted}.
+     */
+    @Override
+    default IntSpliterator spliterator() {
+        return IntSpliterators.asSpliterator(iterator(), size(), SPLITERATOR_CHARACTERISTICS);
+    }
 
-  /**
-   * Returns a spliterator over this set. The spliterator is expected to be
-   * {@link Spliterator#SIZED sized}, {@link Spliterator#DISTINCT distinct},
-   * {@link Spliterator#ORDERED ordered}, and {@link Spliterator#SORTED sorted}.
-   */
-  @Override
-  default IntSpliterator spliterator() {
-    return IntSpliterators.asSpliterator(iterator(), size(), SPLITERATOR_CHARACTERISTICS);
-  }
-
-  /**
-   * Returns an {@link IntIterator iterator} returning the elements of this set in descending order.
-   *
-   * @see #iterator()
-   */
-  IntIterator reverseIterator();
+    /**
+     * Returns an {@link IntIterator iterator} returning the elements of this set in descending order.
+     *
+     * @see #iterator()
+     */
+    IntIterator reverseIterator();
 }

@@ -28,84 +28,84 @@ import java.util.NoSuchElementException;
  * <strong>Warning</strong>: For performance, the returned array is modified in place.
  */
 public class PowerSetIterator implements Iterator<boolean[]> {
-  private final boolean[] base;
-  private final boolean[] current;
-  private final int domainSize;
-  private boolean first = true;
+    private final boolean[] base;
+    private final boolean[] current;
+    private final int domainSize;
+    private boolean first = true;
 
-  public PowerSetIterator(boolean[] base) {
-    this.base = base.clone();
-    this.current = new boolean[base.length];
-    int domainSize = 0;
-    for (boolean value : this.base) {
-      if (value) {
-        domainSize += 1;
-      }
-    }
-    this.domainSize = domainSize;
-  }
-
-  public int currentIndex() {
-    if (domainSize > Integer.SIZE) {
-      throw new IllegalStateException();
+    public PowerSetIterator(boolean[] base) {
+        this.base = base.clone();
+        this.current = new boolean[base.length];
+        int domainSize = 0;
+        for (boolean value : this.base) {
+            if (value) {
+                domainSize += 1;
+            }
+        }
+        this.domainSize = domainSize;
     }
 
-    int index = 0;
-    for (int i = 0; i < base.length; i++) {
-      if (current[i]) {
-        index |= 1 << i;
-      }
-    }
-    return index;
-  }
+    public int currentIndex() {
+        if (domainSize > Integer.SIZE) {
+            throw new IllegalStateException();
+        }
 
-  public long currentIndexLong() {
-    if (domainSize > Long.SIZE) {
-      throw new IllegalStateException();
-    }
-
-    long index = 0L;
-    for (int i = 0; i < base.length; i++) {
-      if (current[i]) {
-        index |= 1L << i;
-      }
-    }
-    return index;
-  }
-
-  @Override
-  public boolean hasNext() {
-    if (first) {
-      return true;
-    }
-    for (int i = 0; i < base.length; i++) {
-      if (base[i] && !current[i]) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  @Override
-  public boolean[] next() {
-    if (first) {
-      first = false;
-      return current;
+        int index = 0;
+        for (int i = 0; i < base.length; i++) {
+            if (current[i]) {
+                index |= 1 << i;
+            }
+        }
+        return index;
     }
 
-    for (int i = 0; i < base.length; i++) {
-      if (!base[i]) {
-        continue;
-      }
-      if (current[i]) {
-        current[i] = false;
-      } else {
-        current[i] = true;
-        return current;
-      }
+    public long currentIndexLong() {
+        if (domainSize > Long.SIZE) {
+            throw new IllegalStateException();
+        }
+
+        long index = 0L;
+        for (int i = 0; i < base.length; i++) {
+            if (current[i]) {
+                index |= 1L << i;
+            }
+        }
+        return index;
     }
 
-    throw new NoSuchElementException("No next element");
-  }
+    @Override
+    public boolean hasNext() {
+        if (first) {
+            return true;
+        }
+        for (int i = 0; i < base.length; i++) {
+            if (base[i] && !current[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    @Override
+    public boolean[] next() {
+        if (first) {
+            first = false;
+            return current;
+        }
+
+        for (int i = 0; i < base.length; i++) {
+            if (!base[i]) {
+                continue;
+            }
+            if (current[i]) {
+                current[i] = false;
+            } else {
+                current[i] = true;
+                return current;
+            }
+        }
+
+        throw new NoSuchElementException("No next element");
+    }
 }

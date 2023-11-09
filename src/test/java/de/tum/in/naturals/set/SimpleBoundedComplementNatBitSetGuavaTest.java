@@ -26,14 +26,16 @@ import org.junit.runners.AllTests;
 @SuppressWarnings({"PMD.JUnit4SuitesShouldUseSuiteAnnotation", "PMD.UseUtilityClass"})
 @RunWith(AllTests.class)
 public class SimpleBoundedComplementNatBitSetGuavaTest {
-  private static NatBitSet create() {
-    SimpleBoundedNatBitSet set = new SimpleBoundedNatBitSet(new BitSet(), 13).complement();
-    set.clear();
-    return set;
-  }
+    private static NatBitSet create() {
+        SimpleBoundedNatBitSet set = new SimpleBoundedNatBitSet(new BitSet(), 13).complement();
+        set.clear();
+        return set;
+    }
 
-  public static TestSuite suite() {
-    return GuavaSetTest.createNatSet(SimpleBoundedComplementNatBitSetGuavaTest::create,
-        "SimpleBoundedComplementNatBitSetGuavaTest", Set.of());
-  }
+    public static TestSuite suite() {
+        return GuavaSetTest.createNatSet(
+                SimpleBoundedComplementNatBitSetGuavaTest::create,
+                "SimpleBoundedComplementNatBitSetGuavaTest",
+                Set.of());
+    }
 }

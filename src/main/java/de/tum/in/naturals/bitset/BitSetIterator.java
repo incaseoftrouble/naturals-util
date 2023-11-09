@@ -22,41 +22,41 @@ import java.util.BitSet;
 import java.util.NoSuchElementException;
 
 final class BitSetIterator implements IntIterator {
-  private final BitSet bitSet;
-  private int current = -1;
-  private int next;
+    private final BitSet bitSet;
+    private int current = -1;
+    private int next;
 
-  BitSetIterator(BitSet bitSet) {
-    this.bitSet = bitSet;
-    next = getNext(0);
-  }
-
-  private int getNext(int index) {
-    return bitSet.nextSetBit(index);
-  }
-
-  @Override
-  public boolean hasNext() {
-    return next != -1;
-  }
-
-  @Override
-  public int nextInt() {
-    if (next == -1) {
-      throw new NoSuchElementException();
+    BitSetIterator(BitSet bitSet) {
+        this.bitSet = bitSet;
+        next = getNext(0);
     }
-    current = next;
-    next = getNext(next + 1);
-    return current;
-  }
 
-  @Override
-  public void remove() {
-    if (current == -1) {
-      throw new IllegalStateException();
+    private int getNext(int index) {
+        return bitSet.nextSetBit(index);
     }
-    assert bitSet.get(current);
-    bitSet.clear(current);
-    current = -1;
-  }
+
+    @Override
+    public boolean hasNext() {
+        return next != -1;
+    }
+
+    @Override
+    public int nextInt() {
+        if (next == -1) {
+            throw new NoSuchElementException();
+        }
+        current = next;
+        next = getNext(next + 1);
+        return current;
+    }
+
+    @Override
+    public void remove() {
+        if (current == -1) {
+            throw new IllegalStateException();
+        }
+        assert bitSet.get(current);
+        bitSet.clear(current);
+        current = -1;
+    }
 }

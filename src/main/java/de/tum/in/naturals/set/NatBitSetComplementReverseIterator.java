@@ -21,35 +21,35 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
 
 class NatBitSetComplementReverseIterator implements IntIterator {
-  private final NatBitSet set;
-  private int current;
+    private final NatBitSet set;
+    private int current;
 
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  public NatBitSetComplementReverseIterator(NatBitSet set, int length) {
-    this.set = set;
-    current = set.previousAbsentIndex(length);
-  }
-
-  @Override
-  public boolean hasNext() {
-    return current != -1;
-  }
-
-  @Override
-  public int nextInt() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    public NatBitSetComplementReverseIterator(NatBitSet set, int length) {
+        this.set = set;
+        current = set.previousAbsentIndex(length);
     }
-    int result = current;
-    current = set.previousAbsentIndex(current - 1);
-    return result;
-  }
 
-  @Override
-  public void remove() {
-    if (set.contains(current)) {
-      throw new IllegalStateException();
+    @Override
+    public boolean hasNext() {
+        return current != -1;
     }
-    set.set(current);
-  }
+
+    @Override
+    public int nextInt() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        int result = current;
+        current = set.previousAbsentIndex(current - 1);
+        return result;
+    }
+
+    @Override
+    public void remove() {
+        if (set.contains(current)) {
+            throw new IllegalStateException();
+        }
+        set.set(current);
+    }
 }

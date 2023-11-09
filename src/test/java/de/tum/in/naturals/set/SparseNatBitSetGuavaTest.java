@@ -26,9 +26,8 @@ import org.junit.runners.AllTests;
 @SuppressWarnings({"PMD.JUnit4SuitesShouldUseSuiteAnnotation", "PMD.UseUtilityClass"})
 @RunWith(AllTests.class)
 public class SparseNatBitSetGuavaTest {
-  public static TestSuite suite() {
-    return GuavaSetTest.createNatSet(() -> new SparseNatBitSet(new SparseBitSet()),
-        "SparseNatBitSetGuavaTest", Set.of());
-  }
-
+    public static TestSuite suite() {
+        return GuavaSetTest.createNatSet(
+                () -> new SparseNatBitSet(new SparseBitSet()), "SparseNatBitSetGuavaTest", Set.of());
+    }
 }

@@ -20,39 +20,39 @@ package de.tum.in.naturals.set;
 import java.util.Spliterator;
 
 public final class NatBitSetsUtil {
-  public static final int SPLITERATOR_CHARACTERISTICS = Spliterator.ORDERED | Spliterator.SORTED
-      | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SIZED;
+    public static final int SPLITERATOR_CHARACTERISTICS =
+            Spliterator.ORDERED | Spliterator.SORTED | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SIZED;
 
-  private NatBitSetsUtil() {}
+    private NatBitSetsUtil() {}
 
-  public static void checkInDomain(int domainSize, int index) {
-    checkNonNegative(index);
-    if (domainSize <= index) {
-      throw new IndexOutOfBoundsException(String.format("Index %d too large for domain [0, %d)",
-          index, domainSize));
+    public static void checkInDomain(int domainSize, int index) {
+        checkNonNegative(index);
+        if (domainSize <= index) {
+            throw new IndexOutOfBoundsException(
+                    String.format("Index %d too large for domain [0, %d)", index, domainSize));
+        }
     }
-  }
 
-  public static void checkInDomain(int domainSize, int from, int to) {
-    checkRange(from, to);
-    if (domainSize < to) {
-      throw new IndexOutOfBoundsException(String.format("To index %d too large for domain [0, %d)",
-          to, domainSize));
+    public static void checkInDomain(int domainSize, int from, int to) {
+        checkRange(from, to);
+        if (domainSize < to) {
+            throw new IndexOutOfBoundsException(
+                    String.format("To index %d too large for domain [0, %d)", to, domainSize));
+        }
     }
-  }
 
-  public static void checkNonNegative(int index) {
-    if (index < 0) {
-      throw new IndexOutOfBoundsException(String.format("Negative index %d ", index));
+    public static void checkNonNegative(int index) {
+        if (index < 0) {
+            throw new IndexOutOfBoundsException(String.format("Negative index %d ", index));
+        }
     }
-  }
 
-  public static void checkRange(int from, int to) {
-    if (to < from) {
-      throw new IndexOutOfBoundsException(String.format("From %d bigger than to %d", from, to));
+    public static void checkRange(int from, int to) {
+        if (to < from) {
+            throw new IndexOutOfBoundsException(String.format("From %d bigger than to %d", from, to));
+        }
+        if (from < 0) {
+            throw new IndexOutOfBoundsException(String.format("Negative from index %d ", from));
+        }
     }
-    if (from < 0) {
-      throw new IndexOutOfBoundsException(String.format("Negative from index %d ", from));
-    }
-  }
 }

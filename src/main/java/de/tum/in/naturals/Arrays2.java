@@ -22,72 +22,72 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class Arrays2 {
-  private Arrays2() {}
+    private Arrays2() {}
 
-  public static int cardinality(boolean[] array) {
-    int count = 0;
-    for (boolean val : array) {
-      if (val) {
-        count += 1;
-      }
+    public static int cardinality(boolean[] array) {
+        int count = 0;
+        for (boolean val : array) {
+            if (val) {
+                count += 1;
+            }
+        }
+        return count;
     }
-    return count;
-  }
 
-  public static int sum(int[] array) {
-    int sum = 0;
-    for (int value : array) {
-      sum += value;
+    public static int sum(int[] array) {
+        int sum = 0;
+        for (int value : array) {
+            sum += value;
+        }
+        return sum;
     }
-    return sum;
-  }
 
-  public static long sumLong(int[] array) {
-    long sum = 0L;
-    for (int value : array) {
-      sum += value;
+    public static long sumLong(int[] array) {
+        long sum = 0L;
+        for (int value : array) {
+            sum += value;
+        }
+        return sum;
     }
-    return sum;
-  }
 
-  public static <E> void forEach(E[] array, Consumer<? super E> action) {
-    for (E element : array) {
-      action.accept(element);
+    public static <E> void forEach(E[] array, Consumer<? super E> action) {
+        for (E element : array) {
+            action.accept(element);
+        }
     }
-  }
 
-  public static <E, S extends E> E[] mapInPlace(E[] array, Function<E, S> function) {
-    for (int i = 0; i < array.length; i++) {
-      array[i] = function.apply(array[i]);
+    public static <E, S extends E> E[] mapInPlace(E[] array, Function<E, S> function) {
+        for (int i = 0; i < array.length; i++) {
+            array[i] = function.apply(array[i]);
+        }
+        return array;
     }
-    return array;
-  }
 
-  @SuppressWarnings("unchecked")
-  public static <E, S> S[] map(E[] array, Function<E, S> function) {
-    @SuppressWarnings("SuspiciousArrayCast")
-    S[] result = (S[]) new Object[array.length];
-    for (int i = 0; i < array.length; i++) {
-      result[i] = function.apply(array[i]);
+    @SuppressWarnings("unchecked")
+    public static <E, S> S[] map(E[] array, Function<E, S> function) {
+        @SuppressWarnings("SuspiciousArrayCast")
+        S[] result = (S[]) new Object[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = function.apply(array[i]);
+        }
+        return result;
     }
-    return result;
-  }
 
-  public static <E> E[] trim(E[] array, int length) {
-    assert length <= array.length;
-    return length < array.length ? Arrays.copyOf(array, length) : array;
-  }
+    public static <E> E[] trim(E[] array, int length) {
+        assert length <= array.length;
+        return length < array.length ? Arrays.copyOf(array, length) : array;
+    }
 
-  public static int[] trim(int[] array, int length) {
-    assert length <= array.length;
-    return length < array.length ? Arrays.copyOf(array, length) : array;
-  }
+    public static int[] trim(int[] array, int length) {
+        assert length <= array.length;
+        return length < array.length ? Arrays.copyOf(array, length) : array;
+    }
 
-  public static <E> E[] ensureSize(E[] array, int length) {
-    return array.length <= length ? array : Arrays.copyOf(array, length);
-  }
+    public static <E> E[] ensureSize(E[] array, int length) {
+        return array.length <= length ? array : Arrays.copyOf(array, length);
+    }
 
-  public static int[] ensureSize(int[] array, int length) {
-    return array.length <= length ? array : Arrays.copyOf(array, length);
-  }
+    public static int[] ensureSize(int[] array, int length) {
+        return array.length <= length ? array : Arrays.copyOf(array, length);
+    }
 }

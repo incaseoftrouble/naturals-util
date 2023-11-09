@@ -27,8 +27,10 @@ import org.roaringbitmap.RoaringBitmap;
 @SuppressWarnings({"PMD.JUnit4SuitesShouldUseSuiteAnnotation", "PMD.UseUtilityClass"})
 @RunWith(AllTests.class)
 public class RoaringNatBitSetGuavaTest {
-  public static TestSuite suite() {
-    return GuavaSetTest.createNatSet(() -> new RoaringNatBitSet(new RoaringBitmap()),
-        "RoaringNatBitSetGuavaTest", Set.of(CollectionFeature.SUPPORTS_ITERATOR_REMOVE));
-  }
+    public static TestSuite suite() {
+        return GuavaSetTest.createNatSet(
+                () -> new RoaringNatBitSet(new RoaringBitmap()),
+                "RoaringNatBitSetGuavaTest",
+                Set.of(CollectionFeature.SUPPORTS_ITERATOR_REMOVE));
+    }
 }

@@ -31,60 +31,60 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 
 class IntArraySortedSetTest {
-  @Test
-  void testEmpty() {
-    Consumer<IntSet> tester = set -> {
-      assertThat(set, empty());
-      assertThat(set.size(), is(0));
-      assertThat(set, iterableWithSize(0));
-    };
+    @Test
+    void testEmpty() {
+        Consumer<IntSet> tester = set -> {
+            assertThat(set, empty());
+            assertThat(set.size(), is(0));
+            assertThat(set, iterableWithSize(0));
+        };
 
-    IntSet defaultConstructor = new IntArraySortedSet();
-    tester.accept(defaultConstructor);
+        IntSet defaultConstructor = new IntArraySortedSet();
+        tester.accept(defaultConstructor);
 
-    IntSet emptyArrayConstructor = new IntArraySortedSet(IntArrays.EMPTY_ARRAY);
-    tester.accept(emptyArrayConstructor);
+        IntSet emptyArrayConstructor = new IntArraySortedSet(IntArrays.EMPTY_ARRAY);
+        tester.accept(emptyArrayConstructor);
 
-    IntSet emptyCollectionConstructor = new IntArraySortedSet(IntSets.EMPTY_SET);
-    tester.accept(emptyCollectionConstructor);
-  }
-
-  @Test
-  void testModify() {
-    IntSet set = new IntArraySortedSet();
-
-    assertThat(set.add(1), is(true));
-    assertThat(set.add(2), is(true));
-    assertThat(set.add(0), is(true));
-
-    assertThat(set, contains(0, 1, 2));
-
-    assertThat(set.remove(1), is(true));
-    assertThat(set.add(4), is(true));
-    assertThat(set.remove(2), is(true));
-    assertThat(set.remove(2), is(false));
-
-    assertThat(set, contains(0, 4));
-
-    set.clear();
-
-    assertThat(set, empty());
-
-    assertThat(set.add(Integer.MAX_VALUE), is(true));
-    assertThat(set.add(Integer.MAX_VALUE), is(false));
-    assertThat(set.add(Integer.MIN_VALUE), is(true));
-    assertThat(set.add(Integer.MIN_VALUE), is(false));
-
-    for (int i = 0; i < 400; i++) {
-      assertThat(set.add(i), is(true));
+        IntSet emptyCollectionConstructor = new IntArraySortedSet(IntSets.EMPTY_SET);
+        tester.accept(emptyCollectionConstructor);
     }
 
-    assertThat(set, hasSize(402));
+    @Test
+    void testModify() {
+        IntSet set = new IntArraySortedSet();
 
-    for (int i = 399; i >= 0; i--) {
-      assertThat(set.remove(i), is(true));
+        assertThat(set.add(1), is(true));
+        assertThat(set.add(2), is(true));
+        assertThat(set.add(0), is(true));
+
+        assertThat(set, contains(0, 1, 2));
+
+        assertThat(set.remove(1), is(true));
+        assertThat(set.add(4), is(true));
+        assertThat(set.remove(2), is(true));
+        assertThat(set.remove(2), is(false));
+
+        assertThat(set, contains(0, 4));
+
+        set.clear();
+
+        assertThat(set, empty());
+
+        assertThat(set.add(Integer.MAX_VALUE), is(true));
+        assertThat(set.add(Integer.MAX_VALUE), is(false));
+        assertThat(set.add(Integer.MIN_VALUE), is(true));
+        assertThat(set.add(Integer.MIN_VALUE), is(false));
+
+        for (int i = 0; i < 400; i++) {
+            assertThat(set.add(i), is(true));
+        }
+
+        assertThat(set, hasSize(402));
+
+        for (int i = 399; i >= 0; i--) {
+            assertThat(set.remove(i), is(true));
+        }
+
+        assertThat(set, hasSize(2));
     }
-
-    assertThat(set, hasSize(2));
-  }
 }

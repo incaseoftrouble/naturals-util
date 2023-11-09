@@ -25,7 +25,7 @@ import org.junit.runners.AllTests;
 @SuppressWarnings({"PMD.JUnit4SuitesShouldUseSuiteAnnotation", "PMD.UseUtilityClass"})
 @RunWith(AllTests.class)
 public class LongNatBitSetGuavaTest {
-  public static TestSuite suite() {
-    return GuavaSetTest.createNatSet(LongNatBitSet::new, "LongNatBitSetTest", Set.of());
-  }
+    public static TestSuite suite() {
+        return GuavaSetTest.createNatSet(LongNatBitSet::new, "LongNatBitSetTest", Set.of());
+    }
 }

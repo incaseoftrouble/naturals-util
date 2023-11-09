@@ -24,63 +24,63 @@ import it.unimi.dsi.fastutil.objects.AbstractObjectSet;
 import java.util.Map;
 
 public abstract class AbstractInt2ObjectEntrySet<V, M extends Int2ObjectMap<V>>
-    extends AbstractObjectSet<Int2ObjectMap.Entry<V>> implements FastEntrySet<V> {
-  protected final M map;
+        extends AbstractObjectSet<Int2ObjectMap.Entry<V>> implements FastEntrySet<V> {
+    protected final M map;
 
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  public AbstractInt2ObjectEntrySet(M map) {
-    this.map = map;
-  }
-
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
-  @Override
-  public AbstractInt2ObjectEntrySet<V, M> clone() throws CloneNotSupportedException {
-    return this;
-  }
-
-  @Override
-  public boolean contains(Object o) {
-    if (!(o instanceof Map.Entry)) {
-      return false;
-    }
-    Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
-    Object value = e.getValue();
-    if (value == null) {
-      return false;
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    public AbstractInt2ObjectEntrySet(M map) {
+        this.map = map;
     }
 
-    Object key = e.getKey();
-    if (!(key instanceof Integer)) {
-      return false;
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @Override
+    public AbstractInt2ObjectEntrySet<V, M> clone() throws CloneNotSupportedException {
+        return this;
     }
 
-    int k = (Integer) key;
-    V v = map.get(k);
-    return value.equals(v);
-  }
+    @Override
+    public boolean contains(Object o) {
+        if (!(o instanceof Map.Entry)) {
+            return false;
+        }
+        Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
+        Object value = e.getValue();
+        if (value == null) {
+            return false;
+        }
 
-  @Override
-  public boolean remove(Object o) {
-    if (!(o instanceof Map.Entry)) {
-      return false;
+        Object key = e.getKey();
+        if (!(key instanceof Integer)) {
+            return false;
+        }
+
+        int k = (Integer) key;
+        V v = map.get(k);
+        return value.equals(v);
     }
-    if (o instanceof Entry) {
-      Entry<?> e = (Entry<?>) o;
-      return map.remove(e.getIntKey(), e.getValue());
+
+    @Override
+    public boolean remove(Object o) {
+        if (!(o instanceof Map.Entry)) {
+            return false;
+        }
+        if (o instanceof Entry) {
+            Entry<?> e = (Entry<?>) o;
+            return map.remove(e.getIntKey(), e.getValue());
+        }
+
+        Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
+        Object key = e.getKey();
+        if (!(key instanceof Integer)) {
+            return false;
+        }
+
+        int k = (Integer) key;
+        return map.remove(k, e.getValue());
     }
 
-    Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
-    Object key = e.getKey();
-    if (!(key instanceof Integer)) {
-      return false;
+    @Override
+    public int size() {
+        return map.size();
     }
-
-    int k = (Integer) key;
-    return map.remove(k, e.getValue());
-  }
-
-  @Override
-  public int size() {
-    return map.size();
-  }
 }

@@ -32,52 +32,48 @@ import java.util.function.Supplier;
 import junit.framework.TestSuite;
 
 public final class GuavaSetTest {
-  private static final Collection<Method> suppression;
+    private static final Collection<Method> suppression;
 
-  static {
-    try {
-      suppression = Arrays.asList(
-          CollectionRetainAllTester.class.getMethod("testRetainAll_nullSingletonPreviouslyNonEmpty"),
-          CollectionSpliteratorTester.class.getMethod("testSpliteratorKnownOrder")
-      );
-    } catch (NoSuchMethodException e) {
-      //noinspection ProhibitedExceptionThrown
-      throw new RuntimeException(e); // NOPMD
+    static {
+        try {
+            suppression = Arrays.asList(
+                    CollectionRetainAllTester.class.getMethod("testRetainAll_nullSingletonPreviouslyNonEmpty"),
+                    CollectionSpliteratorTester.class.getMethod("testSpliteratorKnownOrder"));
+        } catch (NoSuchMethodException e) {
+            //noinspection ProhibitedExceptionThrown
+            throw new RuntimeException(e); // NOPMD
+        }
     }
-  }
 
-  public static TestSuite createDefault(Supplier<? extends IntSet> supplier, String name) {
-    return SetTestSuiteBuilder.using(new SetGenerator(supplier))
-        .named(name)
-        .withFeatures(
-            CollectionFeature.GENERAL_PURPOSE,
-            CollectionFeature.KNOWN_ORDER,
-            CollectionFeature.NON_STANDARD_TOSTRING,
-            CollectionSize.ANY
-        )
-        .suppressing(suppression)
-        .createTestSuite();
-  }
+    public static TestSuite createDefault(Supplier<? extends IntSet> supplier, String name) {
+        return SetTestSuiteBuilder.using(new SetGenerator(supplier))
+                .named(name)
+                .withFeatures(
+                        CollectionFeature.GENERAL_PURPOSE,
+                        CollectionFeature.KNOWN_ORDER,
+                        CollectionFeature.NON_STANDARD_TOSTRING,
+                        CollectionSize.ANY)
+                .suppressing(suppression)
+                .createTestSuite();
+    }
 
-  public static TestSuite createNatSet(Supplier<? extends NatBitSet> supplier, String name,
-      Collection<? extends Feature<?>> removeFeatures) {
-    Collection<Feature<?>> features = new HashSet<>(Arrays.asList(
-        CollectionFeature.SUPPORTS_ADD,
-        CollectionFeature.SUPPORTS_REMOVE,
-        CollectionFeature.SUPPORTS_ITERATOR_REMOVE,
-        CollectionFeature.KNOWN_ORDER,
-        CollectionFeature.NON_STANDARD_TOSTRING,
-        CollectionSize.ANY
-    ));
-    features.removeAll(removeFeatures);
+    public static TestSuite createNatSet(
+            Supplier<? extends NatBitSet> supplier, String name, Collection<? extends Feature<?>> removeFeatures) {
+        Collection<Feature<?>> features = new HashSet<>(Arrays.asList(
+                CollectionFeature.SUPPORTS_ADD,
+                CollectionFeature.SUPPORTS_REMOVE,
+                CollectionFeature.SUPPORTS_ITERATOR_REMOVE,
+                CollectionFeature.KNOWN_ORDER,
+                CollectionFeature.NON_STANDARD_TOSTRING,
+                CollectionSize.ANY));
+        features.removeAll(removeFeatures);
 
-    return SetTestSuiteBuilder.using(new SetGenerator(supplier))
-        .named(name)
-        .withFeatures(features)
-        .suppressing(suppression)
-        .createTestSuite();
-  }
+        return SetTestSuiteBuilder.using(new SetGenerator(supplier))
+                .named(name)
+                .withFeatures(features)
+                .suppressing(suppression)
+                .createTestSuite();
+    }
 
-  private GuavaSetTest() {
-  }
+    private GuavaSetTest() {}
 }

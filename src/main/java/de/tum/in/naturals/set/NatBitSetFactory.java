@@ -30,253 +30,251 @@ import javax.annotation.Nonnegative;
 // CS:OFF OverloadMethodsDeclarationOrderCheck
 public interface NatBitSetFactory {
 
-  // --- Unbounded Sets ---
+    // --- Unbounded Sets ---
 
-  // Constructors
+    // Constructors
 
-  /**
-   * Creates a modifiable set with the expected size and length.
-   */
-  NatBitSet set(int expectedSize, int expectedLength);
+    /**
+     * Creates a modifiable set with the expected size and length.
+     */
+    NatBitSet set(int expectedSize, int expectedLength);
 
-  /**
-   * Creates a modifiable set.
-   */
-  default NatBitSet set() {
-    return set(UNKNOWN_SIZE, UNKNOWN_LENGTH);
-  }
-
-  /**
-   * Creates a modifiable set with expected length.
-   */
-  default NatBitSet setWithExpectedLength(@Nonnegative int expectedLength) {
-    return set(UNKNOWN_SIZE, expectedLength);
-  }
-
-  /**
-   * Creates a modifiable set with expected size.
-   */
-  default NatBitSet setWithExpectedSize(@Nonnegative int expectedSize) {
-    return set(expectedSize, UNKNOWN_LENGTH);
-  }
-
-  /**
-   * Creates a modifiable set which is modifiable up to {@code maximalLength}.
-   */
-  default NatBitSet setWithMaximalLength(int maximalLength) {
-    if (maximalLength < LongNatBitSet.maximalSize()) {
-      return new LongNatBitSet();
-    }
-    return set(UNKNOWN_SIZE, maximalLength);
-  }
-
-  // Copies
-
-  /**
-   * Copies the given indices if necessary. The returned set might not be modifiable.
-   * @param indices
-   *     The indices to be copied.
-   *
-   * @return a copy of the given indices.
-   *
-   * @see #asModifiableSet(Collection)
-   */
-  default NatBitSet asSet(Collection<Integer> indices) {
-    return indices instanceof NatBitSet ? (NatBitSet) indices : copyOf(indices);
-  }
-
-  /**
-   * Copies the given indices. The returned set might not be modifiable.
-   *
-   * @param indices
-   *     The indices to be copied.
-   *
-   * @return a copy of the given indices.
-   *
-   * @see #modifiableCopyOf(NatBitSet)
-   */
-  default NatBitSet copyOf(Collection<Integer> indices) {
-    NatBitSet copy;
-    if (indices.isEmpty()) {
-      copy = NatBitSets.emptySet();
-    } else if (indices instanceof NatBitSet) {
-      copy = ((NatBitSet) indices).clone();
-    } else if (indices instanceof IntSortedSet) {
-      copy = set(indices.size(), ((IntSortedSet) indices).lastInt());
-      copy.or((IntSortedSet) indices);
-    } else {
-      copy = setWithExpectedSize(indices.size());
-      copy.addAll(indices);
-    }
-    assert copy.equals(indices instanceof Set ? indices : new IntAVLTreeSet(indices));
-    return copy;
-  }
-
-  /**
-   * Returns a copy of the given {@code set} which is guaranteed to be modifiable.
-   *
-   * @see NatBitSets#isModifiable(NatBitSet)
-   */
-  default NatBitSet asModifiableSet(Collection<Integer> indices) {
-    if (indices instanceof NatBitSet) {
-      NatBitSet set = (NatBitSet) indices;
-      return NatBitSets.ensureModifiable(set);
-    }
-    NatBitSet set;
-    if (indices instanceof IntSortedSet) {
-      set = set(indices.size(), ((IntSortedSet) indices).lastInt());
-      set.or((IntCollection) indices);
-    } else if (indices instanceof IntCollection) {
-      set = setWithExpectedSize(indices.size());
-      set.or((IntCollection) indices);
-    } else {
-      set = setWithExpectedSize(indices.size());
-      set.addAll(indices);
-    }
-    assert set.equals(indices instanceof Set ? indices : new IntAVLTreeSet(indices));
-    return set;
-  }
-
-  /**
-   * Returns a copy of the given {@code set} which is guaranteed to be modifiable.
-   *
-   * @see NatBitSets#isModifiable(NatBitSet)
-   */
-  default NatBitSet modifiableCopyOf(NatBitSet set) {
-    return modifiableCopyOf(set, Integer.MAX_VALUE);
-  }
-
-  /**
-   * Returns a copy of the given {@code set} which is guaranteed to be modifiable up to
-   * {@code length - 1}.
-   *
-   * @see NatBitSets#isModifiable(NatBitSet, int)
-   */
-  default NatBitSet modifiableCopyOf(NatBitSet set, @Nonnegative int length) {
-    if (NatBitSets.isModifiable(set, length)) {
-      return set.clone();
-    }
-    if (set instanceof BoundedNatBitSet && length <= ((BoundedNatBitSet) set).domainSize()) {
-      return modifiableCopyOf((BoundedNatBitSet) set);
+    /**
+     * Creates a modifiable set.
+     */
+    default NatBitSet set() {
+        return set(UNKNOWN_SIZE, UNKNOWN_LENGTH);
     }
 
-    NatBitSet copy = set(set.size(), length);
-    copy.or(set);
-    assert NatBitSets.isModifiable(copy, length) && copy.equals(set);
-    return copy;
-  }
-
-  // Ensures
-
-  /**
-   * Determines whether the given {@code set} can handle arbitrary (positive) modifications.
-   */
-  default boolean isModifiable(NatBitSet set) {
-    return isModifiable(set, Integer.MAX_VALUE);
-  }
-
-  /**
-   * Determines whether the given {@code set} can handle arbitrary modifications of values between 0
-   * and {@code length - 1}.
-   */
-  boolean isModifiable(NatBitSet set, @Nonnegative int length);
-
-  /**
-   * Ensures that the given {@code set} can be modified with arbitrary values. If necessary, the set
-   * is copied into a general purpose representation.
-   *
-   * @see #isModifiable(NatBitSet)
-   */
-  default NatBitSet ensureModifiable(NatBitSet set) {
-    return NatBitSets.isModifiable(set) ? set : modifiableCopyOf(set);
-  }
-
-  /**
-   * Ensures that the given {@code set} can be modified with arbitrary values from
-   * {@code {0, ..., n}}. If necessary, the set is copied into a general purpose representation.
-   *
-   * @see #isModifiable(NatBitSet, int)
-   */
-  default NatBitSet ensureModifiable(NatBitSet set, @Nonnegative int length) {
-    return NatBitSets.isModifiable(set, length) ? set : modifiableCopyOf(set, length);
-  }
-
-
-  // --- Bounded Sets ---
-
-  // Constructors
-
-  BoundedNatBitSet boundedSet(int domainSize, int expectedSize);
-
-  default BoundedNatBitSet boundedSet(int domainSize) {
-    return boundedSet(domainSize, UNKNOWN_SIZE);
-  }
-
-  // Special cases
-
-  /**
-   * Returns a modifiable set over the specified domain which contains the whole domain.
-   */
-  default BoundedNatBitSet boundedFilledSet(int domainSize) {
-    return boundedFilledSet(domainSize, UNKNOWN_SIZE);
-  }
-
-  default BoundedNatBitSet boundedFilledSet(int domainSize, int expectedSize) {
-    return boundedSet(domainSize, expectedSize).complement();
-  }
-
-  // Copies
-
-  /**
-   * Returns a copy of the given {@code set} which is guaranteed to be modifiable (within the
-   * domain).
-   *
-   * @see NatBitSets#isModifiable(BoundedNatBitSet)
-   */
-  default BoundedNatBitSet modifiableCopyOf(BoundedNatBitSet set) {
-    if (NatBitSets.isModifiable(set)) {
-      return set.clone();
+    /**
+     * Creates a modifiable set with expected length.
+     */
+    default NatBitSet setWithExpectedLength(@Nonnegative int expectedLength) {
+        return set(UNKNOWN_SIZE, expectedLength);
     }
 
-    BoundedNatBitSet copy = boundedSet(set.domainSize(), set.size());
-    copy.or(set);
-    assert NatBitSets.isModifiable(copy, set.domainSize()) && copy.equals(set);
-    return copy;
-  }
+    /**
+     * Creates a modifiable set with expected size.
+     */
+    default NatBitSet setWithExpectedSize(@Nonnegative int expectedSize) {
+        return set(expectedSize, UNKNOWN_LENGTH);
+    }
 
-  // Ensures
+    /**
+     * Creates a modifiable set which is modifiable up to {@code maximalLength}.
+     */
+    default NatBitSet setWithMaximalLength(int maximalLength) {
+        if (maximalLength < LongNatBitSet.maximalSize()) {
+            return new LongNatBitSet();
+        }
+        return set(UNKNOWN_SIZE, maximalLength);
+    }
 
-  /**
-   * Determines whether the given {@code set} can handle arbitrary modifications within its domain.
-   */
-  boolean isModifiable(BoundedNatBitSet set);
+    // Copies
 
-  BoundedNatBitSet ensureBounded(NatBitSet set, @Nonnegative int domainSize);
+    /**
+     * Copies the given indices if necessary. The returned set might not be modifiable.
+     * @param indices
+     *     The indices to be copied.
+     *
+     * @return a copy of the given indices.
+     *
+     * @see #asModifiableSet(Collection)
+     */
+    default NatBitSet asSet(Collection<Integer> indices) {
+        return indices instanceof NatBitSet ? (NatBitSet) indices : copyOf(indices);
+    }
 
-  /**
-   * Ensures that the given {@code set} can be modified in its domain. If necessary, the set is
-   * copied into a general purpose representation.
-   */
-  default NatBitSet ensureModifiable(BoundedNatBitSet set) {
-    return NatBitSets.isModifiable(set) ? set : modifiableCopyOf(set);
-  }
+    /**
+     * Copies the given indices. The returned set might not be modifiable.
+     *
+     * @param indices
+     *     The indices to be copied.
+     *
+     * @return a copy of the given indices.
+     *
+     * @see #modifiableCopyOf(NatBitSet)
+     */
+    default NatBitSet copyOf(Collection<Integer> indices) {
+        NatBitSet copy;
+        if (indices.isEmpty()) {
+            copy = NatBitSets.emptySet();
+        } else if (indices instanceof NatBitSet) {
+            copy = ((NatBitSet) indices).clone();
+        } else if (indices instanceof IntSortedSet) {
+            copy = set(indices.size(), ((IntSortedSet) indices).lastInt());
+            copy.or((IntSortedSet) indices);
+        } else {
+            copy = setWithExpectedSize(indices.size());
+            copy.addAll(indices);
+        }
+        assert copy.equals(indices instanceof Set ? indices : new IntAVLTreeSet(indices));
+        return copy;
+    }
 
+    /**
+     * Returns a copy of the given {@code set} which is guaranteed to be modifiable.
+     *
+     * @see NatBitSets#isModifiable(NatBitSet)
+     */
+    default NatBitSet asModifiableSet(Collection<Integer> indices) {
+        if (indices instanceof NatBitSet) {
+            NatBitSet set = (NatBitSet) indices;
+            return NatBitSets.ensureModifiable(set);
+        }
+        NatBitSet set;
+        if (indices instanceof IntSortedSet) {
+            set = set(indices.size(), ((IntSortedSet) indices).lastInt());
+            set.or((IntCollection) indices);
+        } else if (indices instanceof IntCollection) {
+            set = setWithExpectedSize(indices.size());
+            set.or((IntCollection) indices);
+        } else {
+            set = setWithExpectedSize(indices.size());
+            set.addAll(indices);
+        }
+        assert set.equals(indices instanceof Set ? indices : new IntAVLTreeSet(indices));
+        return set;
+    }
 
-  // --- Compaction ---
+    /**
+     * Returns a copy of the given {@code set} which is guaranteed to be modifiable.
+     *
+     * @see NatBitSets#isModifiable(NatBitSet)
+     */
+    default NatBitSet modifiableCopyOf(NatBitSet set) {
+        return modifiableCopyOf(set, Integer.MAX_VALUE);
+    }
 
-  /**
-   * Try to compact the given set by potentially representing it as, e.g., empty or singleton set.
-   * The returned set might not be modifiable.
-   *
-   * @param set
-   *     The set to be compacted.
-   *
-   * @return a potentially compacted representation of the given set.
-   */
-  default NatBitSet compact(NatBitSet set) {
-    return compact(set, false);
-  }
+    /**
+     * Returns a copy of the given {@code set} which is guaranteed to be modifiable up to
+     * {@code length - 1}.
+     *
+     * @see NatBitSets#isModifiable(NatBitSet, int)
+     */
+    default NatBitSet modifiableCopyOf(NatBitSet set, @Nonnegative int length) {
+        if (NatBitSets.isModifiable(set, length)) {
+            return set.clone();
+        }
+        if (set instanceof BoundedNatBitSet && length <= ((BoundedNatBitSet) set).domainSize()) {
+            return modifiableCopyOf((BoundedNatBitSet) set);
+        }
 
-  NatBitSet compact(NatBitSet set, boolean forceCopy);
+        NatBitSet copy = set(set.size(), length);
+        copy.or(set);
+        assert NatBitSets.isModifiable(copy, length) && copy.equals(set);
+        return copy;
+    }
+
+    // Ensures
+
+    /**
+     * Determines whether the given {@code set} can handle arbitrary (positive) modifications.
+     */
+    default boolean isModifiable(NatBitSet set) {
+        return isModifiable(set, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Determines whether the given {@code set} can handle arbitrary modifications of values between 0
+     * and {@code length - 1}.
+     */
+    boolean isModifiable(NatBitSet set, @Nonnegative int length);
+
+    /**
+     * Ensures that the given {@code set} can be modified with arbitrary values. If necessary, the set
+     * is copied into a general purpose representation.
+     *
+     * @see #isModifiable(NatBitSet)
+     */
+    default NatBitSet ensureModifiable(NatBitSet set) {
+        return NatBitSets.isModifiable(set) ? set : modifiableCopyOf(set);
+    }
+
+    /**
+     * Ensures that the given {@code set} can be modified with arbitrary values from
+     * {@code {0, ..., n}}. If necessary, the set is copied into a general purpose representation.
+     *
+     * @see #isModifiable(NatBitSet, int)
+     */
+    default NatBitSet ensureModifiable(NatBitSet set, @Nonnegative int length) {
+        return NatBitSets.isModifiable(set, length) ? set : modifiableCopyOf(set, length);
+    }
+
+    // --- Bounded Sets ---
+
+    // Constructors
+
+    BoundedNatBitSet boundedSet(int domainSize, int expectedSize);
+
+    default BoundedNatBitSet boundedSet(int domainSize) {
+        return boundedSet(domainSize, UNKNOWN_SIZE);
+    }
+
+    // Special cases
+
+    /**
+     * Returns a modifiable set over the specified domain which contains the whole domain.
+     */
+    default BoundedNatBitSet boundedFilledSet(int domainSize) {
+        return boundedFilledSet(domainSize, UNKNOWN_SIZE);
+    }
+
+    default BoundedNatBitSet boundedFilledSet(int domainSize, int expectedSize) {
+        return boundedSet(domainSize, expectedSize).complement();
+    }
+
+    // Copies
+
+    /**
+     * Returns a copy of the given {@code set} which is guaranteed to be modifiable (within the
+     * domain).
+     *
+     * @see NatBitSets#isModifiable(BoundedNatBitSet)
+     */
+    default BoundedNatBitSet modifiableCopyOf(BoundedNatBitSet set) {
+        if (NatBitSets.isModifiable(set)) {
+            return set.clone();
+        }
+
+        BoundedNatBitSet copy = boundedSet(set.domainSize(), set.size());
+        copy.or(set);
+        assert NatBitSets.isModifiable(copy, set.domainSize()) && copy.equals(set);
+        return copy;
+    }
+
+    // Ensures
+
+    /**
+     * Determines whether the given {@code set} can handle arbitrary modifications within its domain.
+     */
+    boolean isModifiable(BoundedNatBitSet set);
+
+    BoundedNatBitSet ensureBounded(NatBitSet set, @Nonnegative int domainSize);
+
+    /**
+     * Ensures that the given {@code set} can be modified in its domain. If necessary, the set is
+     * copied into a general purpose representation.
+     */
+    default NatBitSet ensureModifiable(BoundedNatBitSet set) {
+        return NatBitSets.isModifiable(set) ? set : modifiableCopyOf(set);
+    }
+
+    // --- Compaction ---
+
+    /**
+     * Try to compact the given set by potentially representing it as, e.g., empty or singleton set.
+     * The returned set might not be modifiable.
+     *
+     * @param set
+     *     The set to be compacted.
+     *
+     * @return a potentially compacted representation of the given set.
+     */
+    default NatBitSet compact(NatBitSet set) {
+        return compact(set, false);
+    }
+
+    NatBitSet compact(NatBitSet set, boolean forceCopy);
 }
 // CS:ON

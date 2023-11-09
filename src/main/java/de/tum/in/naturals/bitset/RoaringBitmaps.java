@@ -30,51 +30,50 @@ import org.roaringbitmap.RoaringBitmap;
  * Utility class to help interacting with {@link org.roaringbitmap.RoaringBitmap}.
  */
 public final class RoaringBitmaps {
-  private RoaringBitmaps() {}
+    private RoaringBitmaps() {}
 
-  public static RoaringBitmap of(IntIterable iterable) {
-    if (iterable instanceof NatBitSet) {
-      return NatBitSets.toRoaringBitmap((NatBitSet) iterable);
+    public static RoaringBitmap of(IntIterable iterable) {
+        if (iterable instanceof NatBitSet) {
+            return NatBitSets.toRoaringBitmap((NatBitSet) iterable);
+        }
+
+        RoaringBitmap bitmap = new RoaringBitmap();
+        iterable.forEach((IntConsumer) bitmap::add);
+        return bitmap;
     }
 
-    RoaringBitmap bitmap = new RoaringBitmap();
-    iterable.forEach((IntConsumer) bitmap::add);
-    return bitmap;
-  }
+    public static RoaringBitmap of(Iterable<Integer> iterable) {
+        if (iterable instanceof IntIterable) {
+            return of((IntIterable) iterable);
+        }
 
-  public static RoaringBitmap of(Iterable<Integer> iterable) {
-    if (iterable instanceof IntIterable) {
-      return of((IntIterable) iterable);
+        RoaringBitmap bitmap = new RoaringBitmap();
+        for (Integer integer : iterable) {
+            bitmap.add(integer);
+        }
+        return bitmap;
     }
 
-    RoaringBitmap bitmap = new RoaringBitmap();
-    for (Integer integer : iterable) {
-      bitmap.add(integer);
+    @SuppressWarnings("TypeMayBeWeakened")
+    public static RoaringBitmap of(PrimitiveIterator.OfInt iterator) {
+        RoaringBitmap bitmap = new RoaringBitmap();
+        iterator.forEachRemaining((IntConsumer) bitmap::add);
+        return bitmap;
     }
-    return bitmap;
-  }
 
-  @SuppressWarnings("TypeMayBeWeakened")
-  public static RoaringBitmap of(PrimitiveIterator.OfInt iterator) {
-    RoaringBitmap bitmap = new RoaringBitmap();
-    iterator.forEachRemaining((IntConsumer) bitmap::add);
-    return bitmap;
-  }
+    public static RoaringBitmap of(BitSet bitSet) {
+        RoaringBitmap bitmap = new RoaringBitmap();
+        BitSets.forEach(bitSet, bitmap::add);
+        return bitmap;
+    }
 
-  public static RoaringBitmap of(BitSet bitSet) {
-    RoaringBitmap bitmap = new RoaringBitmap();
-    BitSets.forEach(bitSet, bitmap::add);
-    return bitmap;
-  }
+    public static IntIterator iterator(RoaringBitmap bitmap) {
+        return new RoaringIterator(bitmap.getIntIterator());
+    }
 
-  public static IntIterator iterator(RoaringBitmap bitmap) {
-    return new RoaringIterator(bitmap.getIntIterator());
-  }
-
-
-  public static RoaringBitmap subset(RoaringBitmap bitmap, long from, long to) {
-    RoaringBitmap selector = new RoaringBitmap();
-    selector.add(from, to);
-    return RoaringBitmap.and(bitmap, selector);
-  }
+    public static RoaringBitmap subset(RoaringBitmap bitmap, long from, long to) {
+        RoaringBitmap selector = new RoaringBitmap();
+        selector.add(from, to);
+        return RoaringBitmap.and(bitmap, selector);
+    }
 }

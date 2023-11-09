@@ -21,37 +21,37 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
 
 class NatBitSetComplementIterator implements IntIterator {
-  private final int length;
-  private final NatBitSet set;
-  private int current;
+    private final int length;
+    private final NatBitSet set;
+    private int current;
 
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  public NatBitSetComplementIterator(NatBitSet set, int length) {
-    this.set = set;
-    this.length = length;
-    current = set.nextAbsentIndex(0);
-  }
-
-  @Override
-  public boolean hasNext() {
-    return current < length;
-  }
-
-  @Override
-  public int nextInt() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    public NatBitSetComplementIterator(NatBitSet set, int length) {
+        this.set = set;
+        this.length = length;
+        current = set.nextAbsentIndex(0);
     }
-    int result = current;
-    current = set.nextAbsentIndex(current + 1);
-    return result;
-  }
 
-  @Override
-  public void remove() {
-    if (set.contains(current)) {
-      throw new IllegalStateException();
+    @Override
+    public boolean hasNext() {
+        return current < length;
     }
-    set.set(current);
-  }
+
+    @Override
+    public int nextInt() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        int result = current;
+        current = set.nextAbsentIndex(current + 1);
+        return result;
+    }
+
+    @Override
+    public void remove() {
+        if (set.contains(current)) {
+            throw new IllegalStateException();
+        }
+        set.set(current);
+    }
 }

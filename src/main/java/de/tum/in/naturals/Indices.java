@@ -36,127 +36,127 @@ import java.util.function.IntUnaryOperator;
 import javax.annotation.Nonnegative;
 
 public final class Indices {
-  private Indices() {}
+    private Indices() {}
 
-  /**
-   * Returns an array containing the indices of all {@code true} entries in the {@code elements}
-   * array. For example, given {@code [true, false, false, true, true, false]}, the method returns
-   * the array {@code [0, 3, 4]}.
-   */
-  public static int[] indexMap(boolean[] elements) {
-    int elementCount = 0;
-    for (boolean element : elements) {
-      if (element) {
-        elementCount += 1;
-      }
+    /**
+     * Returns an array containing the indices of all {@code true} entries in the {@code elements}
+     * array. For example, given {@code [true, false, false, true, true, false]}, the method returns
+     * the array {@code [0, 3, 4]}.
+     */
+    public static int[] indexMap(boolean[] elements) {
+        int elementCount = 0;
+        for (boolean element : elements) {
+            if (element) {
+                elementCount += 1;
+            }
+        }
+
+        if (elementCount == 0) {
+            return IntArrays.EMPTY_ARRAY;
+        }
+        int[] indexArray = new int[elementCount];
+        int index = 0;
+        for (int globalIndex = 0; globalIndex < elements.length; globalIndex++) {
+            if (elements[globalIndex]) {
+                indexArray[index] = globalIndex;
+                index += 1;
+            }
+        }
+        return indexArray;
     }
 
-    if (elementCount == 0) {
-      return IntArrays.EMPTY_ARRAY;
+    public static void forEach(boolean[] elements, IntConsumer action) {
+        for (int i = 0; i < elements.length; i++) {
+            if (elements[i]) {
+                action.accept(i);
+            }
+        }
     }
-    int[] indexArray = new int[elementCount];
-    int index = 0;
-    for (int globalIndex = 0; globalIndex < elements.length; globalIndex++) {
-      if (elements[globalIndex]) {
-        indexArray[index] = globalIndex;
-        index += 1;
-      }
+
+    public static IntUnaryOperator elementToIndexMap(IntIterable ints) {
+        return elementToIndexMap(ints.iterator());
     }
-    return indexArray;
-  }
 
-  public static void forEach(boolean[] elements, IntConsumer action) {
-    for (int i = 0; i < elements.length; i++) {
-      if (elements[i]) {
-        action.accept(i);
-      }
+    public static IntUnaryOperator elementToIndexMap(PrimitiveIterator.OfInt iterator) {
+        Int2IntFunction indexMap = new Int2IntLinkedOpenHashMap();
+        indexMap.defaultReturnValue(-1);
+        int index = 0;
+        while (iterator.hasNext()) {
+            int next = iterator.nextInt();
+            assert !indexMap.containsKey(next);
+            indexMap.put(next, index);
+            index += 1;
+        }
+        return indexMap;
     }
-  }
 
-  public static IntUnaryOperator elementToIndexMap(IntIterable ints) {
-    return elementToIndexMap(ints.iterator());
-  }
-
-  public static IntUnaryOperator elementToIndexMap(PrimitiveIterator.OfInt iterator) {
-    Int2IntFunction indexMap = new Int2IntLinkedOpenHashMap();
-    indexMap.defaultReturnValue(-1);
-    int index = 0;
-    while (iterator.hasNext()) {
-      int next = iterator.nextInt();
-      assert !indexMap.containsKey(next);
-      indexMap.put(next, index);
-      index += 1;
+    public static DoubleToIntFunction elementToIndexMap(DoubleIterable doubles) {
+        return elementToIndexMap(doubles.iterator());
     }
-    return indexMap;
-  }
 
-  public static DoubleToIntFunction elementToIndexMap(DoubleIterable doubles) {
-    return elementToIndexMap(doubles.iterator());
-  }
-
-  public static DoubleToIntFunction elementToIndexMap(PrimitiveIterator.OfDouble iterator) {
-    Double2IntFunction indexMap = new Double2IntLinkedOpenHashMap();
-    indexMap.defaultReturnValue(-1);
-    int index = 0;
-    while (iterator.hasNext()) {
-      double next = iterator.nextDouble();
-      assert !indexMap.containsKey(next);
-      indexMap.put(next, index);
-      index += 1;
+    public static DoubleToIntFunction elementToIndexMap(PrimitiveIterator.OfDouble iterator) {
+        Double2IntFunction indexMap = new Double2IntLinkedOpenHashMap();
+        indexMap.defaultReturnValue(-1);
+        int index = 0;
+        while (iterator.hasNext()) {
+            double next = iterator.nextDouble();
+            assert !indexMap.containsKey(next);
+            indexMap.put(next, index);
+            index += 1;
+        }
+        return indexMap;
     }
-    return indexMap;
-  }
 
-  public static <K> Object2IntMap<K> elementToIndexMap(Collection<K> items) {
-    Object2IntMap<K> ids = new Object2IntOpenHashMap<>(items.size());
-    if (items instanceof Set<?>) {
-      items.forEach(item -> {
-        assert !ids.containsKey(item);
-        ids.put(item, ids.size());
-      });
-    } else {
-      items.forEach(item -> ids.putIfAbsent(item, ids.size()));
+    public static <K> Object2IntMap<K> elementToIndexMap(Collection<K> items) {
+        Object2IntMap<K> ids = new Object2IntOpenHashMap<>(items.size());
+        if (items instanceof Set<?>) {
+            items.forEach(item -> {
+                assert !ids.containsKey(item);
+                ids.put(item, ids.size());
+            });
+        } else {
+            items.forEach(item -> ids.putIfAbsent(item, ids.size()));
+        }
+        return ids;
     }
-    return ids;
-  }
 
-  public static <K> Object2IntMap<K> elementToIndexMap(Iterator<K> items) {
-    Object2IntMap<K> ids = new Object2IntOpenHashMap<>();
-    items.forEachRemaining(item -> ids.putIfAbsent(item, ids.size()));
-    return ids;
-  }
-
-  public static <E> void forEachIndexed(Iterable<E> elements, IndexConsumer<E> action) {
-    forEachIndexed(elements.iterator(), action);
-  }
-
-  public static <E> void forEachIndexed(Iterator<E> iterator, IndexConsumer<E> action) {
-    int index = 0;
-    while (iterator.hasNext()) {
-      action.accept(iterator.next(), index);
-      index += 1;
+    public static <K> Object2IntMap<K> elementToIndexMap(Iterator<K> items) {
+        Object2IntMap<K> ids = new Object2IntOpenHashMap<>();
+        items.forEachRemaining(item -> ids.putIfAbsent(item, ids.size()));
+        return ids;
     }
-  }
 
-  public static void forEachIndexed(IntIterable elements, IntIndexConsumer action) {
-    forEachIndexed(elements.iterator(), action);
-  }
-
-  public static void forEachIndexed(PrimitiveIterator.OfInt iterator, IntIndexConsumer action) {
-    int index = 0;
-    while (iterator.hasNext()) {
-      action.accept(iterator.nextInt(), index);
-      index += 1;
+    public static <E> void forEachIndexed(Iterable<E> elements, IndexConsumer<E> action) {
+        forEachIndexed(elements.iterator(), action);
     }
-  }
 
-  @FunctionalInterface
-  public interface IndexConsumer<E> {
-    void accept(E element, @Nonnegative int index);
-  }
+    public static <E> void forEachIndexed(Iterator<E> iterator, IndexConsumer<E> action) {
+        int index = 0;
+        while (iterator.hasNext()) {
+            action.accept(iterator.next(), index);
+            index += 1;
+        }
+    }
 
-  @FunctionalInterface
-  public interface IntIndexConsumer {
-    void accept(int element, @Nonnegative int index);
-  }
+    public static void forEachIndexed(IntIterable elements, IntIndexConsumer action) {
+        forEachIndexed(elements.iterator(), action);
+    }
+
+    public static void forEachIndexed(PrimitiveIterator.OfInt iterator, IntIndexConsumer action) {
+        int index = 0;
+        while (iterator.hasNext()) {
+            action.accept(iterator.nextInt(), index);
+            index += 1;
+        }
+    }
+
+    @FunctionalInterface
+    public interface IndexConsumer<E> {
+        void accept(E element, @Nonnegative int index);
+    }
+
+    @FunctionalInterface
+    public interface IntIndexConsumer {
+        void accept(int element, @Nonnegative int index);
+    }
 }

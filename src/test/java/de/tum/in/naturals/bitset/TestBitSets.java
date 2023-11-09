@@ -28,40 +28,40 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class TestBitSets {
-  @Test
-  void testPowerBitSetEmpty() {
-    Set<BitSet> powerSet = BitSets.powerSet(new BitSet(0));
-    Set<BitSet> powerSetSimple = BitSets.powerSet(0);
+    @Test
+    void testPowerBitSetEmpty() {
+        Set<BitSet> powerSet = BitSets.powerSet(new BitSet(0));
+        Set<BitSet> powerSetSimple = BitSets.powerSet(0);
 
-    assertThat(powerSetSimple, is(powerSet));
-    assertThat(powerSet, is(powerSetSimple));
+        assertThat(powerSetSimple, is(powerSet));
+        assertThat(powerSet, is(powerSetSimple));
 
-    assertThat(powerSet, contains(new BitSet()));
-    assertThat(powerSetSimple, contains(new BitSet()));
-  }
-
-  @Test
-  void testPowerBitSet() {
-    BitSet base = new BitSet(4);
-    base.set(0, 4);
-
-    Set<BitSet> powerSet = BitSets.powerSet(base);
-    Set<BitSet> powerSetSimple = BitSets.powerSet(4);
-
-    assertThat(powerSetSimple, is(powerSet));
-    assertThat(powerSet, is(powerSetSimple));
-
-    int size = 1 << 4;
-    assertThat(powerSet, iterableWithSize(size));
-
-    BitSet test = new BitSet(4);
-    for (int i = 0; i < size; i++) {
-      test.clear();
-      for (int j = 0; j < 4; j++) {
-        test.set(j, (i & (1 << j)) != 0);
-      }
-      assertThat(powerSet, hasItem(test));
-      assertThat(powerSetSimple, hasItem(test));
+        assertThat(powerSet, contains(new BitSet()));
+        assertThat(powerSetSimple, contains(new BitSet()));
     }
-  }
+
+    @Test
+    void testPowerBitSet() {
+        BitSet base = new BitSet(4);
+        base.set(0, 4);
+
+        Set<BitSet> powerSet = BitSets.powerSet(base);
+        Set<BitSet> powerSetSimple = BitSets.powerSet(4);
+
+        assertThat(powerSetSimple, is(powerSet));
+        assertThat(powerSet, is(powerSetSimple));
+
+        int size = 1 << 4;
+        assertThat(powerSet, iterableWithSize(size));
+
+        BitSet test = new BitSet(4);
+        for (int i = 0; i < size; i++) {
+            test.clear();
+            for (int j = 0; j < 4; j++) {
+                test.set(j, (i & (1 << j)) != 0);
+            }
+            assertThat(powerSet, hasItem(test));
+            assertThat(powerSetSimple, hasItem(test));
+        }
+    }
 }

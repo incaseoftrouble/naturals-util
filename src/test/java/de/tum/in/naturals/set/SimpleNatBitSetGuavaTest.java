@@ -26,8 +26,7 @@ import org.junit.runners.AllTests;
 @SuppressWarnings({"PMD.JUnit4SuitesShouldUseSuiteAnnotation", "PMD.UseUtilityClass"})
 @RunWith(AllTests.class)
 public class SimpleNatBitSetGuavaTest {
-  public static TestSuite suite() {
-    return GuavaSetTest.createNatSet(() -> new SimpleNatBitSet(new BitSet()),
-        "SimpleNatBitSetGuavaTest", Set.of());
-  }
+    public static TestSuite suite() {
+        return GuavaSetTest.createNatSet(() -> new SimpleNatBitSet(new BitSet()), "SimpleNatBitSetGuavaTest", Set.of());
+    }
 }

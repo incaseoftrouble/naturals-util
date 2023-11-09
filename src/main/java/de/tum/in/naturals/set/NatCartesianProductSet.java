@@ -32,84 +32,84 @@ import java.util.function.Predicate;
  * inclusive</i>.</p>
  */
 public class NatCartesianProductSet extends AbstractSet<int[]> implements Size64 {
-  private final int[] domainMaximalElements;
-  private final long size;
+    private final int[] domainMaximalElements;
+    private final long size;
 
-  public NatCartesianProductSet(int[] domainMaximalElements) {
-    this.domainMaximalElements = domainMaximalElements.clone();
-    for (int domainSize : this.domainMaximalElements) {
-      if (domainSize < 0) {
-        throw new IllegalArgumentException("Domain maximum must be non-negative");
-      }
+    public NatCartesianProductSet(int[] domainMaximalElements) {
+        this.domainMaximalElements = domainMaximalElements.clone();
+        for (int domainSize : this.domainMaximalElements) {
+            if (domainSize < 0) {
+                throw new IllegalArgumentException("Domain maximum must be non-negative");
+            }
+        }
+        this.size = numberOfElements(this.domainMaximalElements);
     }
-    this.size = numberOfElements(this.domainMaximalElements);
-  }
 
-  public static long numberOfElements(int[] domainMaximalElements) {
-    long count = 1L;
-    for (int maximalElement : domainMaximalElements) {
-      assert maximalElement >= 0;
-      count *= ((long) maximalElement + 1L);
+    public static long numberOfElements(int[] domainMaximalElements) {
+        long count = 1L;
+        for (int maximalElement : domainMaximalElements) {
+            assert maximalElement >= 0;
+            count *= ((long) maximalElement + 1L);
+        }
+        return count;
     }
-    return count;
-  }
 
-  @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean contains(Object o) {
-    if (!(o instanceof int[])) {
-      return false;
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
     }
-    int[] array = (int[]) o;
-    if (array.length != domainMaximalElements.length) {
-      return false;
+
+    @Override
+    public boolean contains(Object o) {
+        if (!(o instanceof int[])) {
+            return false;
+        }
+        int[] array = (int[]) o;
+        if (array.length != domainMaximalElements.length) {
+            return false;
+        }
+        for (int i = 0; i < array.length; i++) {
+            int val = array[i];
+            if (0 < val || domainMaximalElements[i] < val) {
+                return false;
+            }
+        }
+        return true;
     }
-    for (int i = 0; i < array.length; i++) {
-      int val = array[i];
-      if (0 < val || domainMaximalElements[i] < val) {
-        return false;
-      }
+
+    @Override
+    public NatCartesianProductIterator iterator() {
+        return new NatCartesianProductIterator(domainMaximalElements, size);
     }
-    return true;
-  }
 
-  @Override
-  public NatCartesianProductIterator iterator() {
-    return new NatCartesianProductIterator(domainMaximalElements, size);
-  }
+    @SuppressWarnings({"deprecation", "NumericCastThatLosesPrecision"})
+    @Override
+    public int size() {
+        return size <= Integer.MAX_VALUE ? (int) size : Integer.MAX_VALUE;
+    }
 
-  @SuppressWarnings({"deprecation", "NumericCastThatLosesPrecision"})
-  @Override
-  public int size() {
-    return size <= Integer.MAX_VALUE ? (int) size : Integer.MAX_VALUE;
-  }
+    @Override
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean remove(Object o) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean removeAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean removeIf(Predicate<? super int[]> filter) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean removeIf(Predicate<? super int[]> filter) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean retainAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public long size64() {
-    return size;
-  }
+    @Override
+    public long size64() {
+        return size;
+    }
 }

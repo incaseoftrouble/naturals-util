@@ -22,41 +22,41 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.NoSuchElementException;
 
 final class SparseBitSetIterator implements IntIterator {
-  private final SparseBitSet bitSet;
-  private int current = -1;
-  private int next;
+    private final SparseBitSet bitSet;
+    private int current = -1;
+    private int next;
 
-  SparseBitSetIterator(SparseBitSet bitSet) {
-    this.bitSet = bitSet;
-    this.next = bitSet.nextSetBit(0);
-  }
-
-  private int getNext(int index) {
-    return bitSet.nextSetBit(index);
-  }
-
-  @Override
-  public boolean hasNext() {
-    return next != -1;
-  }
-
-  @Override
-  public int nextInt() {
-    if (next == -1) {
-      throw new NoSuchElementException();
+    SparseBitSetIterator(SparseBitSet bitSet) {
+        this.bitSet = bitSet;
+        this.next = bitSet.nextSetBit(0);
     }
-    current = next;
-    next = getNext(next + 1);
-    return current;
-  }
 
-  @Override
-  public void remove() {
-    if (current == -1) {
-      throw new IllegalStateException();
+    private int getNext(int index) {
+        return bitSet.nextSetBit(index);
     }
-    assert bitSet.get(current);
-    bitSet.clear(current);
-    current = -1;
-  }
+
+    @Override
+    public boolean hasNext() {
+        return next != -1;
+    }
+
+    @Override
+    public int nextInt() {
+        if (next == -1) {
+            throw new NoSuchElementException();
+        }
+        current = next;
+        next = getNext(next + 1);
+        return current;
+    }
+
+    @Override
+    public void remove() {
+        if (current == -1) {
+            throw new IllegalStateException();
+        }
+        assert bitSet.get(current);
+        bitSet.clear(current);
+        current = -1;
+    }
 }

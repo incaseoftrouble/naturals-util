@@ -23,128 +23,128 @@ import java.util.Collection;
 import java.util.function.Predicate;
 
 public abstract class AbstractUnmodifiableNatBitSet extends AbstractIntSet implements NatBitSet {
-  @Override
-  public boolean add(int index) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean addAll(IntCollection c) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean addAll(Collection<? extends Integer> c) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void and(IntCollection indices) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void andNot(IntCollection indices) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clear(int index) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clear(int from, int to) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clearFrom(int from) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public AbstractUnmodifiableNatBitSet clone() {
-    try {
-      return (AbstractUnmodifiableNatBitSet) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new InternalError(e);
+    @Override
+    public boolean add(int index) {
+        throw new UnsupportedOperationException();
     }
-  }
 
-  @Override
-  public boolean containsAll(IntCollection c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean addAll(IntCollection c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public void flip(int index) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean addAll(Collection<? extends Integer> c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public void flip(int from, int to) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void and(IntCollection indices) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public void or(IntCollection indices) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void andNot(IntCollection indices) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean remove(int index) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean removeAll(IntCollection c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void clear(int index) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean removeAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void clear(int from, int to) {
+        throw new UnsupportedOperationException();
+    }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  public boolean removeIf(Predicate<? super Integer> filter) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void clearFrom(int from) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean retainAll(IntCollection c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public AbstractUnmodifiableNatBitSet clone() {
+        try {
+            return (AbstractUnmodifiableNatBitSet) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError(e);
+        }
+    }
 
-  @Override
-  public boolean retainAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean containsAll(IntCollection c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public void set(int index, boolean value) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void flip(int index) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public void set(int from, int to) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void flip(int from, int to) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public void set(int index) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void or(IntCollection indices) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public void xor(IntCollection indices) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean remove(int index) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeAll(IntCollection c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public boolean removeIf(Predicate<? super Integer> filter) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean retainAll(IntCollection c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void set(int index, boolean value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void set(int from, int to) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void set(int index) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void xor(IntCollection indices) {
+        throw new UnsupportedOperationException();
+    }
 }

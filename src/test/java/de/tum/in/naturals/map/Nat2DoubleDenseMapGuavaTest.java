@@ -31,32 +31,31 @@ import org.junit.runners.AllTests;
 @SuppressWarnings({"PMD.JUnit4SuitesShouldUseSuiteAnnotation", "PMD.UseUtilityClass"})
 @RunWith(AllTests.class)
 public class Nat2DoubleDenseMapGuavaTest {
-  public static TestSuite suite() {
-    return MapTestSuiteBuilder.using(new Nat2NatMapGenerator())
-        .named("Nat2DoubleDenseMapTest")
-        .withFeatures(
-            MapFeature.SUPPORTS_PUT,
-            MapFeature.SUPPORTS_REMOVE,
-            MapFeature.ALLOWS_ANY_NULL_QUERIES,
-            CollectionFeature.KNOWN_ORDER,
-            CollectionFeature.SUPPORTS_ITERATOR_REMOVE,
-            CollectionFeature.NON_STANDARD_TOSTRING,
-            CollectionSize.ANY
-        )
-        .suppressing(MapHashCodeTester.class.getMethods())
-        .suppressing(SetHashCodeTester.class.getMethods())
-        .createTestSuite();
-  }
-
-  private static class Nat2NatMapGenerator extends AbstractNatMapGenerator<Integer> {
-    @Override
-    Integer[] sampleValues() {
-      return new Integer[] {-1, 2, 4, Integer.MAX_VALUE, 5};
+    public static TestSuite suite() {
+        return MapTestSuiteBuilder.using(new Nat2NatMapGenerator())
+                .named("Nat2DoubleDenseMapTest")
+                .withFeatures(
+                        MapFeature.SUPPORTS_PUT,
+                        MapFeature.SUPPORTS_REMOVE,
+                        MapFeature.ALLOWS_ANY_NULL_QUERIES,
+                        CollectionFeature.KNOWN_ORDER,
+                        CollectionFeature.SUPPORTS_ITERATOR_REMOVE,
+                        CollectionFeature.NON_STANDARD_TOSTRING,
+                        CollectionSize.ANY)
+                .suppressing(MapHashCodeTester.class.getMethods())
+                .suppressing(SetHashCodeTester.class.getMethods())
+                .createTestSuite();
     }
 
-    @Override
-    Map<Integer, Integer> map() {
-      return new Nat2IntDenseArrayMap(1);
+    private static class Nat2NatMapGenerator extends AbstractNatMapGenerator<Integer> {
+        @Override
+        Integer[] sampleValues() {
+            return new Integer[] {-1, 2, 4, Integer.MAX_VALUE, 5};
+        }
+
+        @Override
+        Map<Integer, Integer> map() {
+            return new Nat2IntDenseArrayMap(1);
+        }
     }
-  }
 }

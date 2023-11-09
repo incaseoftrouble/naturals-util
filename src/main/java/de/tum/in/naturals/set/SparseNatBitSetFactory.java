@@ -25,45 +25,44 @@ import java.util.BitSet;
 import java.util.function.BiPredicate;
 
 public class SparseNatBitSetFactory extends AbstractNatBitSetFactory {
-  private static final int SPARSE_THRESHOLD = Long.SIZE * 128;
+    private static final int SPARSE_THRESHOLD = Long.SIZE * 128;
 
-  private final BiPredicate<Integer, Integer> useSparse;
+    private final BiPredicate<Integer, Integer> useSparse;
 
-  SparseNatBitSetFactory() {
-    this(SparseNatBitSetFactory::useSparse);
-  }
-
-  public SparseNatBitSetFactory(BiPredicate<Integer, Integer> useSparse) {
-    this.useSparse = useSparse;
-  }
-
-  private static boolean useSparse(int expectedSize, int expectedLength) {
-    if (expectedLength == UNKNOWN_LENGTH) {
-      if (expectedSize == UNKNOWN_SIZE) {
-        return true;
-      }
-      if (expectedSize > SPARSE_THRESHOLD) {
-        return true;
-      }
+    SparseNatBitSetFactory() {
+        this(SparseNatBitSetFactory::useSparse);
     }
-    return expectedLength > SPARSE_THRESHOLD
-        || (expectedSize != UNKNOWN_SIZE && expectedSize > SPARSE_THRESHOLD);
-  }
 
-  @Override
-  protected BoundedNatBitSet makeBoundedSet(int domainSize, int expectedSize) {
-    return useSparse.test(expectedSize, domainSize)
-        ? new SparseBoundedNatBitSet(new SparseBitSet(domainSize), domainSize)
-        : new SimpleBoundedNatBitSet(new BitSet(domainSize), domainSize);
-  }
-
-  @Override
-  public NatBitSet set(int expectedSize, int expectedLength) {
-    if (useSparse.test(expectedSize, expectedLength)) {
-      SparseBitSet backingSet = expectedLength == UNKNOWN_LENGTH
-          ? new SparseBitSet() : new SparseBitSet(expectedLength);
-      return new SparseNatBitSet(backingSet);
+    public SparseNatBitSetFactory(BiPredicate<Integer, Integer> useSparse) {
+        this.useSparse = useSparse;
     }
-    return new SimpleNatBitSet(new BitSet(expectedSize));
-  }
+
+    private static boolean useSparse(int expectedSize, int expectedLength) {
+        if (expectedLength == UNKNOWN_LENGTH) {
+            if (expectedSize == UNKNOWN_SIZE) {
+                return true;
+            }
+            if (expectedSize > SPARSE_THRESHOLD) {
+                return true;
+            }
+        }
+        return expectedLength > SPARSE_THRESHOLD || (expectedSize != UNKNOWN_SIZE && expectedSize > SPARSE_THRESHOLD);
+    }
+
+    @Override
+    protected BoundedNatBitSet makeBoundedSet(int domainSize, int expectedSize) {
+        return useSparse.test(expectedSize, domainSize)
+                ? new SparseBoundedNatBitSet(new SparseBitSet(domainSize), domainSize)
+                : new SimpleBoundedNatBitSet(new BitSet(domainSize), domainSize);
+    }
+
+    @Override
+    public NatBitSet set(int expectedSize, int expectedLength) {
+        if (useSparse.test(expectedSize, expectedLength)) {
+            SparseBitSet backingSet =
+                    expectedLength == UNKNOWN_LENGTH ? new SparseBitSet() : new SparseBitSet(expectedLength);
+            return new SparseNatBitSet(backingSet);
+        }
+        return new SimpleNatBitSet(new BitSet(expectedSize));
+    }
 }

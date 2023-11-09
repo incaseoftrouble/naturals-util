@@ -24,7 +24,7 @@ import org.junit.runners.AllTests;
 @SuppressWarnings({"PMD.JUnit4SuitesShouldUseSuiteAnnotation", "PMD.UseUtilityClass"})
 @RunWith(AllTests.class)
 public class IntArraySortedSetGuavaTest {
-  public static TestSuite suite() {
-    return GuavaSetTest.createDefault(IntArraySortedSet::new, "IntArraySortedSet");
-  }
+    public static TestSuite suite() {
+        return GuavaSetTest.createDefault(IntArraySortedSet::new, "IntArraySortedSet");
+    }
 }

@@ -27,359 +27,352 @@ import java.util.function.IntPredicate;
 import org.roaringbitmap.RoaringBitmap;
 
 class RoaringNatBitSet extends AbstractNatBitSet {
-  private static final long INFINITY = Integer.MAX_VALUE + 1L;
+    private static final long INFINITY = Integer.MAX_VALUE + 1L;
 
-  private final RoaringBitmap bitmap;
+    private final RoaringBitmap bitmap;
 
-  RoaringNatBitSet(RoaringBitmap bitmap) {
-    this.bitmap = bitmap;
-  }
-
-
-  @Override
-  public boolean isEmpty() {
-    return bitmap.isEmpty();
-  }
-
-  @Override
-  public int size() {
-    return bitmap.getCardinality();
-  }
-
-  @Override
-  public boolean contains(int index) {
-    return 0 <= index && bitmap.contains(index);
-  }
-
-  @Override
-  public boolean containsAll(IntCollection indices) {
-    if (isEmpty()) {
-      return indices.isEmpty();
-    }
-    if (indices.isEmpty()) {
-      return true;
+    RoaringNatBitSet(RoaringBitmap bitmap) {
+        this.bitmap = bitmap;
     }
 
-    if (indices instanceof RoaringNatBitSet) {
-      RoaringNatBitSet other = (RoaringNatBitSet) indices;
-      return bitmap.contains(other.bitmap);
-    }
-    if (indices instanceof RoaringBoundedNatBitSet) {
-      RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-
-      if (other.isComplement()) {
-        return bitmap.rank(other.domainSize() - 1) + other.bitmap().getCardinality()
-            == other.domainSize() + RoaringBitmap.andCardinality(bitmap, other.bitmap());
-      }
-      return bitmap.contains(other.bitmap());
+    @Override
+    public boolean isEmpty() {
+        return bitmap.isEmpty();
     }
 
-    return super.containsAll(indices);
-  }
-
-
-  @Override
-  public int firstInt() {
-    return bitmap.first();
-  }
-
-  @Override
-  public int lastInt() {
-    return bitmap.last();
-  }
-
-
-  @Override
-  public int nextPresentIndex(int index) {
-    return Math.toIntExact(bitmap.nextValue(index));
-  }
-
-  @Override
-  public int nextAbsentIndex(int index) {
-    return Math.toIntExact(bitmap.nextAbsentValue(index));
-  }
-
-  @Override
-  public int previousPresentIndex(int index) {
-    return bitmap.isEmpty() ? -1 : Math.toIntExact(bitmap.previousValue(index));
-  }
-
-  @Override
-  public int previousAbsentIndex(int index) {
-    return Math.toIntExact(bitmap.previousAbsentValue(index));
-  }
-
-
-  @Override
-  public IntIterator iterator() {
-    return RoaringBitmaps.iterator(bitmap);
-  }
-
-  @Override
-  public void forEach(IntConsumer consumer) {
-    bitmap.forEach((org.roaringbitmap.IntConsumer) consumer::accept);
-  }
-
-  @Override
-  public boolean add(int index) {
-    return bitmap.checkedAdd(index);
-  }
-
-  @Override
-  public void set(int index) {
-    bitmap.add(index);
-  }
-
-  @Override
-  public void set(int index, boolean value) {
-    if (value) {
-      bitmap.add(index);
-    } else {
-      bitmap.remove(index);
-    }
-  }
-
-  @Override
-  public void set(int from, int to) {
-    bitmap.add(from, (long) to);
-  }
-
-  @Override
-  public boolean remove(int index) {
-    return bitmap.checkedRemove(index);
-  }
-
-  @Override
-  public void clear() {
-    bitmap.clear();
-  }
-
-  @Override
-  public void clear(int index) {
-    bitmap.remove(index);
-  }
-
-  @Override
-  public void clear(int from, int to) {
-    bitmap.remove(from, (long) to);
-  }
-
-  @Override
-  public void clearFrom(int from) {
-    bitmap.remove(from, INFINITY);
-  }
-
-  @Override
-  public void flip(int index) {
-    bitmap.flip(index);
-  }
-
-  @Override
-  public void flip(int from, int to) {
-    bitmap.flip(from, (long) to);
-  }
-
-
-  @Override
-  public boolean intersects(Collection<Integer> indices) {
-    if (indices instanceof RoaringNatBitSet) {
-      RoaringNatBitSet other = (RoaringNatBitSet) indices;
-      return RoaringBitmap.intersects(bitmap, other.bitmap);
-    }
-    if (indices instanceof RoaringBoundedNatBitSet) {
-      RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-      return other.isComplement()
-          ? RoaringBitmap.intersects(bitmap, other.complementBits())
-          : RoaringBitmap.intersects(bitmap, other.bitmap());
-    }
-    return super.intersects(indices);
-  }
-
-  @Override
-  public void and(IntCollection indices) {
-    if (indices.isEmpty()) {
-      clear();
-    } else if (indices instanceof RoaringNatBitSet) {
-      RoaringNatBitSet other = (RoaringNatBitSet) indices;
-      bitmap.and(other.bitmap);
-    } else if (indices instanceof RoaringBoundedNatBitSet) {
-      RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-      bitmap.remove(other.domainSize(), INFINITY);
-      if (other.isComplement()) {
-        bitmap.andNot(other.bitmap());
-      } else {
-        bitmap.and(other.bitmap());
-      }
-    } else if (indices instanceof MutableSingletonNatBitSet) {
-      MutableSingletonNatBitSet singleton = (MutableSingletonNatBitSet) indices;
-      int index = singleton.firstInt();
-      assert index == singleton.lastInt();
-      boolean contains = contains(index);
-      clear();
-      if (contains) {
-        set(index);
-      }
-    } else {
-      bitmap.and(RoaringBitmaps.of(indices));
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public boolean retainAll(Collection<?> indices) {
-    if (indices instanceof IntCollection) {
-      return retainAll((IntCollection) indices);
-    }
-    if (isEmpty()) {
-      return false;
-    }
-    if (indices.isEmpty()) {
-      clear();
-      return true;
-    }
-    int size = size();
-    bitmap.and(RoaringBitmaps.of((Iterable<Integer>) indices));
-    return size() < size;
-  }
-
-  @Override
-  public void andNot(IntCollection indices) {
-    if (isEmpty() || indices.isEmpty()) {
-      return;
-    }
-    if (indices instanceof RoaringNatBitSet) {
-      RoaringNatBitSet other = (RoaringNatBitSet) indices;
-      bitmap.andNot(other.bitmap);
-    } else if (indices instanceof RoaringBoundedNatBitSet) {
-      RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-
-      int otherDomainSize = other.domainSize();
-      if (other.isComplement()) {
-        RoaringBitmap tail = RoaringBitmaps.subset(bitmap, otherDomainSize, INFINITY);
-        bitmap.and(other.bitmap());
-        bitmap.or(tail);
-      } else {
-        bitmap.andNot(other.bitmap());
-      }
-    } else {
-      bitmap.andNot(RoaringBitmaps.of(indices));
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public boolean removeAll(Collection<?> indices) {
-    if (indices instanceof IntCollection) {
-      return removeAll((IntCollection) indices);
-    }
-    if (isEmpty() || indices.isEmpty()) {
-      return false;
-    }
-    int size = size();
-    bitmap.andNot(RoaringBitmaps.of((Iterable<Integer>) indices));
-    return size() < size;
-  }
-
-  @Override
-  public void or(IntCollection indices) {
-    if (indices.isEmpty()) {
-      return;
-    }
-    if (indices instanceof RoaringNatBitSet) {
-      RoaringNatBitSet other = (RoaringNatBitSet) indices;
-      bitmap.or(other.bitmap);
-    } else if (indices instanceof RoaringBoundedNatBitSet) {
-      RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-      if (other.isComplement()) {
-        // TODO orNot bug
-        RoaringBitmap tail = RoaringBitmaps.subset(bitmap, other.domainSize(), INFINITY);
-        bitmap.orNot(other.bitmap(), other.domainSize());
-        bitmap.or(tail);
-      } else {
-        bitmap.or(other.bitmap());
-      }
-    } else {
-      bitmap.or(RoaringBitmaps.of(indices));
-    }
-  }
-
-  @Override
-  public void xor(IntCollection indices) {
-    if (indices instanceof RoaringNatBitSet) {
-      RoaringNatBitSet other = (RoaringNatBitSet) indices;
-      bitmap.xor(other.bitmap);
-    } else if (indices instanceof RoaringBoundedNatBitSet) {
-      RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
-
-      bitmap.xor(other.bitmap());
-      if (other.isComplement()) {
-        bitmap.flip(0L, other.domainSize());
-      }
-    } else {
-      bitmap.xor(RoaringBitmaps.of(indices));
-    }
-  }
-
-
-  @Override
-  public boolean removeIf(IntPredicate filter) {
-    RoaringBitmap remove = new RoaringBitmap();
-    bitmap.forEach((int i) -> {
-      if (filter.test(i)) {
-        remove.add(i);
-      }
-    });
-    bitmap.andNot(remove);
-    return !remove.isEmpty();
-  }
-
-
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
-  @Override
-  public RoaringNatBitSet clone() {
-    return new RoaringNatBitSet(bitmap.clone());
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof Set)) {
-      return false;
-    }
-    if (isEmpty()) {
-      return ((Collection<?>) o).isEmpty();
-    }
-    if (((Collection<?>) o).isEmpty()) {
-      return false;
+    @Override
+    public int size() {
+        return bitmap.getCardinality();
     }
 
-    if (o instanceof RoaringNatBitSet) {
-      RoaringNatBitSet other = (RoaringNatBitSet) o;
-      return bitmap.equals(other.bitmap);
+    @Override
+    public boolean contains(int index) {
+        return 0 <= index && bitmap.contains(index);
     }
-    if (o instanceof RoaringBoundedNatBitSet) {
-      RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) o;
 
-      if (lastInt() >= other.domainSize()) {
-        return false;
-      }
-      if (other.isComplement()) {
-        return size() == other.size() && !RoaringBitmap.intersects(bitmap, other.bitmap());
-      }
-      return bitmap.equals(other.bitmap());
+    @Override
+    public boolean containsAll(IntCollection indices) {
+        if (isEmpty()) {
+            return indices.isEmpty();
+        }
+        if (indices.isEmpty()) {
+            return true;
+        }
+
+        if (indices instanceof RoaringNatBitSet) {
+            RoaringNatBitSet other = (RoaringNatBitSet) indices;
+            return bitmap.contains(other.bitmap);
+        }
+        if (indices instanceof RoaringBoundedNatBitSet) {
+            RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
+
+            if (other.isComplement()) {
+                return bitmap.rank(other.domainSize() - 1) + other.bitmap().getCardinality()
+                        == other.domainSize() + RoaringBitmap.andCardinality(bitmap, other.bitmap());
+            }
+            return bitmap.contains(other.bitmap());
+        }
+
+        return super.containsAll(indices);
     }
-    return super.equals(o);
-  }
 
-  @SuppressWarnings("RedundantMethodOverride")
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
+    @Override
+    public int firstInt() {
+        return bitmap.first();
+    }
 
-  RoaringBitmap bitmap() {
-    return bitmap;
-  }
+    @Override
+    public int lastInt() {
+        return bitmap.last();
+    }
+
+    @Override
+    public int nextPresentIndex(int index) {
+        return Math.toIntExact(bitmap.nextValue(index));
+    }
+
+    @Override
+    public int nextAbsentIndex(int index) {
+        return Math.toIntExact(bitmap.nextAbsentValue(index));
+    }
+
+    @Override
+    public int previousPresentIndex(int index) {
+        return bitmap.isEmpty() ? -1 : Math.toIntExact(bitmap.previousValue(index));
+    }
+
+    @Override
+    public int previousAbsentIndex(int index) {
+        return Math.toIntExact(bitmap.previousAbsentValue(index));
+    }
+
+    @Override
+    public IntIterator iterator() {
+        return RoaringBitmaps.iterator(bitmap);
+    }
+
+    @Override
+    public void forEach(IntConsumer consumer) {
+        bitmap.forEach((org.roaringbitmap.IntConsumer) consumer::accept);
+    }
+
+    @Override
+    public boolean add(int index) {
+        return bitmap.checkedAdd(index);
+    }
+
+    @Override
+    public void set(int index) {
+        bitmap.add(index);
+    }
+
+    @Override
+    public void set(int index, boolean value) {
+        if (value) {
+            bitmap.add(index);
+        } else {
+            bitmap.remove(index);
+        }
+    }
+
+    @Override
+    public void set(int from, int to) {
+        bitmap.add(from, (long) to);
+    }
+
+    @Override
+    public boolean remove(int index) {
+        return bitmap.checkedRemove(index);
+    }
+
+    @Override
+    public void clear() {
+        bitmap.clear();
+    }
+
+    @Override
+    public void clear(int index) {
+        bitmap.remove(index);
+    }
+
+    @Override
+    public void clear(int from, int to) {
+        bitmap.remove(from, (long) to);
+    }
+
+    @Override
+    public void clearFrom(int from) {
+        bitmap.remove(from, INFINITY);
+    }
+
+    @Override
+    public void flip(int index) {
+        bitmap.flip(index);
+    }
+
+    @Override
+    public void flip(int from, int to) {
+        bitmap.flip(from, (long) to);
+    }
+
+    @Override
+    public boolean intersects(Collection<Integer> indices) {
+        if (indices instanceof RoaringNatBitSet) {
+            RoaringNatBitSet other = (RoaringNatBitSet) indices;
+            return RoaringBitmap.intersects(bitmap, other.bitmap);
+        }
+        if (indices instanceof RoaringBoundedNatBitSet) {
+            RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
+            return other.isComplement()
+                    ? RoaringBitmap.intersects(bitmap, other.complementBits())
+                    : RoaringBitmap.intersects(bitmap, other.bitmap());
+        }
+        return super.intersects(indices);
+    }
+
+    @Override
+    public void and(IntCollection indices) {
+        if (indices.isEmpty()) {
+            clear();
+        } else if (indices instanceof RoaringNatBitSet) {
+            RoaringNatBitSet other = (RoaringNatBitSet) indices;
+            bitmap.and(other.bitmap);
+        } else if (indices instanceof RoaringBoundedNatBitSet) {
+            RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
+            bitmap.remove(other.domainSize(), INFINITY);
+            if (other.isComplement()) {
+                bitmap.andNot(other.bitmap());
+            } else {
+                bitmap.and(other.bitmap());
+            }
+        } else if (indices instanceof MutableSingletonNatBitSet) {
+            MutableSingletonNatBitSet singleton = (MutableSingletonNatBitSet) indices;
+            int index = singleton.firstInt();
+            assert index == singleton.lastInt();
+            boolean contains = contains(index);
+            clear();
+            if (contains) {
+                set(index);
+            }
+        } else {
+            bitmap.and(RoaringBitmaps.of(indices));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean retainAll(Collection<?> indices) {
+        if (indices instanceof IntCollection) {
+            return retainAll((IntCollection) indices);
+        }
+        if (isEmpty()) {
+            return false;
+        }
+        if (indices.isEmpty()) {
+            clear();
+            return true;
+        }
+        int size = size();
+        bitmap.and(RoaringBitmaps.of((Iterable<Integer>) indices));
+        return size() < size;
+    }
+
+    @Override
+    public void andNot(IntCollection indices) {
+        if (isEmpty() || indices.isEmpty()) {
+            return;
+        }
+        if (indices instanceof RoaringNatBitSet) {
+            RoaringNatBitSet other = (RoaringNatBitSet) indices;
+            bitmap.andNot(other.bitmap);
+        } else if (indices instanceof RoaringBoundedNatBitSet) {
+            RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
+
+            int otherDomainSize = other.domainSize();
+            if (other.isComplement()) {
+                RoaringBitmap tail = RoaringBitmaps.subset(bitmap, otherDomainSize, INFINITY);
+                bitmap.and(other.bitmap());
+                bitmap.or(tail);
+            } else {
+                bitmap.andNot(other.bitmap());
+            }
+        } else {
+            bitmap.andNot(RoaringBitmaps.of(indices));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean removeAll(Collection<?> indices) {
+        if (indices instanceof IntCollection) {
+            return removeAll((IntCollection) indices);
+        }
+        if (isEmpty() || indices.isEmpty()) {
+            return false;
+        }
+        int size = size();
+        bitmap.andNot(RoaringBitmaps.of((Iterable<Integer>) indices));
+        return size() < size;
+    }
+
+    @Override
+    public void or(IntCollection indices) {
+        if (indices.isEmpty()) {
+            return;
+        }
+        if (indices instanceof RoaringNatBitSet) {
+            RoaringNatBitSet other = (RoaringNatBitSet) indices;
+            bitmap.or(other.bitmap);
+        } else if (indices instanceof RoaringBoundedNatBitSet) {
+            RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
+            if (other.isComplement()) {
+                // TODO orNot bug
+                RoaringBitmap tail = RoaringBitmaps.subset(bitmap, other.domainSize(), INFINITY);
+                bitmap.orNot(other.bitmap(), other.domainSize());
+                bitmap.or(tail);
+            } else {
+                bitmap.or(other.bitmap());
+            }
+        } else {
+            bitmap.or(RoaringBitmaps.of(indices));
+        }
+    }
+
+    @Override
+    public void xor(IntCollection indices) {
+        if (indices instanceof RoaringNatBitSet) {
+            RoaringNatBitSet other = (RoaringNatBitSet) indices;
+            bitmap.xor(other.bitmap);
+        } else if (indices instanceof RoaringBoundedNatBitSet) {
+            RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) indices;
+
+            bitmap.xor(other.bitmap());
+            if (other.isComplement()) {
+                bitmap.flip(0L, other.domainSize());
+            }
+        } else {
+            bitmap.xor(RoaringBitmaps.of(indices));
+        }
+    }
+
+    @Override
+    public boolean removeIf(IntPredicate filter) {
+        RoaringBitmap remove = new RoaringBitmap();
+        bitmap.forEach((int i) -> {
+            if (filter.test(i)) {
+                remove.add(i);
+            }
+        });
+        bitmap.andNot(remove);
+        return !remove.isEmpty();
+    }
+
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @Override
+    public RoaringNatBitSet clone() {
+        return new RoaringNatBitSet(bitmap.clone());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Set)) {
+            return false;
+        }
+        if (isEmpty()) {
+            return ((Collection<?>) o).isEmpty();
+        }
+        if (((Collection<?>) o).isEmpty()) {
+            return false;
+        }
+
+        if (o instanceof RoaringNatBitSet) {
+            RoaringNatBitSet other = (RoaringNatBitSet) o;
+            return bitmap.equals(other.bitmap);
+        }
+        if (o instanceof RoaringBoundedNatBitSet) {
+            RoaringBoundedNatBitSet other = (RoaringBoundedNatBitSet) o;
+
+            if (lastInt() >= other.domainSize()) {
+                return false;
+            }
+            if (other.isComplement()) {
+                return size() == other.size() && !RoaringBitmap.intersects(bitmap, other.bitmap());
+            }
+            return bitmap.equals(other.bitmap());
+        }
+        return super.equals(o);
+    }
+
+    @SuppressWarnings("RedundantMethodOverride")
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    RoaringBitmap bitmap() {
+        return bitmap;
+    }
 }

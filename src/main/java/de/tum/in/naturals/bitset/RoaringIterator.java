@@ -22,22 +22,22 @@ import java.util.NoSuchElementException;
 import org.roaringbitmap.PeekableIntIterator;
 
 final class RoaringIterator implements IntIterator {
-  private final PeekableIntIterator iterator;
+    private final PeekableIntIterator iterator;
 
-  public RoaringIterator(PeekableIntIterator iterator) {
-    this.iterator = iterator;
-  }
-
-  @Override
-  public int nextInt() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
+    public RoaringIterator(PeekableIntIterator iterator) {
+        this.iterator = iterator;
     }
-    return iterator.next();
-  }
 
-  @Override
-  public boolean hasNext() {
-    return iterator.hasNext();
-  }
+    @Override
+    public int nextInt() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        return iterator.next();
+    }
+
+    @Override
+    public boolean hasNext() {
+        return iterator.hasNext();
+    }
 }

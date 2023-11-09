@@ -29,44 +29,44 @@ import javax.annotation.Nonnegative;
  * {@code intStream.map(transformer).filter(i -> i >= 0)}.
  */
 public final class NaturalsTransformer implements IntIterator {
-  private final PrimitiveIterator.OfInt original;
-  private final IntUnaryOperator transformer;
-  // A negative value indicates that there are no more elements.
-  private int next;
+    private final PrimitiveIterator.OfInt original;
+    private final IntUnaryOperator transformer;
+    // A negative value indicates that there are no more elements.
+    private int next;
 
-  public NaturalsTransformer(PrimitiveIterator.OfInt original, IntUnaryOperator transformer) {
-    this.original = original;
-    this.transformer = transformer;
-    next = getNext();
-  }
-
-  private int getNext() {
-    while (original.hasNext()) {
-      int nextCandidate = transformer.applyAsInt(original.nextInt());
-
-      // If the transformer returns a negative value, the element is skipped.
-      if (nextCandidate >= 0) {
-        return nextCandidate;
-      }
+    public NaturalsTransformer(PrimitiveIterator.OfInt original, IntUnaryOperator transformer) {
+        this.original = original;
+        this.transformer = transformer;
+        next = getNext();
     }
 
-    return -1;
-  }
+    private int getNext() {
+        while (original.hasNext()) {
+            int nextCandidate = transformer.applyAsInt(original.nextInt());
 
-  @Override
-  public boolean hasNext() {
-    return next >= 0;
-  }
+            // If the transformer returns a negative value, the element is skipped.
+            if (nextCandidate >= 0) {
+                return nextCandidate;
+            }
+        }
 
-  @Override
-  @Nonnegative
-  public int nextInt() {
-    if (next < 0) {
-      throw new NoSuchElementException();
+        return -1;
     }
 
-    int value = next;
-    next = getNext();
-    return value;
-  }
+    @Override
+    public boolean hasNext() {
+        return next >= 0;
+    }
+
+    @Override
+    @Nonnegative
+    public int nextInt() {
+        if (next < 0) {
+            throw new NoSuchElementException();
+        }
+
+        int value = next;
+        next = getNext();
+        return value;
+    }
 }

@@ -29,146 +29,143 @@ import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
 
 public abstract class AbstractNatBitSet extends AbstractIntSet implements NatBitSet {
-  @Override
-  public int firstInt() {
-    int firstPresent = nextPresentIndex(0);
-    if (firstPresent == -1) {
-      throw new NoSuchElementException();
-    }
-    return firstPresent;
-  }
-
-  @Override
-  public int lastInt() {
-    int lastPresent = previousPresentIndex(Integer.MAX_VALUE);
-    if (lastPresent == -1) {
-      throw new NoSuchElementException();
-    }
-    return lastPresent;
-  }
-
-
-  @Override
-  public boolean add(int index) {
-    if (contains(index)) {
-      return false;
-    }
-    set(index);
-    return true;
-  }
-
-  @Override
-  public void clearFrom(int from) {
-    checkNonNegative(from);
-    clear(from, Integer.MAX_VALUE);
-  }
-
-  @Override
-  public boolean remove(int index) {
-    if (!contains(index)) {
-      return false;
-    }
-    clear(index);
-    return true;
-  }
-
-
-  @Override
-  public boolean intersects(Collection<Integer> indices) {
-    if (indices instanceof IntCollection) {
-      return IntIterators.any(((IntCollection) indices).iterator(), this::contains);
-    }
-    return NatBitSet.super.intersects(indices);
-  }
-
-  @Override
-  public void and(IntCollection indices) {
-    if (indices.isEmpty()) {
-      clear();
-    } else {
-      IntIterator iterator = iterator();
-      while (iterator.hasNext()) {
-        int next = iterator.nextInt();
-        if (!indices.contains(next)) {
-          iterator.remove();
+    @Override
+    public int firstInt() {
+        int firstPresent = nextPresentIndex(0);
+        if (firstPresent == -1) {
+            throw new NoSuchElementException();
         }
-      }
+        return firstPresent;
     }
-  }
 
-  @Override
-  public boolean retainAll(IntCollection indices) {
-    if (isEmpty()) {
-      return false;
+    @Override
+    public int lastInt() {
+        int lastPresent = previousPresentIndex(Integer.MAX_VALUE);
+        if (lastPresent == -1) {
+            throw new NoSuchElementException();
+        }
+        return lastPresent;
     }
-    if (indices.isEmpty()) {
-      clear();
-      return true;
-    }
-    int size = size();
-    and(indices);
-    return size() < size;
-  }
 
-  @Override
-  public void andNot(IntCollection indices) {
-    if (indices.isEmpty()) {
-      return;
+    @Override
+    public boolean add(int index) {
+        if (contains(index)) {
+            return false;
+        }
+        set(index);
+        return true;
     }
-    IntIterator iterator = iterator();
-    while (iterator.hasNext()) {
-      int next = iterator.nextInt();
-      if (indices.contains(next)) {
-        iterator.remove();
-      }
-    }
-  }
 
-  @Override
-  public boolean removeAll(IntCollection indices) {
-    if (isEmpty() || indices.isEmpty()) {
-      return false;
+    @Override
+    public void clearFrom(int from) {
+        checkNonNegative(from);
+        clear(from, Integer.MAX_VALUE);
     }
-    int size = size();
-    andNot(indices);
-    return size() < size;
-  }
 
-  @Override
-  public void or(IntCollection indices) {
-    if (indices.isEmpty()) {
-      return;
+    @Override
+    public boolean remove(int index) {
+        if (!contains(index)) {
+            return false;
+        }
+        clear(index);
+        return true;
     }
-    indices.forEach((IntConsumer) this::set);
-  }
 
-  @Override
-  public boolean addAll(IntCollection indices) {
-    if (indices.isEmpty()) {
-      return false;
+    @Override
+    public boolean intersects(Collection<Integer> indices) {
+        if (indices instanceof IntCollection) {
+            return IntIterators.any(((IntCollection) indices).iterator(), this::contains);
+        }
+        return NatBitSet.super.intersects(indices);
     }
-    @SuppressWarnings("TooBroadScope")
-    int size = size();
-    or(indices);
-    return size < size();
-  }
 
-  @Override
-  public void xor(IntCollection indices) {
-    if (indices.isEmpty()) {
-      return;
+    @Override
+    public void and(IntCollection indices) {
+        if (indices.isEmpty()) {
+            clear();
+        } else {
+            IntIterator iterator = iterator();
+            while (iterator.hasNext()) {
+                int next = iterator.nextInt();
+                if (!indices.contains(next)) {
+                    iterator.remove();
+                }
+            }
+        }
     }
-    IntSet set = indices instanceof IntSet ? (IntSet) indices : NatBitSets.copyOf(indices);
-    set.forEach((IntConsumer) this::flip);
-  }
 
-
-  @Override
-  public AbstractNatBitSet clone() {
-    try {
-      return (AbstractNatBitSet) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new InternalError(e);
+    @Override
+    public boolean retainAll(IntCollection indices) {
+        if (isEmpty()) {
+            return false;
+        }
+        if (indices.isEmpty()) {
+            clear();
+            return true;
+        }
+        int size = size();
+        and(indices);
+        return size() < size;
     }
-  }
+
+    @Override
+    public void andNot(IntCollection indices) {
+        if (indices.isEmpty()) {
+            return;
+        }
+        IntIterator iterator = iterator();
+        while (iterator.hasNext()) {
+            int next = iterator.nextInt();
+            if (indices.contains(next)) {
+                iterator.remove();
+            }
+        }
+    }
+
+    @Override
+    public boolean removeAll(IntCollection indices) {
+        if (isEmpty() || indices.isEmpty()) {
+            return false;
+        }
+        int size = size();
+        andNot(indices);
+        return size() < size;
+    }
+
+    @Override
+    public void or(IntCollection indices) {
+        if (indices.isEmpty()) {
+            return;
+        }
+        indices.forEach((IntConsumer) this::set);
+    }
+
+    @Override
+    public boolean addAll(IntCollection indices) {
+        if (indices.isEmpty()) {
+            return false;
+        }
+        @SuppressWarnings("TooBroadScope")
+        int size = size();
+        or(indices);
+        return size < size();
+    }
+
+    @Override
+    public void xor(IntCollection indices) {
+        if (indices.isEmpty()) {
+            return;
+        }
+        IntSet set = indices instanceof IntSet ? (IntSet) indices : NatBitSets.copyOf(indices);
+        set.forEach((IntConsumer) this::flip);
+    }
+
+    @Override
+    public AbstractNatBitSet clone() {
+        try {
+            return (AbstractNatBitSet) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError(e);
+        }
+    }
 }

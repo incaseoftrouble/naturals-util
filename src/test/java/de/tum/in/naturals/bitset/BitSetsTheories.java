@@ -37,139 +37,138 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @SuppressWarnings({"NewClassNamingConvention", "StaticCollection"})
 class BitSetsTheories {
-  private static final int COMPLEMENT_SIZE = 1000;
-  private static final int MAXIMUM_ELEMENTS = 1 << 16;
-  private static final int MAXIMUM_SIZE = 1000;
-  private static final int NUMBER_OF_TESTS = 100;
-  private static final Random generator = new Random(10L);
-  private static final List<IntCollection> indices;
+    private static final int COMPLEMENT_SIZE = 1000;
+    private static final int MAXIMUM_ELEMENTS = 1 << 16;
+    private static final int MAXIMUM_SIZE = 1000;
+    private static final int NUMBER_OF_TESTS = 100;
+    private static final Random generator = new Random(10L);
+    private static final List<IntCollection> indices;
 
-  static {
-    List<IntCollection> generatedIndices = new ArrayList<>(NUMBER_OF_TESTS);
-    for (int i = 0; i < NUMBER_OF_TESTS; i++) {
-      int size = generator.nextInt(MAXIMUM_SIZE);
-      IntCollection list = new IntArrayList(size);
-      for (int j = 0; j < size; j++) {
-        list.add(generator.nextInt(MAXIMUM_ELEMENTS));
-      }
-      generatedIndices.add(list);
-    }
-    indices = Collections.unmodifiableList(generatedIndices);
-  }
-
-  public static Stream<IntCollection> indices() {
-    return indices.stream();
-  }
-
-  @ParameterizedTest
-  @MethodSource("indices")
-  void testComplementIterator(IntCollection ints) {
-    BitSet bitSet = new BitSet();
-    ints.forEach((IntConsumer) bitSet::set);
-
-    IntSet result = new IntOpenHashSet(bitSet.cardinality());
-    BitSets.complementIterator(bitSet, COMPLEMENT_SIZE).forEachRemaining((IntConsumer) result::add);
-
-    IntSet expected = new IntOpenHashSet();
-    for (int i = 0; i < COMPLEMENT_SIZE; i++) {
-      if (!ints.contains(i)) {
-        expected.add(i);
-      }
+    static {
+        List<IntCollection> generatedIndices = new ArrayList<>(NUMBER_OF_TESTS);
+        for (int i = 0; i < NUMBER_OF_TESTS; i++) {
+            int size = generator.nextInt(MAXIMUM_SIZE);
+            IntCollection list = new IntArrayList(size);
+            for (int j = 0; j < size; j++) {
+                list.add(generator.nextInt(MAXIMUM_ELEMENTS));
+            }
+            generatedIndices.add(list);
+        }
+        indices = Collections.unmodifiableList(generatedIndices);
     }
 
-    assertThat(result, is(expected));
-  }
-
-  @ParameterizedTest
-  @MethodSource("indices")
-  void testForEach(IntCollection ints) {
-    BitSet bitSet = new BitSet();
-    ints.forEach((IntConsumer) bitSet::set);
-
-    IntSet result = new IntOpenHashSet(bitSet.cardinality());
-    BitSets.forEach(bitSet, result::add);
-
-    IntSet expected = new IntOpenHashSet(ints);
-
-    assertThat(result, is(expected));
-  }
-
-  @ParameterizedTest
-  @MethodSource("indices")
-  void testImmutableBitSet(IntCollection ints) {
-    BitSet bitSet = new BitSet();
-    ints.forEach((IntConsumer) bitSet::set);
-
-    ImmutableBitSet immutableBitSet = ImmutableBitSet.copyOf(bitSet);
-    bitSet.clear();
-
-    IntSet result = new IntOpenHashSet(immutableBitSet.cardinality());
-    BitSets.forEach(immutableBitSet, result::add);
-
-    IntSet expected = new IntOpenHashSet(ints);
-
-    assertThat(result, is(expected));
-  }
-
-  @ParameterizedTest
-  @MethodSource("indices")
-  void testIterator(IntCollection ints) {
-    BitSet bitSet = new BitSet();
-    ints.forEach((IntConsumer) bitSet::set);
-
-    IntSet result = new IntOpenHashSet(bitSet.cardinality());
-    BitSets.iterator(bitSet).forEachRemaining((IntConsumer) result::add);
-
-    IntSet expected = new IntOpenHashSet(ints);
-
-    assertThat(result, is(expected));
-  }
-
-  @ParameterizedTest
-  @MethodSource("indices")
-  void testSparseComplementIterator(IntCollection ints) {
-    SparseBitSet bitSet = new SparseBitSet();
-    ints.forEach((IntConsumer) bitSet::set);
-
-    IntSet result = new IntOpenHashSet(bitSet.cardinality());
-    SparseBitSets.complementIterator(bitSet, COMPLEMENT_SIZE)
-        .forEachRemaining((IntConsumer) result::add);
-
-    IntSet expected = new IntOpenHashSet();
-    for (int i = 0; i < COMPLEMENT_SIZE; i++) {
-      if (!ints.contains(i)) {
-        expected.add(i);
-      }
+    public static Stream<IntCollection> indices() {
+        return indices.stream();
     }
 
-    assertThat(result, is(expected));
-  }
+    @ParameterizedTest
+    @MethodSource("indices")
+    void testComplementIterator(IntCollection ints) {
+        BitSet bitSet = new BitSet();
+        ints.forEach((IntConsumer) bitSet::set);
 
-  @ParameterizedTest
-  @MethodSource("indices")
-  void testSparseForEach(IntCollection ints) {
-    SparseBitSet bitSet = new SparseBitSet();
-    ints.forEach((IntConsumer) bitSet::set);
+        IntSet result = new IntOpenHashSet(bitSet.cardinality());
+        BitSets.complementIterator(bitSet, COMPLEMENT_SIZE).forEachRemaining((IntConsumer) result::add);
 
-    IntSet result = new IntOpenHashSet(bitSet.cardinality());
-    SparseBitSets.forEach(bitSet, result::add);
+        IntSet expected = new IntOpenHashSet();
+        for (int i = 0; i < COMPLEMENT_SIZE; i++) {
+            if (!ints.contains(i)) {
+                expected.add(i);
+            }
+        }
 
-    IntSet expected = new IntOpenHashSet(ints);
+        assertThat(result, is(expected));
+    }
 
-    assertThat(result, is(expected));
-  }
+    @ParameterizedTest
+    @MethodSource("indices")
+    void testForEach(IntCollection ints) {
+        BitSet bitSet = new BitSet();
+        ints.forEach((IntConsumer) bitSet::set);
 
-  @ParameterizedTest
-  @MethodSource("indices")
-  void testSparseIterator(IntCollection ints) {
-    SparseBitSet bitSet = new SparseBitSet();
-    ints.forEach((IntConsumer) bitSet::set);
+        IntSet result = new IntOpenHashSet(bitSet.cardinality());
+        BitSets.forEach(bitSet, result::add);
 
-    IntSet result = new IntOpenHashSet(bitSet.cardinality());
-    SparseBitSets.iterator(bitSet).forEachRemaining((IntConsumer) result::add);
+        IntSet expected = new IntOpenHashSet(ints);
 
-    IntSet expected = new IntOpenHashSet(ints);
+        assertThat(result, is(expected));
+    }
 
-    assertThat(result, is(expected));
-  }
+    @ParameterizedTest
+    @MethodSource("indices")
+    void testImmutableBitSet(IntCollection ints) {
+        BitSet bitSet = new BitSet();
+        ints.forEach((IntConsumer) bitSet::set);
+
+        ImmutableBitSet immutableBitSet = ImmutableBitSet.copyOf(bitSet);
+        bitSet.clear();
+
+        IntSet result = new IntOpenHashSet(immutableBitSet.cardinality());
+        BitSets.forEach(immutableBitSet, result::add);
+
+        IntSet expected = new IntOpenHashSet(ints);
+
+        assertThat(result, is(expected));
+    }
+
+    @ParameterizedTest
+    @MethodSource("indices")
+    void testIterator(IntCollection ints) {
+        BitSet bitSet = new BitSet();
+        ints.forEach((IntConsumer) bitSet::set);
+
+        IntSet result = new IntOpenHashSet(bitSet.cardinality());
+        BitSets.iterator(bitSet).forEachRemaining((IntConsumer) result::add);
+
+        IntSet expected = new IntOpenHashSet(ints);
+
+        assertThat(result, is(expected));
+    }
+
+    @ParameterizedTest
+    @MethodSource("indices")
+    void testSparseComplementIterator(IntCollection ints) {
+        SparseBitSet bitSet = new SparseBitSet();
+        ints.forEach((IntConsumer) bitSet::set);
+
+        IntSet result = new IntOpenHashSet(bitSet.cardinality());
+        SparseBitSets.complementIterator(bitSet, COMPLEMENT_SIZE).forEachRemaining((IntConsumer) result::add);
+
+        IntSet expected = new IntOpenHashSet();
+        for (int i = 0; i < COMPLEMENT_SIZE; i++) {
+            if (!ints.contains(i)) {
+                expected.add(i);
+            }
+        }
+
+        assertThat(result, is(expected));
+    }
+
+    @ParameterizedTest
+    @MethodSource("indices")
+    void testSparseForEach(IntCollection ints) {
+        SparseBitSet bitSet = new SparseBitSet();
+        ints.forEach((IntConsumer) bitSet::set);
+
+        IntSet result = new IntOpenHashSet(bitSet.cardinality());
+        SparseBitSets.forEach(bitSet, result::add);
+
+        IntSet expected = new IntOpenHashSet(ints);
+
+        assertThat(result, is(expected));
+    }
+
+    @ParameterizedTest
+    @MethodSource("indices")
+    void testSparseIterator(IntCollection ints) {
+        SparseBitSet bitSet = new SparseBitSet();
+        ints.forEach((IntConsumer) bitSet::set);
+
+        IntSet result = new IntOpenHashSet(bitSet.cardinality());
+        SparseBitSets.iterator(bitSet).forEachRemaining((IntConsumer) result::add);
+
+        IntSet expected = new IntOpenHashSet(ints);
+
+        assertThat(result, is(expected));
+    }
 }

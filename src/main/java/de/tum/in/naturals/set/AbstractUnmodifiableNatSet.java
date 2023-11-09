@@ -23,59 +23,59 @@ import java.util.Collection;
 import java.util.function.Predicate;
 
 public abstract class AbstractUnmodifiableNatSet extends AbstractIntSet implements NatSet {
-  @Override
-  public boolean add(int index) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean add(int index) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean addAll(IntCollection c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean addAll(IntCollection c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean addAll(Collection<? extends Integer> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean addAll(Collection<? extends Integer> c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public AbstractUnmodifiableNatSet clone() throws CloneNotSupportedException {
-    return (AbstractUnmodifiableNatSet) super.clone();
-  }
+    @Override
+    public AbstractUnmodifiableNatSet clone() throws CloneNotSupportedException {
+        return (AbstractUnmodifiableNatSet) super.clone();
+    }
 
-  @Override
-  public boolean remove(int index) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean remove(int index) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean removeAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean removeAll(IntCollection c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean removeAll(IntCollection c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  public boolean removeIf(Predicate<? super Integer> filter) {
-    throw new UnsupportedOperationException();
-  }
+    @SuppressWarnings("deprecation")
+    @Override
+    public boolean removeIf(Predicate<? super Integer> filter) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean retainAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean retainAll(IntCollection c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean retainAll(IntCollection c) {
+        throw new UnsupportedOperationException();
+    }
 }

@@ -24,306 +24,302 @@ import java.util.NoSuchElementException;
 import javax.annotation.Nonnegative;
 
 class BoundedWrapper extends AbstractBoundedNatBitSet {
-  private final boolean complement;
-  private final BoundedWrapper complementView;
-  private final NatBitSet delegate;
+    private final boolean complement;
+    private final BoundedWrapper complementView;
+    private final NatBitSet delegate;
 
-  private BoundedWrapper(BoundedWrapper other) {
-    super(other.domainSize());
-    // Complement constructor
-    this.delegate = other.delegate;
-    this.complement = !other.complement;
-    this.complementView = other;
-    assert checkConsistency();
-  }
-
-  private BoundedWrapper(NatBitSet delegate, @Nonnegative int domainSize, boolean complement) {
-    super(domainSize);
-    assert !(delegate instanceof BoundedNatBitSet);
-    this.delegate = delegate;
-    this.complement = complement;
-    this.complementView = new BoundedWrapper(this);
-    assert checkConsistency();
-  }
-
-  BoundedWrapper(NatBitSet delegate, @Nonnegative int domainSize) {
-    this(delegate, domainSize, false);
-  }
-
-  @Override
-  public boolean add(int index) {
-    checkInDomain(index);
-    return complement ? delegate.remove(index) : delegate.add(index);
-  }
-
-  @Override
-  public void and(IntCollection indices) {
-    if (complement) {
-      super.and(indices);
-    } else {
-      delegate.and(indices);
+    private BoundedWrapper(BoundedWrapper other) {
+        super(other.domainSize());
+        // Complement constructor
+        this.delegate = other.delegate;
+        this.complement = !other.complement;
+        this.complementView = other;
+        assert checkConsistency();
     }
-  }
 
-  @Override
-  public void andNot(IntCollection indices) {
-    if (complement) {
-      super.andNot(indices);
-    } else {
-      delegate.andNot(indices);
+    private BoundedWrapper(NatBitSet delegate, @Nonnegative int domainSize, boolean complement) {
+        super(domainSize);
+        assert !(delegate instanceof BoundedNatBitSet);
+        this.delegate = delegate;
+        this.complement = complement;
+        this.complementView = new BoundedWrapper(this);
+        assert checkConsistency();
     }
-  }
 
-  private boolean checkConsistency() {
-    return delegate.isEmpty() || delegate.lastInt() <= domainSize();
-  }
-
-  @Override
-  public void clear(int index) {
-    assert checkConsistency();
-    checkInDomain(index);
-    if (complement) {
-      delegate.set(index);
-    } else {
-      delegate.clear(index);
+    BoundedWrapper(NatBitSet delegate, @Nonnegative int domainSize) {
+        this(delegate, domainSize, false);
     }
-    assert checkConsistency();
-  }
 
-  @Override
-  public void clear(int from, int to) {
-    assert checkConsistency();
-    checkInDomain(from, to);
-    if (complement) {
-      delegate.set(from, to);
-    } else {
-      delegate.clear(from, to);
+    @Override
+    public boolean add(int index) {
+        checkInDomain(index);
+        return complement ? delegate.remove(index) : delegate.add(index);
     }
-    assert checkConsistency();
-  }
 
-  @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
-  @Override
-  public BoundedWrapper clone() {
-    return new BoundedWrapper(delegate, domainSize());
-  }
-
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  @Override
-  public BoundedNatBitSet complement() {
-    return complementView;
-  }
-
-  @Override
-  public boolean contains(int index) {
-    return inDomain(index) && (complement ^ delegate.contains(index));
-  }
-
-  @Override
-  public boolean containsAll(IntCollection indices) {
-    if (complement) {
-      return super.containsAll(indices);
+    @Override
+    public void and(IntCollection indices) {
+        if (complement) {
+            super.and(indices);
+        } else {
+            delegate.and(indices);
+        }
     }
-    return delegate.containsAll(indices);
-  }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+    @Override
+    public void andNot(IntCollection indices) {
+        if (complement) {
+            super.andNot(indices);
+        } else {
+            delegate.andNot(indices);
+        }
     }
-    if (o instanceof BoundedWrapper) {
-      BoundedWrapper other = (BoundedWrapper) o;
-      return delegate.equals(other.delegate);
+
+    private boolean checkConsistency() {
+        return delegate.isEmpty() || delegate.lastInt() <= domainSize();
     }
-    return delegate.equals(o);
-  }
 
-  @Override
-  @Nonnegative
-  public int firstInt() {
-    if (complement) {
-      int nextPresent = nextPresentIndex(0);
-      if (nextPresent < 0) {
-        throw new NoSuchElementException();
-      }
-      return nextPresent;
+    @Override
+    public void clear(int index) {
+        assert checkConsistency();
+        checkInDomain(index);
+        if (complement) {
+            delegate.set(index);
+        } else {
+            delegate.clear(index);
+        }
+        assert checkConsistency();
     }
-    return delegate.firstInt();
-  }
 
-  @Override
-  public void flip(int index) {
-    assert checkConsistency();
-    checkInDomain(index);
-    delegate.flip(index);
-    assert checkConsistency();
-  }
-
-  @Override
-  public void flip(int from, int to) {
-    assert checkConsistency();
-    checkInDomain(from, to);
-    delegate.flip(from, to);
-    assert checkConsistency();
-  }
-
-  @Override
-  public int hashCode() {
-    return delegate.hashCode();
-  }
-
-  @Override
-  public boolean intersects(Collection<Integer> indices) {
-    if (complement) {
-      return super.intersects(indices);
+    @Override
+    public void clear(int from, int to) {
+        assert checkConsistency();
+        checkInDomain(from, to);
+        if (complement) {
+            delegate.set(from, to);
+        } else {
+            delegate.clear(from, to);
+        }
+        assert checkConsistency();
     }
-    return delegate.intersects(indices);
-  }
 
-  @Override
-  boolean isComplement() {
-    return complement;
-  }
-
-  @Override
-  public boolean isEmpty() {
-    assert checkConsistency();
-    return delegate.size() == (complement ? domainSize() : 0);
-  }
-
-  @Override
-  public IntIterator iterator() {
-    assert checkConsistency();
-    return complement
-        ? NatBitSets.complementIterator(delegate, domainSize())
-        : delegate.iterator();
-  }
-
-  @Override
-  public int lastInt() {
-    assert checkConsistency();
-    if (complement) {
-      if (isEmpty()) {
-        throw new NoSuchElementException();
-      }
-      return delegate.previousPresentIndex(domainSize() - 1);
+    @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
+    @Override
+    public BoundedWrapper clone() {
+        return new BoundedWrapper(delegate, domainSize());
     }
-    return delegate.lastInt();
-  }
 
-  @Override
-  public int nextAbsentIndex(int index) {
-    assert checkConsistency();
-    if (complement) {
-      int nextSet = delegate.nextPresentIndex(index);
-      return nextSet == -1 ? index : nextSet;
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    @Override
+    public BoundedNatBitSet complement() {
+        return complementView;
     }
-    return delegate.nextAbsentIndex(index);
-  }
 
-  @Override
-  public int nextPresentIndex(int index) {
-    assert checkConsistency();
-    if (complement) {
-      int nextClear = delegate.nextAbsentIndex(index);
-      return nextClear == domainSize() ? -1 : nextClear;
+    @Override
+    public boolean contains(int index) {
+        return inDomain(index) && (complement ^ delegate.contains(index));
     }
-    return delegate.nextPresentIndex(index);
-  }
 
-  @Override
-  public void or(IntCollection indices) {
-    if (complement) {
-      super.or(indices);
-    } else {
-      delegate.or(indices);
+    @Override
+    public boolean containsAll(IntCollection indices) {
+        if (complement) {
+            return super.containsAll(indices);
+        }
+        return delegate.containsAll(indices);
     }
-  }
 
-  @Override
-  public void orNot(IntCollection indices) {
-    if (indices instanceof BoundedNatBitSet) {
-      delegate.or(((BoundedNatBitSet) indices).complement());
-    } else {
-      super.orNot(indices);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof BoundedWrapper) {
+            BoundedWrapper other = (BoundedWrapper) o;
+            return delegate.equals(other.delegate);
+        }
+        return delegate.equals(o);
     }
-  }
 
-  @Override
-  public int previousAbsentIndex(int index) {
-    assert checkConsistency();
-    return delegate.previousAbsentIndex(index);
-  }
-
-  @Override
-  public int previousPresentIndex(int index) {
-    assert checkConsistency();
-    return delegate.previousPresentIndex(index);
-  }
-
-  @Override
-  public boolean remove(int index) {
-    checkInDomain(index);
-    return complement ? delegate.add(index) : delegate.remove(index);
-  }
-
-  @Override
-  public boolean removeAll(IntCollection indices) {
-    return complement ? delegate.addAll(indices) : delegate.removeAll(indices);
-  }
-
-  @Override
-  public boolean retainAll(IntCollection indices) {
-    if (complement) {
-      return super.retainAll(indices);
+    @Override
+    @Nonnegative
+    public int firstInt() {
+        if (complement) {
+            int nextPresent = nextPresentIndex(0);
+            if (nextPresent < 0) {
+                throw new NoSuchElementException();
+            }
+            return nextPresent;
+        }
+        return delegate.firstInt();
     }
-    return delegate.retainAll(indices);
-  }
 
-  @Override
-  public IntIterator reverseIterator() {
-    assert checkConsistency();
-    return complement
-        ? NatBitSets.complementReverseIterator(delegate, domainSize())
-        : delegate.reverseIterator();
-  }
-
-  @Override
-  public void set(int index) {
-    assert checkConsistency();
-    checkInDomain(index);
-    if (complement) {
-      delegate.clear(index);
-    } else {
-      delegate.set(index);
+    @Override
+    public void flip(int index) {
+        assert checkConsistency();
+        checkInDomain(index);
+        delegate.flip(index);
+        assert checkConsistency();
     }
-    assert checkConsistency();
-  }
 
-  @Override
-  public void set(int index, boolean value) {
-    assert checkConsistency();
-    checkInDomain(index);
-    delegate.set(index, value ^ complement);
-    assert checkConsistency();
-  }
-
-  @Override
-  public void set(int from, int to) {
-    assert checkConsistency();
-    checkInDomain(from, to);
-    if (complement) {
-      delegate.clear(from, to);
-    } else {
-      delegate.set(from, to);
+    @Override
+    public void flip(int from, int to) {
+        assert checkConsistency();
+        checkInDomain(from, to);
+        delegate.flip(from, to);
+        assert checkConsistency();
     }
-    assert checkConsistency();
-  }
 
-  @Override
-  public int size() {
-    assert checkConsistency();
-    return complement ? domainSize() - delegate.size() : delegate.size();
-  }
+    @Override
+    public int hashCode() {
+        return delegate.hashCode();
+    }
+
+    @Override
+    public boolean intersects(Collection<Integer> indices) {
+        if (complement) {
+            return super.intersects(indices);
+        }
+        return delegate.intersects(indices);
+    }
+
+    @Override
+    boolean isComplement() {
+        return complement;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        assert checkConsistency();
+        return delegate.size() == (complement ? domainSize() : 0);
+    }
+
+    @Override
+    public IntIterator iterator() {
+        assert checkConsistency();
+        return complement ? NatBitSets.complementIterator(delegate, domainSize()) : delegate.iterator();
+    }
+
+    @Override
+    public int lastInt() {
+        assert checkConsistency();
+        if (complement) {
+            if (isEmpty()) {
+                throw new NoSuchElementException();
+            }
+            return delegate.previousPresentIndex(domainSize() - 1);
+        }
+        return delegate.lastInt();
+    }
+
+    @Override
+    public int nextAbsentIndex(int index) {
+        assert checkConsistency();
+        if (complement) {
+            int nextSet = delegate.nextPresentIndex(index);
+            return nextSet == -1 ? index : nextSet;
+        }
+        return delegate.nextAbsentIndex(index);
+    }
+
+    @Override
+    public int nextPresentIndex(int index) {
+        assert checkConsistency();
+        if (complement) {
+            int nextClear = delegate.nextAbsentIndex(index);
+            return nextClear == domainSize() ? -1 : nextClear;
+        }
+        return delegate.nextPresentIndex(index);
+    }
+
+    @Override
+    public void or(IntCollection indices) {
+        if (complement) {
+            super.or(indices);
+        } else {
+            delegate.or(indices);
+        }
+    }
+
+    @Override
+    public void orNot(IntCollection indices) {
+        if (indices instanceof BoundedNatBitSet) {
+            delegate.or(((BoundedNatBitSet) indices).complement());
+        } else {
+            super.orNot(indices);
+        }
+    }
+
+    @Override
+    public int previousAbsentIndex(int index) {
+        assert checkConsistency();
+        return delegate.previousAbsentIndex(index);
+    }
+
+    @Override
+    public int previousPresentIndex(int index) {
+        assert checkConsistency();
+        return delegate.previousPresentIndex(index);
+    }
+
+    @Override
+    public boolean remove(int index) {
+        checkInDomain(index);
+        return complement ? delegate.add(index) : delegate.remove(index);
+    }
+
+    @Override
+    public boolean removeAll(IntCollection indices) {
+        return complement ? delegate.addAll(indices) : delegate.removeAll(indices);
+    }
+
+    @Override
+    public boolean retainAll(IntCollection indices) {
+        if (complement) {
+            return super.retainAll(indices);
+        }
+        return delegate.retainAll(indices);
+    }
+
+    @Override
+    public IntIterator reverseIterator() {
+        assert checkConsistency();
+        return complement ? NatBitSets.complementReverseIterator(delegate, domainSize()) : delegate.reverseIterator();
+    }
+
+    @Override
+    public void set(int index) {
+        assert checkConsistency();
+        checkInDomain(index);
+        if (complement) {
+            delegate.clear(index);
+        } else {
+            delegate.set(index);
+        }
+        assert checkConsistency();
+    }
+
+    @Override
+    public void set(int index, boolean value) {
+        assert checkConsistency();
+        checkInDomain(index);
+        delegate.set(index, value ^ complement);
+        assert checkConsistency();
+    }
+
+    @Override
+    public void set(int from, int to) {
+        assert checkConsistency();
+        checkInDomain(from, to);
+        if (complement) {
+            delegate.clear(from, to);
+        } else {
+            delegate.set(from, to);
+        }
+        assert checkConsistency();
+    }
+
+    @Override
+    public int size() {
+        assert checkConsistency();
+        return complement ? domainSize() - delegate.size() : delegate.size();
+    }
 }

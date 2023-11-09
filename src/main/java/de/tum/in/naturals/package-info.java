@@ -20,4 +20,3 @@
  */
 @EverythingIsNonnullByDefault
 package de.tum.in.naturals;
-

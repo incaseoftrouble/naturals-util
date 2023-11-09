@@ -37,248 +37,241 @@ import javax.annotation.Nonnegative;
  */
 public interface NatBitSet extends NatSet, Cloneable {
 
-  // Accessors
+    // Accessors
 
-  /**
-   * Returns the first (smallest) element currently in this set.
-   *
-   * @throws NoSuchElementException
-   *     if this set is empty
-   * @see SortedSet#first()
-   */
-  @Nonnegative
-  default int firstInt() {
-    if (isEmpty()) {
-      throw new NoSuchElementException();
+    /**
+     * Returns the first (smallest) element currently in this set.
+     *
+     * @throws NoSuchElementException
+     *     if this set is empty
+     * @see SortedSet#first()
+     */
+    @Nonnegative
+    default int firstInt() {
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        return iterator().nextInt();
     }
-    return iterator().nextInt();
-  }
 
-  /**
-   * Returns the last (highest) element currently in this set.
-   *
-   * @throws NoSuchElementException
-   *     if this set is empty
-   * @see SortedSet#last()
-   */
-  @Nonnegative
-  default int lastInt() {
-    if (isEmpty()) {
-      throw new NoSuchElementException();
+    /**
+     * Returns the last (highest) element currently in this set.
+     *
+     * @throws NoSuchElementException
+     *     if this set is empty
+     * @see SortedSet#last()
+     */
+    @Nonnegative
+    default int lastInt() {
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        return reverseIterator().nextInt();
     }
-    return reverseIterator().nextInt();
-  }
 
+    /**
+     * Returns the smallest index larger or equal to {@code index} which is contained in this set or
+     * -1 if none.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     * @see BitSet#nextSetBit(int)
+     */
+    int nextPresentIndex(@Nonnegative int index);
 
-  /**
-   * Returns the smallest index larger or equal to {@code index} which is contained in this set or
-   * -1 if none.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   * @see BitSet#nextSetBit(int)
-   */
-  int nextPresentIndex(@Nonnegative int index);
+    /**
+     * Returns the smallest index larger or equal to {@code index} which is not contained in this set.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     * @see BitSet#nextClearBit(int)
+     */
+    int nextAbsentIndex(@Nonnegative int index);
 
-  /**
-   * Returns the smallest index larger or equal to {@code index} which is not contained in this set.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   * @see BitSet#nextClearBit(int)
-   */
-  int nextAbsentIndex(@Nonnegative int index);
+    /**
+     * Returns the largest index smaller or equal to {@code index} which is contained in this set or
+     * -1 if none.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     * @see BitSet#previousSetBit(int)
+     */
+    int previousPresentIndex(@Nonnegative int index);
 
-  /**
-   * Returns the largest index smaller or equal to {@code index} which is contained in this set or
-   * -1 if none.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   * @see BitSet#previousSetBit(int)
-   */
-  int previousPresentIndex(@Nonnegative int index);
+    /**
+     * Returns the largest index smaller or equal to {@code index} which is not contained in this set
+     * or -1 if none.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     * @see BitSet#nextSetBit(int)
+     */
+    int previousAbsentIndex(@Nonnegative int index);
 
-  /**
-   * Returns the largest index smaller or equal to {@code index} which is not contained in this set
-   * or -1 if none.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   * @see BitSet#nextSetBit(int)
-   */
-  int previousAbsentIndex(@Nonnegative int index);
-
-
-  /**
-   * Returns an {@link IntIterator iterator} returning the elements of this set in ascending order.
-   */
-  @Override
-  default IntIterator iterator() {
-    if (isEmpty()) {
-      return IntIterators.EMPTY_ITERATOR;
+    /**
+     * Returns an {@link IntIterator iterator} returning the elements of this set in ascending order.
+     */
+    @Override
+    default IntIterator iterator() {
+        if (isEmpty()) {
+            return IntIterators.EMPTY_ITERATOR;
+        }
+        if (size() == 1) {
+            return IntIterators.singleton(firstInt());
+        }
+        return new NatBitSetIterator(this);
     }
-    if (size() == 1) {
-      return IntIterators.singleton(firstInt());
+
+    @Override
+    default IntIterator reverseIterator() {
+        if (isEmpty()) {
+            return IntIterators.EMPTY_ITERATOR;
+        }
+        if (size() == 1) {
+            return IntIterators.singleton(firstInt());
+        }
+        return new ReverseIntBidiIterator(new NatBitSetBidiIterator(this, lastInt() + 1));
     }
-    return new NatBitSetIterator(this);
-  }
 
-  @Override
-  default IntIterator reverseIterator() {
-    if (isEmpty()) {
-      return IntIterators.EMPTY_ITERATOR;
+    // Mutators
+
+    /**
+     * Adds the given index to this set.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     * @see Collection#add(Object)
+     * @see BitSet#set(int)
+     */
+    void set(@Nonnegative int index);
+
+    /**
+     * Adds or removes the given index, based on the given value.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     * @see BitSet#set(int, boolean)
+     */
+    void set(@Nonnegative int index, boolean value);
+
+    /**
+     * Adds the given range to this set.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code from} or {@code to} is negative or {@code to} is less than {@code from}.
+     * @see BitSet#set(int, int)
+     */
+    void set(@Nonnegative int from, @Nonnegative int to);
+
+    /**
+     * Removes the given index.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     * @see #clear(int, int)
+     * @see Collection#remove(Object)
+     * @see BitSet#clear(int)
+     */
+    void clear(@Nonnegative int index);
+
+    /**
+     * Removes the given range.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code from} or {@code to} is negative or {@code to} is less than {@code from}.
+     * @see #clear(int)
+     * @see BitSet#clear(int, int)
+     */
+    void clear(@Nonnegative int from, @Nonnegative int to);
+
+    /**
+     * Removes all indices larger or equal than {@code from}. Equivalent to calling<pre>
+     * set.clear(from, Integer.MAX_VALUE);
+     * </pre>
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code from} is negative.
+     * @see #clear(int, int)
+     * @see #lastInt()
+     */
+    void clearFrom(@Nonnegative int from);
+
+    /**
+     * Flips the given index.
+     *
+     * <p>This is equivalent to<pre>
+     * if (contains(index)) remove(index);
+     * else add(index);
+     * </pre>
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code index} is negative.
+     * @see #flip(int, int)
+     * @see BitSet#flip(int)
+     */
+    void flip(@Nonnegative int index);
+
+    /**
+     * Flips all values in the given range.
+     *
+     * @throws IndexOutOfBoundsException
+     *     if {@code from} or {@code to} is negative or {@code to} is less than {@code from}.
+     * @see #flip(int)
+     * @see BitSet#flip(int)
+     */
+    void flip(@Nonnegative int from, @Nonnegative int to);
+
+    // Bulk operations
+
+    /**
+     * Determines whether this set has any element in common with the given indices.
+     *
+     * @see BitSet#intersects(BitSet)
+     */
+    default boolean intersects(Collection<Integer> indices) {
+        IntIterator iterator = iterator();
+        while (iterator.hasNext()) {
+            if (indices.contains(iterator.nextInt())) {
+                return true;
+            }
+        }
+        return false;
     }
-    if (size() == 1) {
-      return IntIterators.singleton(firstInt());
-    }
-    return new ReverseIntBidiIterator(new NatBitSetBidiIterator(this, lastInt() + 1));
-  }
 
+    /**
+     * Computes the intersection with the given indices.
+     *
+     * @see Collection#retainAll(Collection)
+     * @see BitSet#and(BitSet)
+     */
+    void and(IntCollection indices);
 
-  // Mutators
+    /**
+     * Removes all elements of the indices from this set.
+     *
+     * @see Collection#removeAll(Collection)
+     * @see BitSet#andNot(BitSet)
+     */
+    void andNot(IntCollection indices);
 
-  /**
-   * Adds the given index to this set.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   * @see Collection#add(Object)
-   * @see BitSet#set(int)
-   */
-  void set(@Nonnegative int index);
+    /**
+     * Adds all elements of the given indices to this set.
+     *
+     * @see Collection#addAll(Collection)
+     * @see BitSet#or(BitSet)
+     */
+    void or(IntCollection indices);
 
-  /**
-   * Adds or removes the given index, based on the given value.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   * @see BitSet#set(int, boolean)
-   */
-  void set(@Nonnegative int index, boolean value);
+    /**
+     * Computes the exclusive or with the given indices. After the call to this method the set
+     * contains all values which are contained either in the set before the call or in the given
+     * indices, but not both.
+     *
+     * @see BitSet#xor(BitSet)
+     */
+    void xor(IntCollection indices);
 
-  /**
-   * Adds the given range to this set.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code from} or {@code to} is negative or {@code to} is less than {@code from}.
-   * @see BitSet#set(int, int)
-   */
-  void set(@Nonnegative int from, @Nonnegative int to);
+    // Clone
 
-
-  /**
-   * Removes the given index.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   * @see #clear(int, int)
-   * @see Collection#remove(Object)
-   * @see BitSet#clear(int)
-   */
-  void clear(@Nonnegative int index);
-
-  /**
-   * Removes the given range.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code from} or {@code to} is negative or {@code to} is less than {@code from}.
-   * @see #clear(int)
-   * @see BitSet#clear(int, int)
-   */
-  void clear(@Nonnegative int from, @Nonnegative int to);
-
-  /**
-   * Removes all indices larger or equal than {@code from}. Equivalent to calling<pre>
-   * set.clear(from, Integer.MAX_VALUE);
-   * </pre>
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code from} is negative.
-   * @see #clear(int, int)
-   * @see #lastInt()
-   */
-  void clearFrom(@Nonnegative int from);
-
-
-  /**
-   * Flips the given index.
-   *
-   * <p>This is equivalent to<pre>
-   * if (contains(index)) remove(index);
-   * else add(index);
-   * </pre>
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code index} is negative.
-   * @see #flip(int, int)
-   * @see BitSet#flip(int)
-   */
-  void flip(@Nonnegative int index);
-
-  /**
-   * Flips all values in the given range.
-   *
-   * @throws IndexOutOfBoundsException
-   *     if {@code from} or {@code to} is negative or {@code to} is less than {@code from}.
-   * @see #flip(int)
-   * @see BitSet#flip(int)
-   */
-  void flip(@Nonnegative int from, @Nonnegative int to);
-
-
-  // Bulk operations
-
-  /**
-   * Determines whether this set has any element in common with the given indices.
-   *
-   * @see BitSet#intersects(BitSet)
-   */
-  default boolean intersects(Collection<Integer> indices) {
-    IntIterator iterator = iterator();
-    while (iterator.hasNext()) {
-      if (indices.contains(iterator.nextInt())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Computes the intersection with the given indices.
-   *
-   * @see Collection#retainAll(Collection)
-   * @see BitSet#and(BitSet)
-   */
-  void and(IntCollection indices);
-
-  /**
-   * Removes all elements of the indices from this set.
-   *
-   * @see Collection#removeAll(Collection)
-   * @see BitSet#andNot(BitSet)
-   */
-  void andNot(IntCollection indices);
-
-  /**
-   * Adds all elements of the given indices to this set.
-   *
-   * @see Collection#addAll(Collection)
-   * @see BitSet#or(BitSet)
-   */
-  void or(IntCollection indices);
-
-  /**
-   * Computes the exclusive or with the given indices. After the call to this method the set
-   * contains all values which are contained either in the set before the call or in the given
-   * indices, but not both.
-   *
-   * @see BitSet#xor(BitSet)
-   */
-  void xor(IntCollection indices);
-
-
-  // Clone
-
-  NatBitSet clone();
+    NatBitSet clone();
 }

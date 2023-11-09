@@ -28,221 +28,221 @@ import java.util.function.IntConsumer;
 import org.roaringbitmap.RoaringBitmap;
 
 class ForwardingNatBitSet extends AbstractNatBitSet {
-  private final IntSortedSet delegate;
+    private final IntSortedSet delegate;
 
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  public ForwardingNatBitSet(IntSortedSet delegate) {
-    this.delegate = delegate;
-  }
-
-  @Override
-  public boolean add(int key) {
-    return delegate.add(key);
-  }
-
-  @Override
-  public boolean addAll(IntCollection o) {
-    return delegate.addAll(o);
-  }
-
-  @Override
-  public void and(IntCollection o) {
-    retainAll(o);
-  }
-
-  @Override
-  public void andNot(IntCollection o) {
-    removeAll(o);
-  }
-
-  @Override
-  public void clear(int index) {
-    remove(index);
-  }
-
-  @Override
-  public void clear(int from, int to) {
-    IntIterators.fromTo(from, to).forEachRemaining((IntConsumer) delegate::remove);
-  }
-
-  @Override
-  public void clear() {
-    delegate.clear();
-  }
-
-  @Override
-  public void clearFrom(int from) {
-    delegate.tailSet(from).clear();
-  }
-
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
-  @Override
-  public ForwardingNatBitSet clone() {
-    return new ForwardingNatBitSet(new IntAVLTreeSet(delegate));
-  }
-
-  @Override
-  public boolean contains(int key) {
-    return delegate.contains(key);
-  }
-
-  @Override
-  public boolean containsAll(IntCollection o) {
-    return delegate.containsAll(o);
-  }
-
-  @SuppressWarnings("com.haulmont.jpb.EqualsDoesntCheckParameterClass")
-  @Override
-  public boolean equals(Object o) {
-    return delegate.equals(o);
-  }
-
-  @Override
-  public int firstInt() {
-    return delegate.firstInt();
-  }
-
-  @Override
-  public void flip(int index) {
-    if (!delegate.remove(index)) {
-      delegate.add(index);
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    public ForwardingNatBitSet(IntSortedSet delegate) {
+        this.delegate = delegate;
     }
-  }
 
-  @Override
-  public void flip(int from, int to) {
-    IntIterators.fromTo(from, to).forEachRemaining((IntConsumer) this::flip);
-  }
-
-  @Override
-  public void forEach(IntConsumer action) {
-    delegate.forEach(action);
-  }
-
-  @Override
-  public int hashCode() {
-    return delegate.hashCode();
-  }
-
-  @Override
-  public boolean intersects(Collection<Integer> o) {
-    return IntIterators.any(delegate.iterator(), o::contains);
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return delegate.isEmpty();
-  }
-
-  @Override
-  public IntIterator iterator() {
-    return delegate.iterator();
-  }
-
-  @Override
-  public int lastInt() {
-    return delegate.lastInt();
-  }
-
-  @Override
-  public int nextAbsentIndex(int index) {
-    // TODO Binary search
-    int i = index;
-    while (delegate.contains(i)) {
-      i++;
+    @Override
+    public boolean add(int key) {
+        return delegate.add(key);
     }
-    return i;
-  }
 
-  @Override
-  public int nextPresentIndex(int index) {
-    IntSortedSet tail = delegate.tailSet(index);
-    return tail.isEmpty() ? -1 : tail.firstInt();
-  }
-
-  @Override
-  public void or(IntCollection o) {
-    addAll(o);
-  }
-
-  @Override
-  public int previousAbsentIndex(int index) {
-    // TODO Binary search
-    int i = index;
-    while (i > -1 && delegate.contains(i)) {
-      i--;
+    @Override
+    public boolean addAll(IntCollection o) {
+        return delegate.addAll(o);
     }
-    return i;
-  }
 
-  @Override
-  public int previousPresentIndex(int index) {
-    IntSortedSet tail = delegate.headSet(index);
-    return tail.isEmpty() ? -1 : tail.lastInt();
-  }
-
-  @Override
-  public boolean remove(int k) {
-    return delegate.remove(k);
-  }
-
-  @Override
-  public boolean removeAll(IntCollection o) {
-    return delegate.removeAll(o);
-  }
-
-  @Override
-  public boolean retainAll(IntCollection o) {
-    return delegate.retainAll(o);
-  }
-
-  @Override
-  public void set(int index) {
-    add(index);
-  }
-
-  @Override
-  public void set(int index, boolean value) {
-    if (value) {
-      add(index);
-    } else {
-      remove(index);
+    @Override
+    public void and(IntCollection o) {
+        retainAll(o);
     }
-  }
 
-  @Override
-  public void set(int from, int to) {
-    IntIterators.fromTo(from, to).forEachRemaining((IntConsumer) delegate::add);
-  }
+    @Override
+    public void andNot(IntCollection o) {
+        removeAll(o);
+    }
 
-  @Override
-  public int size() {
-    return delegate.size();
-  }
+    @Override
+    public void clear(int index) {
+        remove(index);
+    }
 
-  @Override
-  public int[] toArray(int[] a) {
-    return delegate.toArray(a);
-  }
+    @Override
+    public void clear(int from, int to) {
+        IntIterators.fromTo(from, to).forEachRemaining((IntConsumer) delegate::remove);
+    }
 
-  @Override
-  public int[] toIntArray() {
-    return delegate.toIntArray();
-  }
+    @Override
+    public void clear() {
+        delegate.clear();
+    }
 
-  @Override
-  public String toString() {
-    return delegate.toString();
-  }
+    @Override
+    public void clearFrom(int from) {
+        delegate.tailSet(from).clear();
+    }
 
-  @Override
-  public void xor(IntCollection o) {
-    // TODO This is expensive!
-    RoaringBitmap our = RoaringBitmaps.of(this);
-    RoaringBitmap other = RoaringBitmaps.of(o);
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @Override
+    public ForwardingNatBitSet clone() {
+        return new ForwardingNatBitSet(new IntAVLTreeSet(delegate));
+    }
 
-    clear();
-    our.xor(other);
-    our.forEach((org.roaringbitmap.IntConsumer) this::set);
-  }
+    @Override
+    public boolean contains(int key) {
+        return delegate.contains(key);
+    }
+
+    @Override
+    public boolean containsAll(IntCollection o) {
+        return delegate.containsAll(o);
+    }
+
+    @SuppressWarnings("com.haulmont.jpb.EqualsDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return delegate.equals(o);
+    }
+
+    @Override
+    public int firstInt() {
+        return delegate.firstInt();
+    }
+
+    @Override
+    public void flip(int index) {
+        if (!delegate.remove(index)) {
+            delegate.add(index);
+        }
+    }
+
+    @Override
+    public void flip(int from, int to) {
+        IntIterators.fromTo(from, to).forEachRemaining((IntConsumer) this::flip);
+    }
+
+    @Override
+    public void forEach(IntConsumer action) {
+        delegate.forEach(action);
+    }
+
+    @Override
+    public int hashCode() {
+        return delegate.hashCode();
+    }
+
+    @Override
+    public boolean intersects(Collection<Integer> o) {
+        return IntIterators.any(delegate.iterator(), o::contains);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return delegate.isEmpty();
+    }
+
+    @Override
+    public IntIterator iterator() {
+        return delegate.iterator();
+    }
+
+    @Override
+    public int lastInt() {
+        return delegate.lastInt();
+    }
+
+    @Override
+    public int nextAbsentIndex(int index) {
+        // TODO Binary search
+        int i = index;
+        while (delegate.contains(i)) {
+            i++;
+        }
+        return i;
+    }
+
+    @Override
+    public int nextPresentIndex(int index) {
+        IntSortedSet tail = delegate.tailSet(index);
+        return tail.isEmpty() ? -1 : tail.firstInt();
+    }
+
+    @Override
+    public void or(IntCollection o) {
+        addAll(o);
+    }
+
+    @Override
+    public int previousAbsentIndex(int index) {
+        // TODO Binary search
+        int i = index;
+        while (i > -1 && delegate.contains(i)) {
+            i--;
+        }
+        return i;
+    }
+
+    @Override
+    public int previousPresentIndex(int index) {
+        IntSortedSet tail = delegate.headSet(index);
+        return tail.isEmpty() ? -1 : tail.lastInt();
+    }
+
+    @Override
+    public boolean remove(int k) {
+        return delegate.remove(k);
+    }
+
+    @Override
+    public boolean removeAll(IntCollection o) {
+        return delegate.removeAll(o);
+    }
+
+    @Override
+    public boolean retainAll(IntCollection o) {
+        return delegate.retainAll(o);
+    }
+
+    @Override
+    public void set(int index) {
+        add(index);
+    }
+
+    @Override
+    public void set(int index, boolean value) {
+        if (value) {
+            add(index);
+        } else {
+            remove(index);
+        }
+    }
+
+    @Override
+    public void set(int from, int to) {
+        IntIterators.fromTo(from, to).forEachRemaining((IntConsumer) delegate::add);
+    }
+
+    @Override
+    public int size() {
+        return delegate.size();
+    }
+
+    @Override
+    public int[] toArray(int[] a) {
+        return delegate.toArray(a);
+    }
+
+    @Override
+    public int[] toIntArray() {
+        return delegate.toIntArray();
+    }
+
+    @Override
+    public String toString() {
+        return delegate.toString();
+    }
+
+    @Override
+    public void xor(IntCollection o) {
+        // TODO This is expensive!
+        RoaringBitmap our = RoaringBitmaps.of(this);
+        RoaringBitmap other = RoaringBitmaps.of(o);
+
+        clear();
+        our.xor(other);
+        our.forEach((org.roaringbitmap.IntConsumer) this::set);
+    }
 }

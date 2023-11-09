@@ -26,70 +26,66 @@ import java.util.logging.Logger;
 import javax.annotation.Nullable;
 
 class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
-  private final NatBitSet baseSet;
-  private final int baseSize;
+    private final NatBitSet baseSet;
+    private final int baseSize;
 
-  PowerNatBitSet(NatBitSet baseSet) {
-    assert !baseSet.isEmpty();
-    this.baseSet = NatBitSets.compact(baseSet, true);
-    baseSize = this.baseSet.size();
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return false;
-  }
-
-
-  @Override
-  public boolean contains(@Nullable Object obj) {
-    return obj instanceof IntCollection && baseSet.containsAll((IntCollection) obj);
-  }
-
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
+    PowerNatBitSet(NatBitSet baseSet) {
+        assert !baseSet.isEmpty();
+        this.baseSet = NatBitSets.compact(baseSet, true);
+        baseSize = this.baseSet.size();
     }
-    if (obj instanceof PowerNatBitSet) {
-      PowerNatBitSet other = (PowerNatBitSet) obj;
-      return baseSet.equals(other.baseSet);
+
+    @Override
+    public boolean isEmpty() {
+        return false;
     }
-    Logger.getLogger(PowerNatBitSet.class.getName()).log(
-        Level.WARNING, "Calling equals on PowerNatBitSet");
-    return super.equals(obj);
-  }
 
-  @Override
-  public int hashCode() {
-    Logger.getLogger(PowerNatBitSet.class.getName()).log(
-        Level.WARNING, "Calling hashCode on PowerNatBitSet");
-    return super.hashCode();
-  }
+    @Override
+    public boolean contains(@Nullable Object obj) {
+        return obj instanceof IntCollection && baseSet.containsAll((IntCollection) obj);
+    }
 
-  /**
-   * Returns an iterator over the power set.
-   * <strong>Warning</strong>: To avoid repeated allocation, the returned set is modified in-place!
-   */
-  @Override
-  public Iterator<NatBitSet> iterator() {
-    return new PowerNatBitSetIterator(baseSet);
-  }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof PowerNatBitSet) {
+            PowerNatBitSet other = (PowerNatBitSet) obj;
+            return baseSet.equals(other.baseSet);
+        }
+        Logger.getLogger(PowerNatBitSet.class.getName()).log(Level.WARNING, "Calling equals on PowerNatBitSet");
+        return super.equals(obj);
+    }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  public int size() {
-    return baseSize >= Integer.SIZE ? Integer.MAX_VALUE : 1 << baseSize;
-  }
+    @Override
+    public int hashCode() {
+        Logger.getLogger(PowerNatBitSet.class.getName()).log(Level.WARNING, "Calling hashCode on PowerNatBitSet");
+        return super.hashCode();
+    }
 
-  @Override
-  public long size64() {
-    return 1L << baseSize;
-  }
+    /**
+     * Returns an iterator over the power set.
+     * <strong>Warning</strong>: To avoid repeated allocation, the returned set is modified in-place!
+     */
+    @Override
+    public Iterator<NatBitSet> iterator() {
+        return new PowerNatBitSetIterator(baseSet);
+    }
 
-  @Override
-  public String toString() {
-    return String.format("powerSet(%s)", baseSet);
-  }
+    @SuppressWarnings("deprecation")
+    @Override
+    public int size() {
+        return baseSize >= Integer.SIZE ? Integer.MAX_VALUE : 1 << baseSize;
+    }
+
+    @Override
+    public long size64() {
+        return 1L << baseSize;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("powerSet(%s)", baseSet);
+    }
 }

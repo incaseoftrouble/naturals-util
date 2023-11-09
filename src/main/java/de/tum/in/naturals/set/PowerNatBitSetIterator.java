@@ -22,42 +22,42 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 final class PowerNatBitSetIterator implements Iterator<NatBitSet> {
-  private final NatBitSet baseSet;
-  private boolean hasNext = true;
-  private final NatBitSet current;
+    private final NatBitSet baseSet;
+    private boolean hasNext = true;
+    private final NatBitSet current;
 
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  PowerNatBitSetIterator(NatBitSet baseSet) {
-    assert !baseSet.isEmpty();
-    this.baseSet = baseSet;
-    this.current = NatBitSets.setWithMaximalLength(baseSet.lastInt());
-  }
-
-  @Override
-  public boolean hasNext() {
-    return hasNext;
-  }
-
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  @Override
-  public NatBitSet next() {
-    if (!hasNext) {
-      throw new NoSuchElementException("No next element");
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    PowerNatBitSetIterator(NatBitSet baseSet) {
+        assert !baseSet.isEmpty();
+        this.baseSet = baseSet;
+        this.current = NatBitSets.setWithMaximalLength(baseSet.lastInt());
     }
 
-    hasNext = false;
-    IntIterator iterator = baseSet.iterator();
-    while (iterator.hasNext()) {
-      int index = iterator.nextInt();
-      if (current.contains(index)) {
-        current.clear(index);
-      } else {
-        hasNext = true;
-        current.set(index);
-        break;
-      }
+    @Override
+    public boolean hasNext() {
+        return hasNext;
     }
 
-    return current;
-  }
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    @Override
+    public NatBitSet next() {
+        if (!hasNext) {
+            throw new NoSuchElementException("No next element");
+        }
+
+        hasNext = false;
+        IntIterator iterator = baseSet.iterator();
+        while (iterator.hasNext()) {
+            int index = iterator.nextInt();
+            if (current.contains(index)) {
+                current.clear(index);
+            } else {
+                hasNext = true;
+                current.set(index);
+                break;
+            }
+        }
+
+        return current;
+    }
 }

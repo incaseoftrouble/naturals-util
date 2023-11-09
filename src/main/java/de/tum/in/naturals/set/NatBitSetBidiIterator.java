@@ -21,69 +21,69 @@ import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
 import java.util.NoSuchElementException;
 
 class NatBitSetBidiIterator implements IntBidirectionalIterator {
-  private final NatBitSet set;
-  private int previous;
-  private int next;
+    private final NatBitSet set;
+    private int previous;
+    private int next;
 
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  public NatBitSetBidiIterator(NatBitSet set) {
-    this.set = set;
-    previous = -1;
-    next = set.nextPresentIndex(0);
-  }
-
-  @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-  public NatBitSetBidiIterator(NatBitSet set, int start) {
-    this.set = set;
-    if (start == 0) {
-      previous = -1;
-      next = set.nextPresentIndex(0);
-    } else {
-      previous = set.previousPresentIndex(start - 1);
-      next = set.nextPresentIndex(start);
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    public NatBitSetBidiIterator(NatBitSet set) {
+        this.set = set;
+        previous = -1;
+        next = set.nextPresentIndex(0);
     }
-  }
 
-  @Override
-  public boolean hasNext() {
-    return next != -1;
-  }
-
-  @Override
-  public boolean hasPrevious() {
-    return previous != -1;
-  }
-
-  @Override
-  public int nextInt() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
+    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
+    public NatBitSetBidiIterator(NatBitSet set, int start) {
+        this.set = set;
+        if (start == 0) {
+            previous = -1;
+            next = set.nextPresentIndex(0);
+        } else {
+            previous = set.previousPresentIndex(start - 1);
+            next = set.nextPresentIndex(start);
+        }
     }
-    previous = next;
-    next = set.nextPresentIndex(next + 1);
-    return previous;
-  }
 
-  @Override
-  public int previousInt() {
-    if (!hasPrevious()) {
-      throw new NoSuchElementException();
+    @Override
+    public boolean hasNext() {
+        return next != -1;
     }
-    next = previous;
-    if (next == 0) {
-      previous = -1;
-    } else {
-      previous = set.previousPresentIndex(next - 1);
-    }
-    return next;
-  }
 
-  @Override
-  public void remove() {
-    if (previous == -1) {
-      throw new IllegalStateException();
+    @Override
+    public boolean hasPrevious() {
+        return previous != -1;
     }
-    set.clear(previous);
-    previous = set.previousPresentIndex(previous - 1);
-  }
+
+    @Override
+    public int nextInt() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        previous = next;
+        next = set.nextPresentIndex(next + 1);
+        return previous;
+    }
+
+    @Override
+    public int previousInt() {
+        if (!hasPrevious()) {
+            throw new NoSuchElementException();
+        }
+        next = previous;
+        if (next == 0) {
+            previous = -1;
+        } else {
+            previous = set.previousPresentIndex(next - 1);
+        }
+        return next;
+    }
+
+    @Override
+    public void remove() {
+        if (previous == -1) {
+            throw new IllegalStateException();
+        }
+        set.clear(previous);
+        previous = set.previousPresentIndex(previous - 1);
+    }
 }
