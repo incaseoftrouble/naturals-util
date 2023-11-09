@@ -41,11 +41,11 @@ public class IntArrayUnionFind implements IntUnionFind {
         int currentSize = parent.length;
         int newSize = currentSize + num;
         parent = Arrays.copyOf(parent, newSize);
-        size = Arrays.copyOf(size, newSize);
         for (int i = currentSize; i < newSize; i++) {
             parent[i] = i;
-            this.size[i] = 1;
         }
+        size = Arrays.copyOf(size, newSize);
+        Arrays.fill(size, currentSize, newSize, 1);
     }
 
     @Override

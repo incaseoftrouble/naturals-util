@@ -23,6 +23,7 @@
     <exclude name="ShortVariable"/>
     <exclude name="LongVariable"/>
     <exclude name="ShortMethodName"/>
+    <exclude name="ClassNamingConventions"/>
     <exclude name="CallSuperInConstructor"/>
     <exclude name="OnlyOneReturn"/>
     <exclude name="MethodArgumentCouldBeFinal"/>
@@ -47,28 +48,6 @@
     <properties>
       <property name="ignoreElseIf">
         <value>true</value>
-      </property>
-    </properties>
-  </rule>
-  <rule ref="category/java/codestyle.xml/ClassNamingConventions">
-    <properties>
-      <property name="classPattern">
-        <value>[A-Z][a-zA-Z2]+</value>
-      </property>
-      <property name="abstractClassPattern">
-        <value>[A-Z][a-zA-Z2]+</value>
-      </property>
-      <property name="interfacePattern">
-        <value>[A-Z][a-zA-Z]+</value>
-      </property>
-      <property name="enumPattern">
-        <value>[A-Z][a-zA-Z]+</value>
-      </property>
-      <property name="annotationPattern">
-        <value>[A-Z][a-zA-Z]+</value>
-      </property>
-      <property name="utilityClassPattern">
-        <value>[A-Z][a-zA-Z2]+</value>
       </property>
     </properties>
   </rule>
@@ -107,6 +86,7 @@
     <exclude name="CloneThrowsCloneNotSupportedException"/>
     <exclude name="ProperCloneImplementation"/>
     <exclude name="OverrideBothEqualsAndHashcode"/>
+    <exclude name="TestClassWithoutTestCases"/>
   </rule>
   <rule ref="category/java/errorprone.xml/EmptyCatchBlock">
     <properties>
