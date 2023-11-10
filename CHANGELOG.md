@@ -1,5 +1,11 @@
 # 0.x
 
+### 0.19.0 (2023-11-10)
+
+ * Bump versions
+ * Fixed performance issue of union find
+ * Code is now spotless
+
 ### 0.18.0 (2022-09-15)
 
  * Bump versions

@@ -4,12 +4,13 @@ plugins {
     pmd
     idea
 
-    id("com.diffplug.spotless") version "6.19.0"
+    // https://plugins.gradle.org/plugin/com.diffplug.spotless
+    id("com.diffplug.spotless") version "6.22.0"
 
     `maven-publish`
     signing
     // https://plugins.gradle.org/plugin/io.github.gradle-nexus.publish-plugin
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
 group = "de.tum.in"
