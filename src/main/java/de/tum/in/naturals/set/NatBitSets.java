@@ -467,7 +467,7 @@ public final class NatBitSets {
      *
      * @return a copy of the given indices.
      *
-     * @see #modifiableCopyOf(NatBitSet)
+     * @see #modifiableCopyOf(Collection)
      */
     public static NatBitSet copyOf(Collection<Integer> indices) {
         return factory.copyOf(indices);
@@ -517,7 +517,7 @@ public final class NatBitSets {
      *
      * @see #isModifiable(NatBitSet)
      */
-    public static NatBitSet modifiableCopyOf(NatBitSet set) {
+    public static NatBitSet modifiableCopyOf(Collection<Integer> set) {
         return factory.modifiableCopyOf(set);
     }
 
@@ -603,19 +603,55 @@ public final class NatBitSets {
         return !Collections.disjoint(one, other);
     }
 
+    public static <S> NatBitSet union(Collection<S> sets, Function<S, NatBitSet> map) {
+        if (sets.isEmpty()) {
+            return emptySet();
+        }
+        var iterator = sets.iterator();
+        var union = NatBitSets.modifiableCopyOf(map.apply(iterator.next()));
+        while (iterator.hasNext()) {
+            union.or(map.apply(iterator.next()));
+        }
+        return union;
+    }
+
     public static <S> NatBitSet lazyUnion(Collection<S> sets, Function<S, NatBitSet> map) {
+        if (sets.isEmpty()) {
+            return emptySet();
+        }
         if (sets.size() == 1) {
             return map.apply(sets.iterator().next());
         }
         return union(sets, map);
     }
 
-    public static <S> NatBitSet union(Collection<S> sets, Function<S, NatBitSet> map) {
-        var iterator = sets.iterator();
-        var union = NatBitSets.copyOf(map.apply(iterator.next()));
-        while (iterator.hasNext()) {
-            union.or(map.apply(iterator.next()));
+    public static <S> NatBitSet veryLazyUnion(Collection<S> sets, Function<S, NatBitSet> map) {
+        if (sets.isEmpty()) {
+            return emptySet();
         }
-        return union;
+        if (sets.size() == 1) {
+            return map.apply(sets.iterator().next());
+        }
+        // TODO This is suboptimal if iteration is ordered unfavourably; maybe sort by size?
+        var iterator = sets.iterator();
+        var current = map.apply(iterator.next());
+        while (iterator.hasNext()) {
+            var next = map.apply(iterator.next());
+            if (current.containsAll(next)) {
+                continue;
+            }
+            if (next.containsAll(current)) {
+                current = next;
+                continue;
+            }
+            break;
+        }
+        if (iterator.hasNext()) {
+            current = modifiableCopyOf(current);
+            while (iterator.hasNext()) {
+                current.or(map.apply(iterator.next()));
+            }
+        }
+        return current;
     }
 }
