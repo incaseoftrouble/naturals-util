@@ -22,7 +22,7 @@ import it.unimi.dsi.fastutil.Size64;
 import java.util.AbstractSet;
 import java.util.BitSet;
 import java.util.Iterator;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 class PowerBitSetSimple extends AbstractSet<BitSet> implements Size64 {
     private final int baseSize;

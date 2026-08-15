@@ -18,7 +18,7 @@
 /**
  * Contains some specific map representations.
  */
-@EverythingIsNonnullByDefault
+@NullMarked
 package de.tum.in.naturals.map;
 
-import de.tum.in.naturals.EverythingIsNonnullByDefault;
+import org.jspecify.annotations.NullMarked;

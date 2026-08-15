@@ -22,8 +22,10 @@ import static de.tum.in.naturals.set.NatBitSets.UNKNOWN_SIZE;
 
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnegative;
 
@@ -70,6 +72,10 @@ public interface NatBitSetFactory {
         return set(UNKNOWN_SIZE, maximalLength);
     }
 
+    default NatBitSet setWithMaximalSize(int maximalSize) {
+        return set(maximalSize, UNKNOWN_LENGTH);
+    }
+
     // Copies
 
     /**
@@ -93,7 +99,7 @@ public interface NatBitSetFactory {
      *
      * @return a copy of the given indices.
      *
-     * @see #modifiableCopyOf(NatBitSet)
+     * @see #modifiableCopyOf(IntSet)
      */
     default NatBitSet copyOf(Collection<Integer> indices) {
         NatBitSet copy;
@@ -113,7 +119,7 @@ public interface NatBitSetFactory {
     }
 
     /**
-     * Returns a copy of the given {@code set} which is guaranteed to be modifiable.
+     * Ensure that the given {@code set} is modifiable, possibly copying it if necessary.
      *
      * @see NatBitSets#isModifiable(NatBitSet)
      */
@@ -142,7 +148,7 @@ public interface NatBitSetFactory {
      *
      * @see NatBitSets#isModifiable(NatBitSet)
      */
-    default NatBitSet modifiableCopyOf(NatBitSet set) {
+    default NatBitSet modifiableCopyOf(Collection<Integer> set) {
         return modifiableCopyOf(set, Integer.MAX_VALUE);
     }
 
@@ -152,17 +158,25 @@ public interface NatBitSetFactory {
      *
      * @see NatBitSets#isModifiable(NatBitSet, int)
      */
-    default NatBitSet modifiableCopyOf(NatBitSet set, @Nonnegative int length) {
-        if (NatBitSets.isModifiable(set, length)) {
-            return set.clone();
-        }
-        if (set instanceof BoundedNatBitSet && length <= ((BoundedNatBitSet) set).domainSize()) {
-            return modifiableCopyOf((BoundedNatBitSet) set);
+    default NatBitSet modifiableCopyOf(Collection<Integer> set, @Nonnegative int length) {
+        if (set instanceof NatBitSet) {
+            NatBitSet nat = (NatBitSet) set;
+            if (NatBitSets.isModifiable(nat, length)) {
+                return nat.clone();
+            }
+            if (set instanceof BoundedNatBitSet && length <= ((BoundedNatBitSet) set).domainSize()) {
+                return modifiableCopyOf((BoundedNatBitSet) set);
+            }
         }
 
-        NatBitSet copy = set(set.size(), length);
-        copy.or(set);
-        assert NatBitSets.isModifiable(copy, length) && copy.equals(set);
+        int size = set.size();
+        NatBitSet copy = set(size, length);
+        if (set instanceof IntCollection) {
+            copy.or((IntCollection) set);
+        } else {
+            set.forEach(copy::set);
+        }
+        assert NatBitSets.isModifiable(copy, length) && copy.equals(new HashSet<>(set));
         return copy;
     }
 

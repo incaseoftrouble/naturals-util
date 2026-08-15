@@ -36,7 +36,7 @@ import java.util.PrimitiveIterator;
 import java.util.function.BiFunction;
 import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An efficient representation of a total mapping from {0, ..., n} to objects.
@@ -48,7 +48,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     public static final int DEFAULT_SIZE = 16;
     private static final long serialVersionUID = 630710213786009957L;
 
-    private V[] array;
+    private @Nullable V[] array;
     private int size = 0;
 
     @Nullable

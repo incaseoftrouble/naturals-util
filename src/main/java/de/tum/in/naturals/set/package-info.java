@@ -46,7 +46,7 @@
  * </li>
  * </ul>
  */
-@EverythingIsNonnullByDefault
+@NullMarked
 package de.tum.in.naturals.set;
 
-import de.tum.in.naturals.EverythingIsNonnullByDefault;
+import org.jspecify.annotations.NullMarked;

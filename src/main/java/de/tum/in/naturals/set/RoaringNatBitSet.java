@@ -219,7 +219,6 @@ class RoaringNatBitSet extends AbstractNatBitSet {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean retainAll(Collection<?> indices) {
         if (indices instanceof IntCollection) {
@@ -233,7 +232,14 @@ class RoaringNatBitSet extends AbstractNatBitSet {
             return true;
         }
         int size = size();
-        bitmap.and(RoaringBitmaps.of((Iterable<Integer>) indices));
+        // TODO If other is a set, maybe we can avoid copy?
+        RoaringBitmap bitmap = new RoaringBitmap();
+        for (Object o : indices) {
+            if (o instanceof Integer) {
+                bitmap.add((Integer) o);
+            }
+        }
+        this.bitmap.and(bitmap);
         return size() < size;
     }
 
@@ -257,11 +263,10 @@ class RoaringNatBitSet extends AbstractNatBitSet {
                 bitmap.andNot(other.bitmap());
             }
         } else {
-            bitmap.andNot(RoaringBitmaps.of(indices));
+            indices.forEach(bitmap::remove);
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean removeAll(Collection<?> indices) {
         if (indices instanceof IntCollection) {
@@ -271,7 +276,11 @@ class RoaringNatBitSet extends AbstractNatBitSet {
             return false;
         }
         int size = size();
-        bitmap.andNot(RoaringBitmaps.of((Iterable<Integer>) indices));
+        indices.forEach(i -> {
+            if (i instanceof Integer) {
+                bitmap.remove((Integer) (i));
+            }
+        });
         return size() < size;
     }
 
@@ -294,7 +303,7 @@ class RoaringNatBitSet extends AbstractNatBitSet {
                 bitmap.or(other.bitmap());
             }
         } else {
-            bitmap.or(RoaringBitmaps.of(indices));
+            indices.forEach(bitmap::add);
         }
     }
 
@@ -366,7 +375,6 @@ class RoaringNatBitSet extends AbstractNatBitSet {
         return super.equals(o);
     }
 
-    @SuppressWarnings("RedundantMethodOverride")
     @Override
     public int hashCode() {
         return super.hashCode();

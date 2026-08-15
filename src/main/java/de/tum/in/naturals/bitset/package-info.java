@@ -18,7 +18,7 @@
 /**
  * Contains abstraction of bitsets and low level operations on them.
  */
-@EverythingIsNonnullByDefault
+@NullMarked
 package de.tum.in.naturals.bitset;
 
-import de.tum.in.naturals.EverythingIsNonnullByDefault;
+import org.jspecify.annotations.NullMarked;

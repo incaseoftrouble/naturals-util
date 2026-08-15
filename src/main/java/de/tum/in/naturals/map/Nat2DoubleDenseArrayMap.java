@@ -37,7 +37,7 @@ import java.util.function.BiFunction;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.function.IntToDoubleFunction;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An efficient representation of a total mapping from {0, ..., n} to R.
@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
  * <p><strong>Warning</strong>: This class uses {@link Double#NaN} to represent missing keys. Thus,
  * this value cannot be mapped.</p>
  */
-@SuppressWarnings("PMD.AssignmentInOperand")
+@SuppressWarnings({"PMD.AssignmentInOperand", "AssignmentExpression"})
 public class Nat2DoubleDenseArrayMap extends AbstractInt2DoubleMap {
     private static final long serialVersionUID = 943823872741225228L;
 

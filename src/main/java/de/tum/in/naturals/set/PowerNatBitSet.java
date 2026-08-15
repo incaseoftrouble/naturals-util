@@ -23,7 +23,7 @@ import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
     private final NatBitSet baseSet;

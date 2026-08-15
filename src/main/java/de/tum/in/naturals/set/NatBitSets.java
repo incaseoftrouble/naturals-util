@@ -24,12 +24,12 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
-import org.roaringbitmap.RoaringBitmap;
-
-import javax.annotation.Nonnegative;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.IntConsumer;
+import java.util.function.Predicate;
+import javax.annotation.Nonnegative;
+import org.roaringbitmap.RoaringBitmap;
 
 public final class NatBitSets {
     public static final int UNKNOWN_LENGTH = -1;
@@ -460,14 +460,42 @@ public final class NatBitSets {
     }
 
     /**
+     * Converts the given set, copying if necessary. The returned set might not be modifiable.
+     *
+     * @param indices
+     *     The indices to be copied.
+     *
+     * @return a copy of the given indices.
+     */
+    public static NatBitSet of(Collection<Integer> indices) {
+        if (indices instanceof NatBitSet) {
+            return (NatBitSet) indices;
+        }
+        return factory.copyOf(indices);
+    }
+
+    /**
+     * Converts the given set, copying if necessary.
+     *
+     * @param indices
+     *     The indices to be copied.
+     *
+     * @return a copy of the given indices.
+     */
+    public static NatBitSet modifiableOf(Collection<Integer> indices) {
+        if (indices instanceof NatBitSet) {
+            return ensureModifiable((NatBitSet) indices);
+        }
+        return factory.modifiableCopyOf(indices);
+    }
+
+    /**
      * Copies the given indices. The returned set might not be modifiable.
      *
      * @param indices
      *     The indices to be copied.
      *
      * @return a copy of the given indices.
-     *
-     * @see #modifiableCopyOf(NatBitSet)
      */
     public static NatBitSet copyOf(Collection<Integer> indices) {
         return factory.copyOf(indices);
@@ -517,7 +545,7 @@ public final class NatBitSets {
      *
      * @see #isModifiable(NatBitSet)
      */
-    public static NatBitSet modifiableCopyOf(NatBitSet set) {
+    public static NatBitSet modifiableCopyOf(IntSet set) {
         return factory.modifiableCopyOf(set);
     }
 
@@ -527,7 +555,7 @@ public final class NatBitSets {
      *
      * @see #isModifiable(NatBitSet, int)
      */
-    public static NatBitSet modifiableCopyOf(NatBitSet set, @Nonnegative int length) {
+    public static NatBitSet modifiableCopyOf(IntSet set, @Nonnegative int length) {
         return factory.modifiableCopyOf(set, length);
     }
 
@@ -576,6 +604,13 @@ public final class NatBitSets {
         return factory.setWithExpectedSize(maximalLength);
     }
 
+    /**
+     * Creates a modifiable set which is modifiable up to {@code maximalLength}.
+     */
+    public static NatBitSet setWithMaximalSize(int maximalSize) {
+        return factory.setWithMaximalSize(maximalSize);
+    }
+
     // --- Utilities ---
 
     public static boolean intersects(Set<Integer> one, Set<Integer> other) {
@@ -603,19 +638,57 @@ public final class NatBitSets {
         return !Collections.disjoint(one, other);
     }
 
-    public static <S> NatBitSet lazyUnion(Collection<S> sets, Function<S, NatBitSet> map) {
+    public static <S> IntSet lazyUnion(Collection<S> sets, Function<S, IntSet> map) {
         if (sets.size() == 1) {
             return map.apply(sets.iterator().next());
         }
         return union(sets, map);
     }
 
-    public static <S> NatBitSet union(Collection<S> sets, Function<S, NatBitSet> map) {
+    public static <S> IntSet lazyFilteredUnion(
+            Collection<S> items, Predicate<? super S> filter, Function<? super S, ? extends IntSet> map) {
+        IntSet candidate = null;
+        NatBitSet union = null;
+        for (S item : items) {
+            if (!filter.test(item)) {
+                continue;
+            }
+            if (candidate == null) {
+                candidate = map.apply(item);
+            } else {
+                if (union == null) {
+                    union = modifiableCopyOf(candidate);
+                }
+                union.or(map.apply(item));
+            }
+        }
+        if (candidate == null) {
+            return IntSet.of();
+        }
+        return union == null ? candidate : union;
+    }
+
+    public static <S> NatBitSet union(Collection<S> sets, Function<S, IntSet> map) {
+        if (sets.isEmpty()) {
+            return NatBitSets.emptySet();
+        }
         var iterator = sets.iterator();
-        var union = NatBitSets.copyOf(map.apply(iterator.next()));
+        var union = modifiableCopyOf(map.apply(iterator.next()));
         while (iterator.hasNext()) {
             union.or(map.apply(iterator.next()));
         }
         return union;
+    }
+
+    public static NatBitSet lazyIntersection(NatBitSet one, NatBitSet other) {
+        if (one.containsAll(other)) {
+            return other;
+        }
+        if (other.containsAll(one)) {
+            return one;
+        }
+        NatBitSet copy = NatBitSets.modifiableCopyOf(one);
+        copy.retainAll(other);
+        return copy;
     }
 }

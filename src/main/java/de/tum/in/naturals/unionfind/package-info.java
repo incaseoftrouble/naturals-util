@@ -18,7 +18,7 @@
 /**
  * A union find algorithm for integer keys.
  */
-@EverythingIsNonnullByDefault
+@NullMarked
 package de.tum.in.naturals.unionfind;
 
-import de.tum.in.naturals.EverythingIsNonnullByDefault;
+import org.jspecify.annotations.NullMarked;

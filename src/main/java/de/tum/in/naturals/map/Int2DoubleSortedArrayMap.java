@@ -36,7 +36,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class Int2DoubleSortedArrayMap extends AbstractInt2DoubleMap {
     private static final long serialVersionUID = 4177317104795467442L;

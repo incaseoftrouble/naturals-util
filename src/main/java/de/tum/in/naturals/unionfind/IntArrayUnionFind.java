@@ -24,11 +24,15 @@ public class IntArrayUnionFind implements IntUnionFind {
     private int[] parent;
     private int[] size;
 
-    public IntArrayUnionFind(int size) {
-        parent = new int[size];
-        this.size = new int[size];
-        componentCount = size;
-        for (int i = 0; i < size; i++) {
+    public IntArrayUnionFind() {
+        this(32);
+    }
+
+    public IntArrayUnionFind(int initialSize) {
+        parent = new int[initialSize];
+        this.size = new int[initialSize];
+        componentCount = initialSize;
+        for (int i = 0; i < initialSize; i++) {
             parent[i] = i;
         }
         Arrays.fill(this.size, 1);

@@ -36,7 +36,7 @@ import java.util.function.BiFunction;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.function.IntUnaryOperator;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An efficient representation of a total mapping from {0, ..., n} to {{@link Integer#MIN_VALUE} +

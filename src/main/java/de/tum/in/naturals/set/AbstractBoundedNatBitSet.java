@@ -20,7 +20,6 @@ package de.tum.in.naturals.set;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import java.util.Collection;
 import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
 
 public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet implements BoundedNatBitSet {
     @Nonnegative
@@ -43,7 +42,7 @@ public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet impleme
     }
 
     @Override
-    public boolean addAll(@Nonnull Collection<? extends Integer> c) { // NOPMD Added for annotation
+    public boolean addAll(Collection<? extends Integer> c) { // NOPMD Added for annotation
         return super.addAll(c);
     }
 
