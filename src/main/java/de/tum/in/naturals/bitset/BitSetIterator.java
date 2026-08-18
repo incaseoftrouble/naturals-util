@@ -1,19 +1,4 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.bitset;
 
@@ -21,18 +6,56 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.util.BitSet;
 import java.util.NoSuchElementException;
 
+/**
+ * Ascending iterator over the set bits, which walks a run at a time where that pays.
+ *
+ * <p>Inside a run the next element is the one after this one, and finding out costs an increment against
+ * the bit search a plain scan makes for every element - worth up to four times on run structured sets. On
+ * scattered ones it is a loss instead, since the run then ends at every element and the extra search that
+ * establishes that is on top of the one the plain scan already makes.
+ *
+ * <p>Which it is cannot be known in advance, but this does not have to know in advance: both ways of
+ * finding the next element are correct at any point, so it starts run aware, measures the first
+ * {@value BitSets#SAMPLE_RUNS} runs it walks anyway, and drops to the plain scan for the rest if they came
+ * out shorter than {@value BitSets#RUN_LENGTH_THRESHOLD} elements on average - the same rule that
+ * {@link BitSets#forEach(BitSet, java.util.function.IntConsumer)} applies to its own traversal.
+ */
 final class BitSetIterator implements IntIterator {
+    /** No index is below this, so a run end of {@code -1} sends every element through the bit search. */
+    private static final int PER_ELEMENT = -1;
+
     private final BitSet bitSet;
     private int current = -1;
     private int next;
+    /** Exclusive end of the run holding {@link #next}, or {@link #PER_ELEMENT}. */
+    private int runEnd = PER_ELEMENT;
+
+    private boolean runAware = true;
+    private int runs;
+    private int elements;
 
     BitSetIterator(BitSet bitSet) {
         this.bitSet = bitSet;
-        next = getNext(0);
+        advance(0);
     }
 
-    private int getNext(int index) {
-        return bitSet.nextSetBit(index);
+    /** Moves to the first element at or after {@code from}, and takes in the run it belongs to. */
+    private void advance(int from) {
+        int start = bitSet.nextSetBit(from);
+        next = start;
+        if (!runAware || start < 0) {
+            return;
+        }
+        int end = bitSet.nextClearBit(start);
+        runEnd = end;
+        if (runs < BitSets.SAMPLE_RUNS) {
+            runs += 1;
+            elements += end - start;
+            if (runs == BitSets.SAMPLE_RUNS && elements < BitSets.RUN_LENGTH_THRESHOLD * runs) {
+                runAware = false;
+                runEnd = PER_ELEMENT;
+            }
+        }
     }
 
     @Override
@@ -46,7 +69,12 @@ final class BitSetIterator implements IntIterator {
             throw new NoSuchElementException();
         }
         current = next;
-        next = getNext(next + 1);
+        int candidate = current + 1;
+        if (candidate < runEnd) {
+            next = candidate;
+        } else {
+            advance(candidate);
+        }
         return current;
     }
 

@@ -1,19 +1,4 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.set;
 
@@ -24,16 +9,11 @@ class NatBitSetBidiIterator implements IntBidirectionalIterator {
     private final NatBitSet set;
     private int previous;
     private int next;
+    /** Element last returned by {@link #nextInt()} or {@link #previousInt()}, {@code -1} if none. */
+    private int last = -1;
 
     @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-    public NatBitSetBidiIterator(NatBitSet set) {
-        this.set = set;
-        previous = -1;
-        next = set.nextPresentIndex(0);
-    }
-
-    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-    public NatBitSetBidiIterator(NatBitSet set, int start) {
+    NatBitSetBidiIterator(NatBitSet set, int start) {
         this.set = set;
         if (start == 0) {
             previous = -1;
@@ -61,6 +41,7 @@ class NatBitSetBidiIterator implements IntBidirectionalIterator {
         }
         previous = next;
         next = set.nextPresentIndex(next + 1);
+        last = previous;
         return previous;
     }
 
@@ -70,20 +51,24 @@ class NatBitSetBidiIterator implements IntBidirectionalIterator {
             throw new NoSuchElementException();
         }
         next = previous;
-        if (next == 0) {
-            previous = -1;
-        } else {
-            previous = set.previousPresentIndex(next - 1);
-        }
+        previous = next == 0 ? -1 : set.previousPresentIndex(next - 1);
+        last = next;
         return next;
     }
 
     @Override
     public void remove() {
-        if (previous == -1) {
+        if (last == -1) {
             throw new IllegalStateException();
         }
-        set.clear(previous);
-        previous = set.previousPresentIndex(previous - 1);
+        set.clear(last);
+        // The removed element was whichever cursor pointed at it - re-anchor that one past the gap.
+        if (previous == last) {
+            previous = last == 0 ? -1 : set.previousPresentIndex(last - 1);
+        }
+        if (next == last) {
+            next = set.nextPresentIndex(last + 1);
+        }
+        last = -1;
     }
 }

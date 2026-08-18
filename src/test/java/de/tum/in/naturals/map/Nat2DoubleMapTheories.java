@@ -1,19 +1,4 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.map;
 
@@ -55,7 +40,7 @@ class Nat2DoubleMapTheories {
                                 .map(k -> generator.nextInt(MAXIMAL_MODIFICATIONS))
                                 .mapToObj(length -> IntStream.range(0, length)
                                         .mapToObj(k -> generateAction(
-                                                () -> generator.nextInt(10), () -> (double) generator.nextInt(20)))
+                                                () -> generator.nextInt(10), () -> generator.nextInt(20)))
                                         .collect(Collectors.toList())),
                         IntStream.range(0, NUMBER_OF_LARGE_TESTS)
                                 .map(k -> generator.nextInt(MAXIMAL_MODIFICATIONS))
@@ -142,7 +127,7 @@ class Nat2DoubleMapTheories {
         checkEquality(map, reference);
     }
 
-    private static class Clear implements Consumer<Int2DoubleMap> {
+    private static final class Clear implements Consumer<Int2DoubleMap> {
         @Override
         public void accept(Int2DoubleMap map) {
             map.clear();
@@ -154,7 +139,7 @@ class Nat2DoubleMapTheories {
         }
     }
 
-    private static class DefaultReturnValue implements Consumer<Int2DoubleMap> {
+    private static final class DefaultReturnValue implements Consumer<Int2DoubleMap> {
         final double drv;
 
         public DefaultReturnValue(double drv) {
@@ -172,7 +157,7 @@ class Nat2DoubleMapTheories {
         }
     }
 
-    private static class EntrySetRemove implements Consumer<Int2DoubleMap> {
+    private static final class EntrySetRemove implements Consumer<Int2DoubleMap> {
         final int key;
         final double value;
 
@@ -192,7 +177,7 @@ class Nat2DoubleMapTheories {
         }
     }
 
-    private static class KeySetRemove implements Consumer<Int2DoubleMap> {
+    private static final class KeySetRemove implements Consumer<Int2DoubleMap> {
         final int key;
 
         public KeySetRemove(int key) {
@@ -210,7 +195,7 @@ class Nat2DoubleMapTheories {
         }
     }
 
-    private static class Put implements Consumer<Int2DoubleMap> {
+    private static final class Put implements Consumer<Int2DoubleMap> {
         final int key;
         final double value;
 
@@ -230,7 +215,7 @@ class Nat2DoubleMapTheories {
         }
     }
 
-    private static class PutAll implements Consumer<Int2DoubleMap> {
+    private static final class PutAll implements Consumer<Int2DoubleMap> {
         final Int2DoubleMap map;
 
         public PutAll(Int2DoubleMap map) {
@@ -248,7 +233,7 @@ class Nat2DoubleMapTheories {
         }
     }
 
-    private static class Remove implements Consumer<Int2DoubleMap> {
+    private static final class Remove implements Consumer<Int2DoubleMap> {
         final int key;
         final double value;
 
@@ -268,7 +253,7 @@ class Nat2DoubleMapTheories {
         }
     }
 
-    private static class RemoveKey implements Consumer<Int2DoubleMap> {
+    private static final class RemoveKey implements Consumer<Int2DoubleMap> {
         final int key;
 
         RemoveKey(int key) {
@@ -286,7 +271,7 @@ class Nat2DoubleMapTheories {
         }
     }
 
-    private static class ValuesRemove implements Consumer<Int2DoubleMap> {
+    private static final class ValuesRemove implements Consumer<Int2DoubleMap> {
         final double value;
 
         public ValuesRemove(double value) {

@@ -1,28 +1,16 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.set;
 
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntIterators;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.SortedSet;
 import javax.annotation.Nonnegative;
 
@@ -36,7 +24,6 @@ import javax.annotation.Nonnegative;
  * {@link BitSet}.</p>
  */
 public interface NatBitSet extends NatSet, Cloneable {
-
     // Accessors
 
     /**
@@ -116,9 +103,6 @@ public interface NatBitSet extends NatSet, Cloneable {
         if (isEmpty()) {
             return IntIterators.EMPTY_ITERATOR;
         }
-        if (size() == 1) {
-            return IntIterators.singleton(firstInt());
-        }
         return new NatBitSetIterator(this);
     }
 
@@ -126,9 +110,6 @@ public interface NatBitSet extends NatSet, Cloneable {
     default IntIterator reverseIterator() {
         if (isEmpty()) {
             return IntIterators.EMPTY_ITERATOR;
-        }
-        if (size() == 1) {
-            return IntIterators.singleton(firstInt());
         }
         return new ReverseIntBidiIterator(new NatBitSetBidiIterator(this, lastInt() + 1));
     }
@@ -149,7 +130,8 @@ public interface NatBitSet extends NatSet, Cloneable {
      * Adds or removes the given index, based on the given value.
      *
      * @throws IndexOutOfBoundsException
-     *     if {@code index} is negative.
+     *     if {@code value} is {@code true} and {@code index} is negative. Removing an index this set
+     *     cannot hold is a no-op, see {@link #clear(int)}.
      * @see BitSet#set(int, boolean)
      */
     void set(@Nonnegative int index, boolean value);
@@ -164,37 +146,36 @@ public interface NatBitSet extends NatSet, Cloneable {
     void set(@Nonnegative int from, @Nonnegative int to);
 
     /**
-     * Removes the given index.
+     * Removes the given index. An index this set cannot hold - a negative one, or one outside the domain
+     * of a {@link BoundedNatBitSet} - is absent by definition, so removing it is a no-op rather than an
+     * error.
      *
-     * @throws IndexOutOfBoundsException
-     *     if {@code index} is negative.
      * @see #clear(int, int)
      * @see Collection#remove(Object)
      * @see BitSet#clear(int)
      */
-    void clear(@Nonnegative int index);
+    void clear(int index);
 
     /**
-     * Removes the given range.
+     * Removes the given range ({@code from} inclusive, {@code to} exclusive). The range is clamped to the
+     * indices this set can hold.
      *
      * @throws IndexOutOfBoundsException
-     *     if {@code from} or {@code to} is negative or {@code to} is less than {@code from}.
+     *     if {@code to} is less than {@code from}.
      * @see #clear(int)
      * @see BitSet#clear(int, int)
      */
-    void clear(@Nonnegative int from, @Nonnegative int to);
+    void clear(int from, int to);
 
     /**
      * Removes all indices larger or equal than {@code from}. Equivalent to calling<pre>
      * set.clear(from, Integer.MAX_VALUE);
      * </pre>
      *
-     * @throws IndexOutOfBoundsException
-     *     if {@code from} is negative.
      * @see #clear(int, int)
      * @see #lastInt()
      */
-    void clearFrom(@Nonnegative int from);
+    void clearFrom(int from);
 
     /**
      * Flips the given index.
@@ -238,6 +219,10 @@ public interface NatBitSet extends NatSet, Cloneable {
         return false;
     }
 
+    default boolean isSubsetOf(Collection<Integer> indices) {
+        return indices.containsAll(this);
+    }
+
     /**
      * Computes the intersection with the given indices.
      *
@@ -270,6 +255,48 @@ public interface NatBitSet extends NatSet, Cloneable {
      * @see BitSet#xor(BitSet)
      */
     void xor(IntCollection indices);
+
+    @Override
+    default boolean retainAll(Collection<?> indices) {
+        if (indices instanceof IntCollection) {
+            return retainAll((IntCollection) indices);
+        }
+        if (indices instanceof Set) {
+            Set<?> set = (Set<?>) indices;
+            return removeIf(i -> !set.contains(i));
+        }
+        IntSet set = new IntOpenHashSet();
+        indices.forEach(i -> {
+            if (i instanceof Integer) {
+                set.add((int) i);
+            }
+        });
+        return retainAll(set);
+    }
+
+    @Override
+    default boolean removeAll(Collection<?> indices) {
+        if (indices instanceof IntCollection) {
+            return removeAll((IntCollection) indices);
+        }
+        int before = size();
+        indices.forEach(i -> {
+            if (i instanceof Integer) {
+                clear((int) i);
+            }
+        });
+        return before != size();
+    }
+
+    /**
+     * Optimise internal representation for read-heavy use. Contents are unchanged.
+     *
+     * @return whether the representation changed.
+     */
+    default boolean optimize() {
+        // Nothing to gain
+        return false;
+    }
 
     // Clone
 

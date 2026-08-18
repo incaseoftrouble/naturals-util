@@ -1,135 +1,127 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.BitSet;
+import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.roaringbitmap.RoaringBitmap;
 
 class NatBitSetTest {
+    private static BoundedNatBitSet boundedFullSet(int domainSize) {
+        BoundedNatBitSet set = NatBitSets.boundedSet(domainSize);
+        set.set(0, domainSize);
+        return set;
+    }
+
     @Test
     void testCreateBoundedLongSet() {
         BoundedNatBitSet ints = NatBitSets.boundedLongSet(10);
         assertThat(ints.domainSize(), is(10));
-        assertThat(NatBitSets.isModifiable(ints, 10), is(true));
-        assertThat(NatBitSets.isModifiable(ints, 11), is(false));
-        assertThat(NatBitSets.isModifiable(ints.complement(), 10), is(true));
-        assertThat(NatBitSets.isModifiable(ints.complement(), 11), is(false));
         ints.set(0, 10);
+        assertThat(ints.size(), is(10));
     }
 
     @Test
     void testCreateBoundedSet() {
         BoundedNatBitSet ints = NatBitSets.boundedSet(10);
         assertThat(ints.domainSize(), is(10));
-        assertThat(NatBitSets.isModifiable(ints, 10), is(true));
-        assertThat(NatBitSets.isModifiable(ints, 11), is(false));
-        assertThat(NatBitSets.isModifiable(ints.complement(), 10), is(true));
-        assertThat(NatBitSets.isModifiable(ints.complement(), 11), is(false));
         ints.set(0, 10);
+        assertThat(ints.size(), is(10));
     }
 
     @Test
     void testCreateFullSet() {
-        BoundedNatBitSet ints = NatBitSets.boundedFullSet(500);
-        assertThat(ints, instanceOf(FixedSizeNatBitSet.class));
-        assertThat(NatBitSets.isModifiable(ints, 500), is(false));
-        assertThat(NatBitSets.isModifiable(ints.complement(), 500), is(false));
+        BoundedNatBitSet ints = boundedFullSet(500);
         assertThat(ints.domainSize(), is(500));
 
         assertThat(ints.firstInt(), is(0));
         assertThat(ints.lastInt(), is(499));
 
-        assertThat(ints.complement().isEmpty(), is(true));
+        assertThat(NatBitSets.boundedSet(500).isEmpty(), is(true));
     }
 
     @Test
-    void testCreateSimpleSet() {
-        NatBitSet ints = NatBitSets.simpleSet();
-        assertThat(ints, instanceOf(SimpleNatBitSet.class));
-        assertThat(NatBitSets.isModifiable(ints), is(true));
+    void testOfIsEmptyAndGrowable() {
+        NatBitSet ints = NatBitSets.of();
+        assertThat(ints.isEmpty(), is(true));
         ints.set(0, 10);
+        assertThat(ints.size(), is(10));
+        ints.set(1_000_000);
+        assertThat(ints.size(), is(11));
+        assertThat(ints.lastInt(), is(1_000_000));
     }
 
     @Test
-    void testCreateSimpleSetWithExpectedSize() {
-        NatBitSet ints = NatBitSets.simpleSet(10);
-        assertThat(ints, instanceOf(SimpleNatBitSet.class));
-        assertThat(NatBitSets.isModifiable(ints), is(true));
-        ints.set(0, 10);
+    void testOfElements() {
+        NatBitSet ints = NatBitSets.ofVar(3, 1, 2, 1);
+        assertThat(ints.size(), is(3));
+        assertThat(ints, contains(1, 2, 3));
     }
 
     @Test
-    void testCreateSingleton() {
-        NatBitSet singleton = NatBitSets.singleton(1);
-        assertThat(singleton, instanceOf(MutableSingletonNatBitSet.class));
-        assertThat(NatBitSets.isModifiable(singleton), is(false));
-        assertThat(NatBitSets.isModifiable(singleton, 1), is(false));
-
-        assertThat(singleton.size(), is(1));
-        assertThat(singleton, contains(1));
-        assertThat(singleton.firstInt(), is(1));
-        assertThat(singleton.lastInt(), is(1));
+    void testCastOrCopyReturnsTheArgumentForNatBitSets() {
+        NatBitSet ints = NatBitSets.ofVar(1, 2, 3);
+        assertThat(NatBitSets.castOrCopy(ints), sameInstance(ints));
     }
 
     @Test
-    void testCreateSparseSet() {
-        NatBitSet ints = NatBitSets.sparseSet();
-        assertThat(ints, instanceOf(SparseNatBitSet.class));
-        assertThat(NatBitSets.isModifiable(ints), is(true));
-        ints.set(0, 10);
+    void testCopyOfIsIndependent() {
+        NatBitSet ints = NatBitSets.ofVar(1, 2, 3);
+        NatBitSet copy = NatBitSets.copyOf(ints);
+        assertThat(copy, is(ints));
+        assertThat(copy, not(sameInstance(ints)));
+
+        copy.set(4);
+        assertThat(ints.contains(4), is(false));
     }
 
     @Test
-    void testCreateSparseSetWithExpectedSize() {
-        NatBitSet ints = NatBitSets.sparseSet(10);
-        assertThat(ints, instanceOf(SparseNatBitSet.class));
-        assertThat(NatBitSets.isModifiable(ints), is(true));
-        ints.set(0, 10);
+    void testCopyOfBoxedCollection() {
+        NatBitSet ints = NatBitSets.copyOf(List.of(5, 3, 5, 900));
+        assertThat(ints.size(), is(3));
+        assertThat(ints, contains(3, 5, 900));
     }
 
     @Test
-    void testSingleton() {
-        NatBitSet singleton = NatBitSets.singleton(1);
-        assertThat(singleton.size(), is(1));
-        assertThat(singleton, contains(1));
+    void testAsSetAdoptsTheStore() {
+        BitSet bitSet = new BitSet();
+        bitSet.set(1, 5);
+        NatBitSet ints = NatBitSets.wrap(bitSet);
+        assertThat(ints.size(), is(4));
 
-        singleton.clear(0, 10);
-        assertThat(singleton.isEmpty(), is(true));
-        singleton.set(0);
-        assertThat(singleton.size(), is(1));
-        assertThat(singleton, contains(0));
+        NatBitSet bitmapBacked = NatBitSets.wrap(RoaringBitmap.bitmapOf(1, 2, 3, 4));
+        assertThat(bitmapBacked, is(ints));
+    }
 
-        singleton.flip(0);
-        singleton.flip(1, 2);
-        assertThat(singleton, contains(1));
+    @Test
+    void testWithExpectedSize() {
+        NatBitSet ints = NatBitSets.withExpectedCardinality(4);
+        assertThat(ints.isEmpty(), is(true));
+        ints.set(0, 100);
+        assertThat(ints.size(), is(100));
+    }
 
-        assertThat(singleton.nextPresentIndex(0), is(1));
-        assertThat(singleton.nextAbsentIndex(0), is(0));
-        assertThat(singleton.nextPresentIndex(1), is(1));
-        assertThat(singleton.nextAbsentIndex(1), is(2));
-        assertThat(singleton.nextPresentIndex(2), is(-1));
-        assertThat(singleton.nextAbsentIndex(2), is(2));
+    @Test
+    void testFilled() {
+        assertThat(NatBitSets.filled(0, 0).isEmpty(), is(true));
+        assertThat(NatBitSets.filled(3, 4), contains(3));
 
-        singleton.clear();
-        assertThat(singleton.nextPresentIndex(0), is(-1));
+        NatBitSet range = NatBitSets.filled(10, 1_000_000);
+        assertThat(range.size(), is(999_990));
+        assertThat(range.firstInt(), is(10));
+        assertThat(range.lastInt(), is(999_999));
+        assertThat(range.contains(9), is(false));
+        assertThat(range.contains(10), is(true));
+
+        assertThrows(IndexOutOfBoundsException.class, () -> NatBitSets.filled(-1, 5));
+        assertThrows(IndexOutOfBoundsException.class, () -> NatBitSets.filled(5, 4));
     }
 }

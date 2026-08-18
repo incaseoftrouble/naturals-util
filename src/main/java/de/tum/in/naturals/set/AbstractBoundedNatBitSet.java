@@ -1,23 +1,12 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.set;
 
 import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import java.util.Collection;
 import javax.annotation.Nonnegative;
 
@@ -42,7 +31,7 @@ public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet impleme
     }
 
     @Override
-    public boolean addAll(Collection<? extends Integer> c) { // NOPMD Added for annotation
+    public boolean addAll(Collection<? extends Integer> c) {
         return super.addAll(c);
     }
 
@@ -51,7 +40,7 @@ public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet impleme
         if (from >= domainSize) {
             return;
         }
-        clear(from, domainSize);
+        clear(Math.max(0, from), domainSize);
     }
 
     @Override
@@ -59,12 +48,44 @@ public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet impleme
         if (indices.isEmpty()) {
             set(0, domainSize);
         } else {
+            IntSet reference;
+            if (indices instanceof IntSet) {
+                reference = (IntSet) indices;
+            } else {
+                reference = new IntOpenHashSet();
+                indices.forEach(i -> {
+                    if (0 <= i && i < domainSize) {
+                        reference.add(i);
+                    }
+                });
+            }
             for (int i = 0; i < domainSize(); i++) {
-                if (!indices.contains(i)) {
+                if (!reference.contains(i)) {
                     set(i);
                 }
             }
         }
+    }
+
+    @Override
+    public boolean intersects(Collection<Integer> indices) {
+        if (isEmpty() || indices.isEmpty()) {
+            return false;
+        }
+        if (indices instanceof IntSortedSet || indices instanceof NatBitSet) {
+            IntIterator iterator = ((IntSet) indices).intIterator();
+            while (iterator.hasNext()) {
+                int index = iterator.nextInt();
+                if (contains(index)) {
+                    return true;
+                }
+                if (index >= domainSize()) {
+                    return false;
+                }
+            }
+            return false;
+        }
+        return super.intersects(indices);
     }
 
     @Override
@@ -74,10 +95,8 @@ public abstract class AbstractBoundedNatBitSet extends AbstractNatBitSet impleme
 
     @Override
     public String toString() {
-        return domainSize + (isComplement() ? "(C)" : "") + super.toString();
+        return domainSize + super.toString();
     }
-
-    abstract boolean isComplement();
 
     protected boolean inDomain(int index) {
         return 0 <= index && index < domainSize;

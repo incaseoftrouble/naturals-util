@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 package de.tum.in.naturals.unionfind;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -25,7 +27,9 @@ public class IntMapUnionFind implements IntUnionFind {
 
     @Override
     public int componentCount() {
-        return elements - size.size();
+        // Only non-roots ever get a parent entry, so their count is exactly the number of elements
+        // that have been merged into some other root.
+        return elements - parent.size();
     }
 
     @Override

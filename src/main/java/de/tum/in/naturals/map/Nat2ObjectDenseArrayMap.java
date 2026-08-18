@@ -1,19 +1,4 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.map;
 
@@ -36,6 +21,7 @@ import java.util.PrimitiveIterator;
 import java.util.function.BiFunction;
 import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
+import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -61,7 +47,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
     private transient ValuesView<V> valuesView = null;
 
     @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-    public Nat2ObjectDenseArrayMap(V[] array) {
+    public Nat2ObjectDenseArrayMap(@Nullable V[] array) {
         this.array = array;
         for (V value : array) {
             if (!isAbsent(value)) {
@@ -94,6 +80,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
         this.size = initialSize;
     }
 
+    @Contract("null -> true")
     private boolean isAbsent(@Nullable Object value) {
         return value == null;
     }
@@ -143,7 +130,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
         if (isAbsent(v)) {
             return false;
         }
-        V[] array = this.array;
+        @Nullable V[] array = this.array;
         for (V value : array) {
             if (!isAbsent(value) && value.equals(v)) {
                 return true;
@@ -170,6 +157,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
         return isAbsent(value) ? defaultValue : value;
     }
 
+    @SuppressWarnings("AssignmentExpression")
     @Override
     public V put(int key, V value) {
         checkNotAbsent(value);
@@ -181,10 +169,12 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
             size++;
             return defaultReturnValue();
         }
+        assert !isAbsent(previous);
         array[key] = value;
         return previous;
     }
 
+    @SuppressWarnings("AssignmentExpression")
     @Override
     public V putIfAbsent(int key, V value) {
         checkNotAbsent(value);
@@ -195,9 +185,11 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
             size++;
             return defaultReturnValue();
         }
+        assert !isAbsent(previous);
         return previous;
     }
 
+    @SuppressWarnings("AssignmentExpression")
     @Override
     public V computeIfAbsent(int key, IntFunction<? extends V> mappingFunction) {
         V previous;
@@ -209,11 +201,13 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
             size++;
             return value;
         }
+        assert !isAbsent(previous);
         return previous;
     }
 
+    @SuppressWarnings("AssignmentExpression")
     @Override
-    public V merge(int key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+    public V merge(int key, V value, BiFunction<? super V, ? super V, ? extends @Nullable V> remappingFunction) {
         checkNotAbsent(value);
         V previous;
         //noinspection NestedAssignment
@@ -235,7 +229,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
         return merge;
     }
 
-    @SuppressWarnings("AssignmentToNull")
+    @SuppressWarnings("AssignmentExpression")
     @Override
     public V remove(int key) {
         V previous;
@@ -243,6 +237,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
         if (array.length <= key || isAbsent(previous = array[key])) {
             return defaultReturnValue();
         }
+        assert !isAbsent(previous);
         array[key] = null;
         size--;
         return previous;
@@ -256,7 +251,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
 
     public void fill(PrimitiveIterator.OfInt iterator, V value) {
         checkNotAbsent(value);
-        V[] array = this.array;
+        @Nullable V[] array = this.array;
         while (iterator.hasNext()) {
             int index = iterator.nextInt();
             ensureSize(index);
@@ -266,9 +261,10 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
 
     public void setAll(int from, int to, IntFunction<V> generator) {
         ensureSize(to);
-        V[] array = this.array;
+        @Nullable V[] array = this.array;
         for (int i = from; i < to; i++) {
             V value = generator.apply(i);
+            //noinspection ConstantValue
             assert !isAbsent(value);
             if (isAbsent(array[i])) {
                 size += 1;
@@ -310,7 +306,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
         int hash = HashCommon.mix(size);
         int elements = 0;
         int index = 0;
-        V[] array = this.array;
+        @Nullable V[] array = this.array;
         while (elements < size) {
             V element = array[index];
             if (!isAbsent(element)) {
@@ -402,7 +398,9 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
 
         @Override
         public V getValue() {
-            return map.array[index];
+            V value = map.array[index];
+            assert value != null;
+            return value;
         }
 
         @Override
@@ -503,7 +501,9 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
 
         @Override
         public V getValue() {
-            return map.array[index];
+            V value = map.array[index];
+            assert value != null;
+            return value;
         }
 
         @Override
@@ -610,6 +610,7 @@ public class Nat2ObjectDenseArrayMap<V> extends AbstractInt2ObjectMap<V> {
                 throw new NoSuchElementException();
             }
             V value = map.array[next];
+            assert value != null;
             current = next;
             next = map.nextKey(next + 1);
             return value;

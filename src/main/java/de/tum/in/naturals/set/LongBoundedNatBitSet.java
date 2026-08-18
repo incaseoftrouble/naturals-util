@@ -1,361 +1,296 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.set;
 
 import static de.tum.in.naturals.BitUtil.mask;
 import static de.tum.in.naturals.BitUtil.maskTo;
+import static de.tum.in.naturals.set.NatBitSetsUtil.checkNonNegative;
+import static de.tum.in.naturals.set.NatBitSetsUtil.checkOrdered;
+import static de.tum.in.naturals.set.NatBitSetsUtil.checkRange;
 
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.IntConsumer;
 import javax.annotation.Nonnegative;
 
+/**
+ * A bounded set over a domain of at most {@link Long#SIZE} values, held in a single word.
+ */
 class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
-    private final boolean complement;
-    private final LongBoundedNatBitSet complementView;
     private final long domainMask;
-    private final long[] store;
+    private long store;
 
-    @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
-    private LongBoundedNatBitSet(long store, int domainSize, boolean complement) {
+    LongBoundedNatBitSet(long store, @Nonnegative int domainSize) {
         super(domainSize);
         if (Long.SIZE < domainSize) {
             throw new IllegalArgumentException();
         }
-        this.store = new long[] {store};
-        this.complement = complement;
-        domainMask = maskTo(domainSize());
-        this.complementView = new LongBoundedNatBitSet(this);
+        this.domainMask = maskTo(domainSize);
+        this.store = store;
         assert checkConsistency();
     }
 
-    private LongBoundedNatBitSet(LongBoundedNatBitSet other) {
-        super(other.domainSize());
-        this.complementView = other;
-        this.complement = !other.complement;
-        this.store = other.store;
-        domainMask = other.domainMask;
-    }
-
-    LongBoundedNatBitSet(long store, @Nonnegative int domainSize) {
-        this(store, domainSize, false);
-    }
-
-    LongBoundedNatBitSet(int domainSize) {
-        this(0L, domainSize, false);
+    LongBoundedNatBitSet(@Nonnegative int domainSize) {
+        this(0L, domainSize);
     }
 
     public static int maximalSize() {
         return Long.SIZE;
     }
 
-    @Override
-    boolean isComplement() {
-        return complement;
+    private void checkWordInDomain(long word) {
+        long excess = word & ~domainMask;
+        if (excess != 0L) {
+            checkInDomain(Long.numberOfTrailingZeros(excess));
+        }
+    }
+
+    private boolean containsIndex(int index) {
+        return (store & (1L << index)) != 0L;
     }
 
     @Override
     public boolean isEmpty() {
-        assert checkConsistency();
-        return store[0] == (complement ? domainMask : 0L);
+        return store == 0L;
     }
 
     @Override
     public int size() {
-        assert checkConsistency();
-        int bitCount = Long.bitCount(store[0]);
-        return complement ? domainSize() - bitCount : bitCount;
+        return Long.bitCount(store);
     }
 
     @Override
     public boolean contains(int index) {
-        assert checkConsistency();
         return inDomain(index) && containsIndex(index);
     }
 
     @Override
     public boolean containsAll(IntCollection indices) {
-        assert checkConsistency();
-        if (isEmpty()) {
-            return indices.isEmpty();
+        if (NatBitSetsUtil.isSingleWord(indices)) {
+            return (~store & NatBitSetsUtil.word(indices)) == 0L;
         }
         if (indices.isEmpty()) {
             return true;
         }
-        if (indices instanceof LongBoundedNatBitSet) {
-            LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
-
-            long otherSetBits = other.complement ? other.complementBits() : other.store[0];
-            long unsetBits = complement ? store[0] | ~domainMask : ~store[0];
-
-            return (unsetBits & otherSetBits) == 0L;
+        if (isEmpty() || NatBitSetsUtil.lastOf(indices) >= domainSize()) {
+            return false;
         }
         return super.containsAll(indices);
     }
 
     @Override
     public int firstInt() {
-        assert checkConsistency();
         if (isEmpty()) {
             throw new NoSuchElementException();
         }
-        int first = Long.numberOfTrailingZeros(complement ? ~store[0] : store[0]);
-        assert first < Long.SIZE && containsIndex(first);
-        return first;
+        return Long.numberOfTrailingZeros(store);
     }
 
     @Override
     public int lastInt() {
-        assert checkConsistency();
         if (isEmpty()) {
             throw new NoSuchElementException();
         }
-        int last = Long.SIZE - Long.numberOfLeadingZeros(complement ? complementBits() : store[0]) - 1;
-        assert 0 <= last && containsIndex(last);
-        return last;
+        return Long.SIZE - Long.numberOfLeadingZeros(store) - 1;
     }
 
     @Override
     public int nextPresentIndex(int index) {
-        assert checkConsistency();
-        NatBitSetsUtil.checkNonNegative(index);
-        if (index >= domainSize() || isEmpty()) {
+        checkNonNegative(index);
+        if (index >= domainSize()) {
             return -1;
         }
-        long masked = (complement ? complementBits() : store[0]) & ~maskTo(index);
-        if (masked == 0L) {
-            return -1;
-        }
-        int next = Long.numberOfTrailingZeros(masked);
-        assert next < Long.SIZE && containsIndex(next) : next;
-        return next;
+        long masked = store & ~maskTo(index);
+        return masked == 0L ? -1 : Long.numberOfTrailingZeros(masked);
     }
 
     @Override
     public int nextAbsentIndex(int index) {
-        assert checkConsistency();
-        NatBitSetsUtil.checkNonNegative(index);
-        if (index >= domainSize() || isEmpty()) {
+        checkNonNegative(index);
+        if (index >= domainSize()) {
             return index;
         }
-        long masked = (complement ? store[0] : complementBits()) & ~maskTo(index);
-        if (masked == 0L) {
-            return domainSize();
-        }
-        int next = Long.numberOfTrailingZeros(masked);
-        assert next < Long.SIZE && !containsIndex(next) : next;
-        return next;
+        long masked = ~store & domainMask & ~maskTo(index);
+        return masked == 0L ? domainSize() : Long.numberOfTrailingZeros(masked);
     }
 
     @Override
     public int previousPresentIndex(int index) {
-        assert checkConsistency();
-        NatBitSetsUtil.checkNonNegative(index);
-        if (isEmpty()) {
-            return -1;
-        }
-
-        long masked = (complement ? complementBits() : store[0]) & maskTo(index + 1);
-        if (masked == 0L) {
-            return -1;
-        }
-        int previous = Long.SIZE - Long.numberOfLeadingZeros(masked) - 1;
-        assert containsIndex(previous) : previous;
-        return previous;
+        checkNonNegative(index);
+        long masked = store & maskTo(Math.min(index, domainSize() - 1) + 1);
+        return masked == 0L ? -1 : Long.SIZE - Long.numberOfLeadingZeros(masked) - 1;
     }
 
     @Override
     public int previousAbsentIndex(int index) {
-        assert checkConsistency();
-        NatBitSetsUtil.checkNonNegative(index);
-        if (index >= domainSize() || isEmpty()) {
+        checkNonNegative(index);
+        if (index >= domainSize()) {
             return index;
         }
-        long mask = maskTo(index + 1);
-        long masked = (complement ? store[0] : complementBits()) & mask;
-        if (masked == 0L) {
-            return -1;
-        }
-        int previous = Long.SIZE - Long.numberOfLeadingZeros(masked) - 1;
-        assert !containsIndex(previous) : previous;
-        return previous;
+        long masked = ~store & domainMask & maskTo(index + 1);
+        return masked == 0L ? -1 : Long.SIZE - Long.numberOfLeadingZeros(masked) - 1;
     }
 
     @Override
     public IntIterator iterator() {
-        return new NatBitSetIterator(this);
+        return new WordIterator();
+    }
+
+    @Override
+    public void forEach(IntConsumer consumer) {
+        long remaining = store;
+        while (remaining != 0L) {
+            consumer.accept(Long.numberOfTrailingZeros(remaining));
+            remaining &= remaining - 1;
+        }
     }
 
     @Override
     public void set(int index) {
-        assert checkConsistency();
         checkInDomain(index);
-        if (complement) {
-            store[0] &= ~(1L << index);
-        } else {
-            store[0] |= (1L << index);
-        }
-        assert checkConsistency();
+        store |= 1L << index;
     }
 
     @Override
     public void set(int index, boolean value) {
-        assert checkConsistency();
         if (value) {
             set(index);
         } else {
             clear(index);
         }
-        assert checkConsistency();
     }
 
     @Override
     public void set(int from, int to) {
-        assert checkConsistency();
+        checkRange(from, to);
+        if (from == to) {
+            return;
+        }
         checkInDomain(from, to);
-        if (complement) {
-            store[0] &= ~mask(from, to);
-        } else {
-            store[0] |= mask(from, to);
-        }
-        assert checkConsistency();
-    }
-
-    @Override
-    public void clear(int index) {
-        assert checkConsistency();
-        checkInDomain(index);
-        if (complement) {
-            store[0] |= 1L << index;
-        } else {
-            store[0] &= ~(1L << index);
-        }
-        assert checkConsistency();
-    }
-
-    @Override
-    public void clear(int from, int to) {
-        assert checkConsistency();
-        checkInDomain(from, to);
-        if (complement) {
-            store[0] |= mask(from, to);
-        } else {
-            store[0] &= ~mask(from, to);
-        }
-        assert checkConsistency();
+        store |= mask(from, to);
     }
 
     @Override
     public void clear() {
-        assert checkConsistency();
-        if (complement) {
-            store[0] = domainMask;
-        } else {
-            store[0] = 0L;
+        store = 0L;
+    }
+
+    @Override
+    public void clear(int index) {
+        if (inDomain(index)) {
+            store &= ~(1L << index);
         }
-        assert checkConsistency();
+    }
+
+    @Override
+    public void clear(int from, int to) {
+        checkOrdered(from, to);
+        int start = Math.max(0, from);
+        if (start < domainSize()) {
+            store &= ~mask(start, Math.min(to, domainSize()));
+        }
     }
 
     @Override
     public void flip(int index) {
-        assert checkConsistency();
         checkInDomain(index);
-        store[0] ^= (1L << index);
-        assert checkConsistency();
+        store ^= 1L << index;
     }
 
     @Override
     public void flip(int from, int to) {
-        assert checkConsistency();
+        checkRange(from, to);
+        if (from == to) {
+            return;
+        }
         checkInDomain(from, to);
-        store[0] ^= mask(from, to);
-        assert checkConsistency();
+        store ^= mask(from, to);
     }
 
     @Override
     public boolean intersects(Collection<Integer> indices) {
-        assert checkConsistency();
-        if (indices instanceof LongBoundedNatBitSet) {
-            LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
-            long store = complement ? complementBits() : this.store[0];
-            long otherStore = other.complement ? other.complementBits() : other.store[0];
-            return (store & otherStore) != 0L;
-        }
-        return super.intersects(indices);
+        return NatBitSetsUtil.isSingleWord(indices)
+                ? (store & NatBitSetsUtil.word(indices)) != 0L
+                : super.intersects(indices);
     }
 
     @Override
     public void and(IntCollection indices) {
-        assert checkConsistency();
+        if (NatBitSetsUtil.isSingleWord(indices)) {
+            store &= NatBitSetsUtil.word(indices);
+            return;
+        }
+        if (isEmpty()) {
+            return;
+        }
         if (indices.isEmpty()) {
-            clear();
-        } else if (indices instanceof LongBoundedNatBitSet) {
-            LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
-
-            if (complement) {
-                store[0] |= other.complement ? other.store[0] | ~other.domainMask : ~other.store[0];
-                store[0] &= domainMask;
-            } else {
-                store[0] &= other.complement ? other.complementBits() : other.store[0];
+            store = 0L;
+            return;
+        }
+        long newStore = 0L;
+        if (indices instanceof IntSet && indices.size() > Long.SIZE) {
+            IntIterator iterator = intIterator();
+            while (iterator.hasNext()) {
+                int index = iterator.nextInt();
+                if (indices.contains(index)) {
+                    newStore |= 1L << index;
+                }
             }
         } else {
-            super.and(indices);
+            IntIterator iterator = indices.intIterator();
+            while (iterator.hasNext()) {
+                int index = iterator.nextInt();
+                if (contains(index)) {
+                    newStore |= 1L << index;
+                }
+            }
         }
+        store = newStore;
         assert checkConsistency();
     }
 
     @Override
     public void andNot(IntCollection indices) {
-        assert checkConsistency();
-        if (indices.isEmpty()) {
+        if (NatBitSetsUtil.isSingleWord(indices)) {
+            store &= ~NatBitSetsUtil.word(indices);
             return;
         }
-        if (indices instanceof LongBoundedNatBitSet) {
-            LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
-
-            if (complement) {
-                store[0] |= other.complement ? other.complementBits() : other.store[0];
-                store[0] &= domainMask;
-            } else {
-                store[0] &= other.complement ? other.store[0] | ~other.domainMask : ~other.store[0];
-            }
-        } else {
-            super.andNot(indices);
+        if (isEmpty() || indices.isEmpty()) {
+            return;
         }
-        assert checkConsistency();
+        if (indices instanceof IntSet && indices.size() > Long.SIZE) {
+            long newStore = 0L;
+            IntIterator iterator = intIterator();
+            while (iterator.hasNext()) {
+                int index = iterator.nextInt();
+                if (!indices.contains(index)) {
+                    newStore |= 1L << index;
+                }
+            }
+            store = newStore;
+            return;
+        }
+        long other = 0L;
+        IntIterator iterator = indices.intIterator();
+        while (iterator.hasNext()) {
+            int index = iterator.nextInt();
+            if (contains(index)) {
+                other |= 1L << index;
+            }
+        }
+        store &= ~other;
     }
 
     @Override
     public void or(IntCollection indices) {
-        assert checkConsistency();
-        if (indices.isEmpty()) {
-            return;
-        }
-        if (indices instanceof LongBoundedNatBitSet) {
-            LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
-            checkInDomain(other.lastInt());
-            if (complement) {
-                store[0] &= other.complement ? (other.store[0] | ~other.domainMask) : ~other.store[0];
-            } else {
-                store[0] |= other.complement ? other.complementBits() : other.store[0];
-            }
+        if (NatBitSetsUtil.isSingleWord(indices)) {
+            long word = NatBitSetsUtil.word(indices);
+            checkWordInDomain(word);
+            store |= word;
         } else {
             super.or(indices);
         }
@@ -364,89 +299,102 @@ class LongBoundedNatBitSet extends AbstractBoundedNatBitSet {
 
     @Override
     public void orNot(IntCollection indices) {
-        assert checkConsistency();
-        if (indices.isEmpty()) {
-            store[0] = complement ? 0L : domainMask;
-        } else if (indices instanceof LongBoundedNatBitSet) {
-            LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
-
-            if (complement) {
-                store[0] &= other.complement ? other.complementBits() : other.store[0];
-            } else {
-                store[0] |= ((other.complement ? other.store[0] : ~other.store[0]) | ~other.domainMask) & domainMask;
-            }
+        if (NatBitSetsUtil.isSingleWord(indices)) {
+            store |= ~NatBitSetsUtil.word(indices) & domainMask;
         } else {
-            super.orNot(indices);
+            long other = 0L;
+            IntIterator iterator = indices.intIterator();
+            while (iterator.hasNext()) {
+                int index = iterator.nextInt();
+                if (0 <= index && index < domainSize()) {
+                    other |= 1L << index;
+                }
+            }
+            store |= ~other & domainMask;
         }
         assert checkConsistency();
     }
 
     @Override
     public void xor(IntCollection indices) {
-        assert checkConsistency();
-        if (indices.isEmpty()) {
-            return;
-        }
-        if (indices instanceof LongBoundedNatBitSet) {
-            LongBoundedNatBitSet other = (LongBoundedNatBitSet) indices;
-            checkInDomain(other.domainSize() - 1);
-            store[0] ^= other.store[0];
-            if (other.complement) {
-                store[0] ^= other.domainMask;
-            }
+        if (NatBitSetsUtil.isSingleWord(indices)) {
+            long word = NatBitSetsUtil.word(indices);
+            checkWordInDomain(word);
+            store ^= word;
         } else {
-            super.xor(indices);
+            long other = 0L;
+            IntIterator iterator = indices.intIterator();
+            while (iterator.hasNext()) {
+                int index = iterator.nextInt();
+                checkInDomain(index);
+                other |= 1L << index;
+            }
+            store ^= other;
         }
         assert checkConsistency();
     }
 
-    @SuppressWarnings("OverridableMethodCallDuringObjectConstruction")
     @Override
     public LongBoundedNatBitSet clone() {
-        assert checkConsistency();
-        return new LongBoundedNatBitSet(store[0], domainSize(), complement);
+        return (LongBoundedNatBitSet) super.clone();
     }
 
-    @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
     @Override
-    public BoundedNatBitSet complement() {
-        return complementView;
+    public void complement() {
+        store = ~store & domainMask;
     }
 
     @Override
     public boolean equals(Object o) {
-        assert checkConsistency();
         if (this == o) {
             return true;
         }
         if (!(o instanceof Set)) {
             return false;
         }
-        if (isEmpty()) {
-            return ((Collection<?>) o).isEmpty();
-        }
-        if (((Collection<?>) o).isEmpty()) {
-            return false;
-        }
-
-        if (o instanceof LongBoundedNatBitSet) {
-            LongBoundedNatBitSet other = (LongBoundedNatBitSet) o;
-
-            return (complement ? complementBits() : store[0])
-                    == (other.complement ? other.complementBits() : other.store[0]);
-        }
-        return super.equals(o);
+        return NatBitSetsUtil.isSingleWord(o) ? store == NatBitSetsUtil.word(o) : super.equals(o);
     }
 
-    protected long complementBits() {
-        return ~store[0] & domainMask;
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 
-    private boolean containsIndex(int index) {
-        return ((store[0] & (1L << index)) == 0L) == complement;
+    long getStore() {
+        return store;
     }
 
     private boolean checkConsistency() {
-        return (store[0] & ~domainMask) == 0L;
+        return (store & ~domainMask) == 0L;
+    }
+
+    private final class WordIterator implements IntIterator {
+        private long remaining = store;
+        private int last = -1;
+
+        @Override
+        public boolean hasNext() {
+            return remaining != 0L;
+        }
+
+        @Override
+        public int nextInt() {
+            if (remaining == 0L) {
+                throw new NoSuchElementException();
+            }
+            int index = Long.numberOfTrailingZeros(remaining);
+            remaining &= remaining - 1;
+            last = index;
+            return index;
+        }
+
+        @Override
+        public void remove() {
+            if (last == -1) {
+                throw new IllegalStateException();
+            }
+            store &= ~(1L << last);
+            last = -1;
+        }
     }
 }

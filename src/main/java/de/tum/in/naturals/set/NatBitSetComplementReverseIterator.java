@@ -1,19 +1,4 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.set;
 
@@ -25,9 +10,10 @@ class NatBitSetComplementReverseIterator implements IntIterator {
     private int current;
 
     @SuppressWarnings("AssignmentOrReturnOfFieldWithMutableType")
-    public NatBitSetComplementReverseIterator(NatBitSet set, int length) {
+    NatBitSetComplementReverseIterator(NatBitSet set, int length) {
         this.set = set;
-        current = set.previousAbsentIndex(length);
+        // The domain is [0, length), so the search starts at length - 1, and index 0 has no predecessor
+        current = length == 0 ? -1 : set.previousAbsentIndex(length - 1);
     }
 
     @Override
@@ -41,15 +27,9 @@ class NatBitSetComplementReverseIterator implements IntIterator {
             throw new NoSuchElementException();
         }
         int result = current;
-        current = set.previousAbsentIndex(current - 1);
+        current = result == 0 ? -1 : set.previousAbsentIndex(result - 1);
         return result;
     }
 
-    @Override
-    public void remove() {
-        if (set.contains(current)) {
-            throw new IllegalStateException();
-        }
-        set.set(current);
-    }
+    // No remove(): see NatBitSetComplementIterator.
 }

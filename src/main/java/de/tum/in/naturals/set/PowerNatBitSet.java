@@ -1,25 +1,11 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.set;
 
 import it.unimi.dsi.fastutil.Size64;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,7 +17,7 @@ class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
 
     PowerNatBitSet(NatBitSet baseSet) {
         assert !baseSet.isEmpty();
-        this.baseSet = NatBitSets.compact(baseSet, true);
+        this.baseSet = baseSet.clone();
         baseSize = this.baseSet.size();
     }
 
@@ -42,7 +28,20 @@ class PowerNatBitSet extends AbstractSet<NatBitSet> implements Size64 {
 
     @Override
     public boolean contains(@Nullable Object obj) {
-        return obj instanceof IntCollection && baseSet.containsAll((IntCollection) obj);
+        if (obj instanceof IntCollection) {
+            return baseSet.containsAll((IntCollection) obj);
+        }
+        if (!(obj instanceof Collection)) {
+            return false;
+        }
+        // Any other collection of Integers is a member just as well. Probed element-wise rather than
+        // through containsAll, which throws rather than answering false on a non-Integer element.
+        for (Object element : (Collection<?>) obj) {
+            if (!(element instanceof Integer) || !baseSet.contains((int) element)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

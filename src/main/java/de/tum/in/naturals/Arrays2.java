@@ -1,19 +1,4 @@
-/*
- * Copyright (C) 2018 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals;
 
@@ -22,6 +7,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class Arrays2 {
+    /**
+     * Where {@link #binaryWindow} stops halving and scans. Binary search only starts paying off around
+     * 48 entries, and a scan of this many is cheaper than the branches needed to narrow it further.
+     */
+    private static final int LINEAR_SEARCH_WINDOW = 32;
+
     private Arrays2() {}
 
     public static int cardinality(boolean[] array) {
@@ -89,5 +80,39 @@ public final class Arrays2 {
 
     public static int[] ensureSize(int[] array, int length) {
         return array.length <= length ? array : Arrays.copyOf(array, length);
+    }
+
+    public static int hybridBinarySearch(int[] array, int size, int value) {
+        return size <= LINEAR_SEARCH_WINDOW ? linearSearch(array, 0, size, value) : binaryWindow(array, size, value);
+    }
+
+    public static int linearSearch(int[] array, int from, int to, int value) {
+        // Assumption: Array is sorted + value cannot be in array[to] or beyond
+        for (int i = from; i < to; i++) {
+            int current = array[i];
+            if (current >= value) {
+                return current == value ? i : -(i + 1);
+            }
+        }
+        return -(to + 1);
+    }
+
+    private static int binaryWindow(int[] array, int size, int value) {
+        int low = 0;
+        int high = size;
+        do {
+            int mid = (low + high) >>> 1;
+            if (array[mid] < value) {
+                low = mid + 1;
+            } else {
+                // Everything from mid onwards is >= value, so the answer cannot be past it
+                high = mid;
+            }
+        } while (high - low > LINEAR_SEARCH_WINDOW);
+        // If high < size, we have not excluded that value actually is there
+        if (high < size && array[high] == value) {
+            return high;
+        }
+        return linearSearch(array, low, high, value);
     }
 }

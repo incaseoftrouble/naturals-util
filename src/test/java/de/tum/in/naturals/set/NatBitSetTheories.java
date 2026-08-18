@@ -1,19 +1,4 @@
-/*
- * Copyright (C) 2017 Tobias Meggendorfer
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: Apache-2.0
 
 package de.tum.in.naturals.set;
 
@@ -25,16 +10,14 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import com.zaxxer.sparsebits.SparseBitSet;
 import de.tum.in.naturals.bitset.BitSets;
-import de.tum.in.naturals.bitset.SparseBitSets;
+import de.tum.in.naturals.bitset.RoaringBitmaps;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntCollection;
@@ -63,6 +46,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -70,6 +54,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @SuppressWarnings({"StaticCollection", "NewClassNamingConvention"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+// TESTED_PAIRS alone fans out into 10,000s of cases; excluded from the default `test`/`check` run
+// (see build.gradle.kts) and run separately via `./gradlew testSlow`.
+@Tag("slow")
 class NatBitSetTheories {
     private static final Logger logger = Logger.getLogger(NatBitSetTheories.class.getName());
 
@@ -88,6 +75,12 @@ class NatBitSetTheories {
     private static final List<MutationList> largeMutations;
     private static final List<MutationList> smallMutations;
 
+    private static BoundedNatBitSet boundedFullSet(int domainSize) {
+        BoundedNatBitSet set = NatBitSets.boundedSet(domainSize);
+        set.set(0, domainSize);
+        return set;
+    }
+
     static {
         smallMutations = generateMutations(NUMBER_OF_SMALL_MUTATIONS, MAXIMAL_MUTATION_LENGTH, SMALL_SUBSET_SIZE);
         largeMutations = generateMutations(NUMBER_OF_LARGE_MUTATIONS, MAXIMAL_MUTATION_LENGTH, MAXIMAL_SUBSET_SIZE);
@@ -102,78 +95,43 @@ class NatBitSetTheories {
         }
 
         implementations = new ArrayList<>();
-        implementations.add(new Pair(NatBitSets.emptySet()));
+        implementations.add(new Pair(NatBitSets.of()));
 
         // Unbounded
 
         for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-            NatBitSet singleton = NatBitSets.singleton(generator.nextInt(MAXIMAL_SUBSET_SIZE));
+            NatBitSet singleton = NatBitSets.of(generator.nextInt(MAXIMAL_SUBSET_SIZE));
             implementations.add(new Pair(singleton));
         }
 
         for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-            int size = generator.nextInt(Long.SIZE);
-            NatBitSet longSet = NatBitSets.longSet();
-            longSet.addAll(generateSet(size, size));
-            implementations.add(new Pair(longSet));
-        }
-        for (IntCollection fixedSet : fixedSets) {
-            if (fixedSet.intStream().anyMatch(value -> value >= Long.SIZE)) {
-                continue;
-            }
-            NatBitSet longSet = NatBitSets.longSet();
-            longSet.addAll(fixedSet);
-            implementations.add(new Pair(longSet));
-        }
-
-        for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
             int size = generator.nextInt(MAXIMAL_SUBSET_SIZE);
-            NatBitSet simpleSet = NatBitSets.simpleSet(size);
-            simpleSet.addAll(generateSet(size, size));
-            implementations.add(new Pair(simpleSet));
+            NatBitSet hybridSet = new HybridNatBitSet();
+            hybridSet.addAll(generateSet(size, size));
+            implementations.add(new Pair(hybridSet));
         }
         for (IntCollection fixedSet : fixedSets) {
-            NatBitSet simpleSet = NatBitSets.simpleSet(MAXIMAL_SUBSET_SIZE);
-            simpleSet.addAll(fixedSet);
-            implementations.add(new Pair(simpleSet));
-        }
+            NatBitSet hybridSet = new HybridNatBitSet();
+            hybridSet.addAll(fixedSet);
+            implementations.add(new Pair(hybridSet));
 
-        for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-            int size = generator.nextInt(MAXIMAL_SUBSET_SIZE);
-            NatBitSet sparseSet = NatBitSets.sparseSet(size);
-            sparseSet.addAll(generateSet(size, size));
-            implementations.add(new Pair(sparseSet));
-        }
-        for (IntCollection fixedSet : fixedSets) {
-            NatBitSet sparseSet = NatBitSets.sparseSet(MAXIMAL_SUBSET_SIZE);
-            sparseSet.addAll(fixedSet);
-            implementations.add(new Pair(sparseSet));
-        }
-
-        for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-            int size = generator.nextInt(MAXIMAL_SUBSET_SIZE);
-            NatBitSet sparseSet = NatBitSets.roaringSet();
-            sparseSet.addAll(generateSet(size, size));
-            implementations.add(new Pair(sparseSet));
-        }
-        for (IntCollection fixedSet : fixedSets) {
-            NatBitSet sparseSet = NatBitSets.roaringSet();
-            sparseSet.addAll(fixedSet);
-            implementations.add(new Pair(sparseSet));
+            // Force each backing representation over the same contents so that the cross-mode paths get hit
+            implementations.add(new Pair(new HybridNatBitSet(BitSets.of(fixedSet))));
+            implementations.add(new Pair(new HybridNatBitSet(RoaringBitmaps.of(fixedSet))));
         }
 
         // Bounded
 
         for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-            BoundedNatBitSet boundedEmpty = NatBitSets.boundedEmptySet(generator.nextInt(MAXIMAL_SUBSET_SIZE - 1) + 1);
+            BoundedNatBitSet boundedEmpty = NatBitSets.boundedSet(generator.nextInt(MAXIMAL_SUBSET_SIZE - 1) + 1);
             implementations.add(new Pair(boundedEmpty));
-            implementations.add(new Pair(boundedEmpty.complement()));
+            implementations.add(new Pair(complementOf(boundedEmpty)));
         }
 
         for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-            BoundedNatBitSet fullSet = NatBitSets.boundedFullSet(generator.nextInt(MAXIMAL_SUBSET_SIZE - 1) + 1);
-            implementations.add(new Pair(fullSet));
-            implementations.add(new Pair(fullSet.complement()));
+            int domainSize = generator.nextInt(MAXIMAL_SUBSET_SIZE - 1) + 1;
+            implementations.add(new Pair(boundedFullSet(domainSize)));
+            implementations.add(new Pair(NatBitSets.boundedSet(domainSize)));
         }
 
         for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
@@ -181,7 +139,7 @@ class NatBitSetTheories {
             BoundedNatBitSet longSet = NatBitSets.boundedLongSet(size);
             longSet.addAll(generateSet(size, size));
             implementations.add(new Pair(longSet));
-            implementations.add(new Pair(longSet.complement()));
+            implementations.add(new Pair(complementOf(longSet)));
         }
         for (IntCollection fixedSet : fixedSets) {
             if (fixedSet.intStream().anyMatch(value -> value >= SMALL_SUBSET_SIZE)) {
@@ -190,7 +148,7 @@ class NatBitSetTheories {
             BoundedNatBitSet longSet = NatBitSets.boundedLongSet(Long.SIZE - generator.nextInt(4));
             longSet.addAll(fixedSet);
             implementations.add(new Pair(longSet));
-            implementations.add(new Pair(longSet.complement()));
+            implementations.add(new Pair(complementOf(longSet)));
         }
 
         for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
@@ -198,41 +156,13 @@ class NatBitSetTheories {
             BoundedNatBitSet simpleSet = NatBitSets.boundedSimpleSet(size);
             simpleSet.addAll(generateSet(size, size));
             implementations.add(new Pair(simpleSet));
-            implementations.add(new Pair(simpleSet.complement()));
+            implementations.add(new Pair(complementOf(simpleSet)));
         }
         for (IntCollection fixedSet : fixedSets) {
             BoundedNatBitSet simpleSet = NatBitSets.boundedSimpleSet(MAXIMAL_SUBSET_SIZE);
             simpleSet.addAll(fixedSet);
             implementations.add(new Pair(simpleSet));
-            implementations.add(new Pair(simpleSet.complement()));
-        }
-
-        for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-            int size = generator.nextInt(MAXIMAL_SUBSET_SIZE - 1) + 1;
-            BoundedNatBitSet sparseSet = NatBitSets.boundedSparseSet(size);
-            sparseSet.addAll(generateSet(size, size));
-            implementations.add(new Pair(sparseSet));
-            implementations.add(new Pair(sparseSet.complement()));
-        }
-        for (IntCollection fixedSet : fixedSets) {
-            BoundedNatBitSet sparseSet = NatBitSets.boundedSparseSet(MAXIMAL_SUBSET_SIZE);
-            sparseSet.addAll(fixedSet);
-            implementations.add(new Pair(sparseSet));
-            implementations.add(new Pair(sparseSet.complement()));
-        }
-
-        for (int i = 0; i < NUMBER_OF_SUBSETS_PER_IMPLEMENTATION; i++) {
-            int size = generator.nextInt(MAXIMAL_SUBSET_SIZE - 1) + 1;
-            BoundedNatBitSet roaringSet = NatBitSets.boundedRoaringSet(size);
-            roaringSet.addAll(generateSet(size, size));
-            implementations.add(new Pair(roaringSet));
-            implementations.add(new Pair(roaringSet.complement()));
-        }
-        for (IntCollection fixedSet : fixedSets) {
-            BoundedNatBitSet roaringSet = NatBitSets.boundedRoaringSet(MAXIMAL_SUBSET_SIZE);
-            roaringSet.addAll(fixedSet);
-            implementations.add(new Pair(roaringSet));
-            implementations.add(new Pair(roaringSet.complement()));
+            implementations.add(new Pair(complementOf(simpleSet)));
         }
     }
 
@@ -315,6 +245,12 @@ class NatBitSetTheories {
                         .collect(Collectors.toList()))
                 .map(MutationList::new)
                 .collect(Collectors.toList());
+    }
+
+    private static BoundedNatBitSet complementOf(BoundedNatBitSet set) {
+        BoundedNatBitSet complement = set.clone();
+        complement.complement();
+        return complement;
     }
 
     private static IntCollection generateSet(int maximalKey, int maximalEntries) {
@@ -450,8 +386,6 @@ class NatBitSetTheories {
         int domainSize;
         if (set instanceof BoundedNatBitSet) {
             domainSize = ((BoundedNatBitSet) set).domainSize();
-        } else if (set instanceof LongNatBitSet) {
-            domainSize = Long.SIZE - generator.nextInt(4);
         } else {
             domainSize = MAXIMAL_SUBSET_SIZE;
         }
@@ -476,7 +410,7 @@ class NatBitSetTheories {
             reference.add(index);
         });
 
-        NatBitSet ints = NatBitSets.asSet(set);
+        NatBitSet ints = NatBitSets.wrap(set);
         assertThat(ints, is(reference));
     }
 
@@ -501,11 +435,14 @@ class NatBitSetTheories {
 
     @ParameterizedTest(name = "{index}")
     @MethodSource("implementations")
-    void testCompact(Pair implementation) {
-        NatBitSet set = implementation.set;
+    void testOptimize(Pair implementation) {
+        NatBitSet set = implementation.checkedCopy();
+        NatBitSet expected = implementation.set;
 
-        NatBitSet compacted = NatBitSets.compact(set);
-        assertThat(compacted, is(set));
+        set.optimize();
+        assertThat(set, is(expected));
+        set.optimize();
+        assertThat(set, is(expected));
 
         implementation.check();
     }
@@ -514,29 +451,27 @@ class NatBitSetTheories {
     @MethodSource("implementations")
     void testComplement(Pair implementation) {
         assumeTrue(implementation.set instanceof BoundedNatBitSet);
-        BoundedNatBitSet boundedSet = (BoundedNatBitSet) implementation.checkedCopy();
+        BoundedNatBitSet original = (BoundedNatBitSet) implementation.checkedCopy();
+        BoundedNatBitSet complement = original.clone();
+        complement.complement();
 
-        BoundedNatBitSet complement = boundedSet.complement();
-        assumeFalse(complement.equals(boundedSet));
-        assertFalse(complement.intersects(boundedSet));
-        assertFalse(boundedSet.intersects(complement));
-        assertThat(complement.domainSize(), is(boundedSet.domainSize()));
+        assertFalse(complement.intersects(original));
+        assertFalse(original.intersects(complement));
+        assertThat(complement.domainSize(), is(original.domainSize()));
 
-        for (int i = 0; i < boundedSet.domainSize(); i++) {
-            assertThat(boundedSet.contains(i), not(is(complement.contains(i))));
+        for (int i = 0; i < original.domainSize(); i++) {
+            assertThat(original.contains(i), not(is(complement.contains(i))));
         }
 
         IntSortedSet union = new IntAVLTreeSet();
-        union.addAll(boundedSet);
-        assertThat(union.size(), is(boundedSet.size()));
+        union.addAll(original);
+        assertThat(union.size(), is(original.size()));
         union.addAll(complement);
-        assertThat(union.toString(), union.size(), is(boundedSet.domainSize()));
+        assertThat(union.toString(), union.size(), is(original.domainSize()));
 
-        assumeTrue(NatBitSets.isModifiable(complement));
-        complement.clear();
-        assertThat(boundedSet.size(), is(boundedSet.domainSize()));
-        complement.addAll(union);
-        assertTrue(boundedSet.isEmpty());
+        // Flipping twice is the identity
+        complement.complement();
+        assertThat(complement, is(original));
     }
 
     @ParameterizedTest(name = "{index}")
@@ -628,30 +563,6 @@ class NatBitSetTheories {
     }
 
     @ParameterizedTest(name = "{index}")
-    @MethodSource("implementations")
-    void testEnsureModifiable(Pair implementation) {
-        NatBitSet set = implementation.checkedCopy();
-
-        NatBitSet copy = NatBitSets.ensureModifiable(set);
-        checkEquality(copy, set);
-        assertTrue(NatBitSets.isModifiable(copy));
-
-        copy.set(0, MAXIMAL_SUBSET_SIZE + 100);
-    }
-
-    @ParameterizedTest(name = "{index}")
-    @MethodSource("implementations")
-    void testEnsureModifiableLength(Pair implementation) {
-        NatBitSet set = implementation.checkedCopy();
-
-        NatBitSet copy = NatBitSets.ensureModifiable(set, 2 * MAXIMAL_SUBSET_SIZE);
-        checkEquality(copy, set);
-        assertTrue(NatBitSets.isModifiable(copy, 2 * MAXIMAL_SUBSET_SIZE));
-
-        copy.set(2 * MAXIMAL_SUBSET_SIZE - 1);
-    }
-
-    @ParameterizedTest(name = "{index}")
     @MethodSource("implementationPairs")
     void testEquals(Pair oneSet, Pair otherSet) {
         assertThat(oneSet.set.equals(otherSet.set), is(oneSet.reference.equals(otherSet.reference)));
@@ -708,36 +619,6 @@ class NatBitSetTheories {
         } else {
             assertThat(set.lastInt(), is(reference.lastInt()));
         }
-    }
-
-    @ParameterizedTest(name = "{index}")
-    @MethodSource("implementations")
-    void testModifiableCopyOf(Pair implementation) {
-        NatBitSet set = implementation.set;
-
-        NatBitSet copy = NatBitSets.modifiableCopyOf(set, 2 * MAXIMAL_SUBSET_SIZE);
-        checkEquality(copy, set);
-        assertThat(copy, not(sameInstance(set)));
-        assertTrue(NatBitSets.isModifiable(copy, 2 * MAXIMAL_SUBSET_SIZE));
-
-        copy.set(0, 2 * MAXIMAL_SUBSET_SIZE);
-        assertThat(copy, not(is(set)));
-    }
-
-    @ParameterizedTest(name = "{index}")
-    @MethodSource("implementations")
-    void testModifiableCopyOfBoundedSet(Pair implementation) {
-        NatBitSet set = implementation.set;
-        assumeTrue(set instanceof BoundedNatBitSet);
-
-        BoundedNatBitSet boundedSet = (BoundedNatBitSet) set;
-
-        BoundedNatBitSet copy = NatBitSets.modifiableCopyOf(boundedSet);
-        checkEquality(copy, set);
-        assertThat(copy, not(sameInstance(set)));
-        assertThat(copy.domainSize(), is(boundedSet.domainSize()));
-
-        copy.set(0, copy.domainSize());
     }
 
     @ParameterizedTest(name = "{index}")
@@ -817,7 +698,7 @@ class NatBitSetTheories {
         Set<BitSet> referencePowerSet = BitSets.powerSet(implementation.bitSet);
         for (BitSet subset : referencePowerSet) {
             BitSets.forEach(subset, index -> assertThat(set, hasItem(index)));
-            assertThat(powerSet, hasItem(NatBitSets.asSet(subset)));
+            assertThat(powerSet, hasItem(NatBitSets.wrap(subset)));
         }
         assertThat(powerSet, hasSize(referencePowerSet.size()));
     }
@@ -936,17 +817,6 @@ class NatBitSetTheories {
     }
 
     @ParameterizedTest(name = "{index}")
-    @MethodSource("implementations")
-    void testToSparseBitSet(Pair implementation) {
-        NatBitSet set = implementation.set;
-
-        SparseBitSet bitSet = NatBitSets.toSparseBitSet(set);
-        IntSet reference = new IntAVLTreeSet();
-        SparseBitSets.forEach(bitSet, reference::add);
-        assertThat(set, is(reference));
-    }
-
-    @ParameterizedTest(name = "{index}")
     @MethodSource("implementationPairs")
     void testXor(Pair implementation, Pair other) {
         int maximal = Math.max(implementation.length(), other.length());
@@ -967,14 +837,14 @@ class NatBitSetTheories {
     @ParameterizedTest(name = "{index}")
     @MethodSource("small")
     void testSmallMutations(Pair implementation, MutationList sequence) {
-        assumeTrue(NatBitSets.isModifiable(implementation.set, SMALL_SUBSET_SIZE));
+        assumeTrue(implementation.modifiable(SMALL_SUBSET_SIZE));
         testMutations(implementation, sequence);
     }
 
     @ParameterizedTest(name = "{index}")
     @MethodSource("large")
     void testLargeMutations(Pair implementation, MutationList sequence) {
-        assumeTrue(NatBitSets.isModifiable(implementation.set, MAXIMAL_SUBSET_SIZE));
+        assumeTrue(implementation.modifiable(MAXIMAL_SUBSET_SIZE));
         testMutations(implementation, sequence);
     }
 
@@ -1028,13 +898,18 @@ class NatBitSetTheories {
                 Consumer<NatBitSet> action = list.get(i);
                 action.accept(set);
                 action.accept(reference);
-                builder.append(action).append('\n');
-                builder.append("  ")
+                builder.append(action)
+                        .append('\n')
+                        .append("  ")
                         .append(reference.size())
                         .append(' ')
                         .append(reference)
+                        .append('\n')
+                        .append("  ")
+                        .append(set.size())
+                        .append(' ')
+                        .append(set)
                         .append('\n');
-                builder.append("  ").append(set.size()).append(' ').append(set).append('\n');
                 if (!set.equals(reference)) {
                     break;
                 }
@@ -1043,7 +918,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class And implements Consumer<NatBitSet> {
+    private static final class And implements Consumer<NatBitSet> {
         final IntCollection collection;
 
         public And(IntCollection collection) {
@@ -1061,7 +936,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class AndNot implements Consumer<NatBitSet> {
+    private static final class AndNot implements Consumer<NatBitSet> {
         final IntCollection collection;
 
         public AndNot(IntCollection collection) {
@@ -1079,7 +954,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class Clear implements Consumer<NatBitSet> {
+    private static final class Clear implements Consumer<NatBitSet> {
         @Override
         public void accept(NatBitSet ints) {
             ints.clear();
@@ -1091,7 +966,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class ClearFrom implements Consumer<NatBitSet> {
+    private static final class ClearFrom implements Consumer<NatBitSet> {
         final int fromIndex;
 
         public ClearFrom(int fromIndex) {
@@ -1109,7 +984,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class ClearIndex implements Consumer<NatBitSet> {
+    private static final class ClearIndex implements Consumer<NatBitSet> {
         final int index;
 
         public ClearIndex(int index) {
@@ -1127,7 +1002,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class ClearRange implements Consumer<NatBitSet> {
+    private static final class ClearRange implements Consumer<NatBitSet> {
         final int fromIndex;
         final int toIndex;
 
@@ -1147,7 +1022,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class Flip implements Consumer<NatBitSet> {
+    private static final class Flip implements Consumer<NatBitSet> {
         final int index;
 
         public Flip(int index) {
@@ -1165,7 +1040,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class FlipRange implements Consumer<NatBitSet> {
+    private static final class FlipRange implements Consumer<NatBitSet> {
         final int fromIndex;
         final int toIndex;
 
@@ -1185,7 +1060,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class Or implements Consumer<NatBitSet> {
+    private static final class Or implements Consumer<NatBitSet> {
         final IntCollection collection;
 
         public Or(IntCollection collection) {
@@ -1216,7 +1091,7 @@ class NatBitSetTheories {
                 bitSet = new BitSet(set.lastInt());
                 set.forEach((IntConsumer) bitSet::set);
             }
-            this.reference = NatBitSets.asSet(bitSet);
+            this.reference = NatBitSets.wrap(bitSet);
         }
 
         void check() {
@@ -1244,7 +1119,8 @@ class NatBitSetTheories {
         }
 
         public boolean modifiable(int bound) {
-            return NatBitSets.isModifiable(set, bound);
+            return modifiableType()
+                    && (!(set instanceof BoundedNatBitSet) || bound <= ((BoundedNatBitSet) set).domainSize());
         }
 
         public boolean modifiable(IntIterable basis) {
@@ -1256,11 +1132,11 @@ class NatBitSetTheories {
                     maximum = next;
                 }
             }
-            return NatBitSets.isModifiable(set, maximum + 1);
+            return modifiable(maximum + 1);
         }
 
         public boolean modifiableType() {
-            return !(set instanceof MutableSingletonNatBitSet || set instanceof FixedSizeNatBitSet);
+            return true;
         }
 
         @Override
@@ -1269,7 +1145,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class SetIndex implements Consumer<NatBitSet> {
+    private static final class SetIndex implements Consumer<NatBitSet> {
         final int index;
 
         public SetIndex(int index) {
@@ -1287,7 +1163,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class SetRange implements Consumer<NatBitSet> {
+    private static final class SetRange implements Consumer<NatBitSet> {
         final int fromIndex;
         final int toIndex;
 
@@ -1307,7 +1183,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class SetValue implements Consumer<NatBitSet> {
+    private static final class SetValue implements Consumer<NatBitSet> {
         final int index;
         final boolean value;
 
@@ -1327,7 +1203,7 @@ class NatBitSetTheories {
         }
     }
 
-    private static class Xor implements Consumer<NatBitSet> {
+    private static final class Xor implements Consumer<NatBitSet> {
         final IntCollection collection;
 
         public Xor(IntCollection collection) {

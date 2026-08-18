@@ -1,5 +1,14 @@
 # 0.x
 
+### 0.20.0 (2026-08-19)
+
+ * Replace the separate simple/sparse/Roaring set implementations (bounded and unbounded) with a single `HybridNatBitSet`, which adapts between an array, `BitSet`, or `RoaringBitmap` backing as it grows.
+   This simplifies usage while staying close to the performance of the specialisation it replaces in each regime.
+ * Added `optimize()` which tries to pick the best representation and compacts the backing data structure.
+ * Dropped the distinction between modifiable and unmodifiable: There is just one implementation, which is modifiable.
+ * Breaking: `BoundedNatBitSet#complement()` now flips the contents in place (`void`) instead of returning a live complement view.
+ * Add `IntMapUnionFind`, a map-backed union-find for sparse domains.
+
 ### 0.19.0 (2023-11-10)
 
  * Bump versions
